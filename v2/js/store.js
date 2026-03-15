@@ -4,48 +4,55 @@
 window.App = window.App || {};
 
 (function () {
+  // Demo territories traced along real streets in Centro Histórico, Santiago de los Caballeros
+  // Territory 1: Bounded by C/ H.R. Grieser (N), C/ San Francisco de Asís (E), C/ Eliseo Espaillat (S), C/ Loló Pichardo (W)
+  // Territory 2: Bounded by C/ Eliseo Espaillat (N), C/ Ulises F. Espaillat (E), C/ Arté (S), C/ Loló Pichardo (W)
+  // Territory 3: Bounded by C/ Arté (N), C/ Ulises F. Espaillat (E), C/ Independencia (S), C/ 19 de Marzo (W)
   var SAMPLE_DATA = {
     territories: [
       {
-        id: 1, number: '1', name: 'Villa Olga Norte', group_name: 'Sur',
+        id: 1, number: '1', name: 'La Joya', group_name: 'Centro',
         polygon: [
-          [-70.6891, 19.4530], [-70.6885, 19.4533], [-70.6878, 19.4529],
-          [-70.6874, 19.4524], [-70.6871, 19.4518], [-70.6876, 19.4514],
-          [-70.6882, 19.4511], [-70.6889, 19.4513], [-70.6893, 19.4517],
-          [-70.6895, 19.4523], [-70.6894, 19.4527]
+          [-70.7142421, 19.4596383], [-70.7140219, 19.4596124], [-70.7136891, 19.4595746],
+          [-70.7131125, 19.4595053], [-70.7125173, 19.4594188],
+          [-70.7125691, 19.4590277], [-70.7126262, 19.4585969],
+          [-70.7132229, 19.4586727], [-70.7138022, 19.4587458], [-70.7143974, 19.4588071]
         ],
         qr_url: '',
         landmarks: [
-          { id: 1, name: 'Colmado Don Pedro', lat: 19.4522, lng: -70.6884, color: '#EF4444' },
-          { id: 2, name: 'Iglesia Adventista', lat: 19.4518, lng: -70.6878, color: '#3B82F6' },
-          { id: 3, name: 'Cancha', lat: 19.4526, lng: -70.6888, color: '#10B981' }
+          { id: 1, name: 'Colmado Mireya', lat: 19.4591, lng: -70.7133, color: '#EF4444' },
+          { id: 2, name: 'Iglesia San José', lat: 19.4593, lng: -70.7139, color: '#3B82F6' }
         ]
       },
       {
-        id: 2, number: '2', name: 'Reparto Universitario', group_name: 'Sur',
+        id: 2, number: '2', name: 'La Trinitaria', group_name: 'Centro',
         polygon: [
-          [-70.6871, 19.4518], [-70.6874, 19.4524], [-70.6878, 19.4529],
-          [-70.6870, 19.4534], [-70.6862, 19.4531], [-70.6856, 19.4527],
-          [-70.6853, 19.4521], [-70.6855, 19.4515], [-70.6860, 19.4510],
-          [-70.6866, 19.4512], [-70.6870, 19.4515]
+          [-70.7143974, 19.4588071], [-70.7138022, 19.4587458], [-70.7132229, 19.4586727],
+          [-70.7126262, 19.4585969], [-70.7120424, 19.4585345], [-70.7114533, 19.4584644],
+          [-70.7114912, 19.4582499], [-70.7115854, 19.4574568],
+          [-70.7121617, 19.4575243], [-70.7127442, 19.4575955], [-70.7133420, 19.4576780],
+          [-70.7139401, 19.4577540], [-70.7145103, 19.4578224]
         ],
         qr_url: '',
         landmarks: [
-          { id: 1, name: 'Farmacia Carol', lat: 19.4520, lng: -70.6863, color: '#EF4444' },
-          { id: 2, name: 'Escuela Basica', lat: 19.4525, lng: -70.6868, color: '#8B5CF6' }
+          { id: 1, name: 'Farmacia San Martín', lat: 19.4581, lng: -70.7128, color: '#EF4444' },
+          { id: 2, name: 'Escuela Primaria', lat: 19.4580, lng: -70.7136, color: '#8B5CF6' },
+          { id: 3, name: 'Cancha', lat: 19.4583, lng: -70.7121, color: '#10B981' }
         ]
       },
       {
-        id: 3, number: '3', name: 'Los Jardines', group_name: 'Sur',
+        id: 3, number: '3', name: 'Pueblo Nuevo', group_name: 'Centro',
         polygon: [
-          [-70.6895, 19.4523], [-70.6893, 19.4517], [-70.6896, 19.4511],
-          [-70.6900, 19.4506], [-70.6907, 19.4504], [-70.6913, 19.4507],
-          [-70.6916, 19.4513], [-70.6914, 19.4519], [-70.6910, 19.4524],
-          [-70.6904, 19.4527], [-70.6898, 19.4526]
+          [-70.7133420, 19.4576780], [-70.7127442, 19.4575955], [-70.7121617, 19.4575243],
+          [-70.7115854, 19.4574568],
+          [-70.7117228, 19.4564598], [-70.7118696, 19.4554680], [-70.7119496, 19.4548228],
+          [-70.7125257, 19.4548932], [-70.7131270, 19.4549561], [-70.7137009, 19.4550539],
+          [-70.7135876, 19.4557333], [-70.7134661, 19.4566536]
         ],
         qr_url: '',
         landmarks: [
-          { id: 1, name: 'Super Mercado', lat: 19.4515, lng: -70.6906, color: '#F59E0B' }
+          { id: 1, name: 'Mini Market El Punto', lat: 19.4560, lng: -70.7126, color: '#F59E0B' },
+          { id: 2, name: 'Cancha Municipal', lat: 19.4566, lng: -70.7130, color: '#10B981' }
         ]
       }
     ]
