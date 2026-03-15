@@ -39,16 +39,10 @@ window.App = window.App || {};
               kmlFile = entry;
             }
           });
-          if (!kmlFile) {
-            reject(new Error('No .kml file found inside KMZ archive'));
-            return;
-          }
+          if (!kmlFile) throw new Error('No .kml file found inside KMZ archive');
           return kmlFile.async('string');
         }).then(function (kmlString) {
-          if (kmlString) {
-            var territories = parseKMLString(kmlString);
-            resolve(territories);
-          }
+          resolve(parseKMLString(kmlString));
         }).catch(reject);
       };
       reader.onerror = function () { reject(reader.error); };

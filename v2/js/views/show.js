@@ -42,6 +42,7 @@ window.App.Views = window.App.Views || {};
           lng: latlng.lng,
           color: color
         });
+        App.Router.refresh();
       });
 
       // Helper text
@@ -68,8 +69,13 @@ window.App.Views = window.App.Views || {};
         territory.landmarks.forEach(function (lm) {
           var li = document.createElement('li');
           li.className = 'landmark-item';
-          li.innerHTML =
-            '<span class="landmark-dot" style="background: ' + lm.color + '"></span>' +
+
+          var dot = document.createElement('span');
+          dot.className = 'landmark-dot';
+          dot.style.background = lm.color;
+          li.appendChild(dot);
+
+          li.innerHTML +=
             '<span class="landmark-name">' + escapeHtml(lm.name) + '</span>' +
             '<span class="landmark-coords">' + lm.lat.toFixed(6) + ' - ' + lm.lng.toFixed(6) + '</span>' +
             '<span class="landmark-actions"></span>';
@@ -80,6 +86,7 @@ window.App.Views = window.App.Views || {};
           deleteBtn.addEventListener('click', function () {
             if (confirm('Delete this landmark?')) {
               App.Store.deleteLandmark(territory.id, lm.id);
+              App.Router.refresh();
             }
           });
           li.querySelector('.landmark-actions').appendChild(deleteBtn);

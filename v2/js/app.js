@@ -41,11 +41,6 @@
       }
     });
 
-    // Subscribe store changes to re-render current route
-    App.Store.onChange(function () {
-      App.Router.refresh();
-    });
-
     // Initialize router
     var appContainer = document.getElementById('app');
     App.Router.init(appContainer);

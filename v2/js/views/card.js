@@ -70,7 +70,11 @@ window.App.Views = window.App.Views || {};
         card.appendChild(qrContainer);
       }
 
-      // Card map div (the card itself IS the map container)
+      // Dedicated map div inside the card
+      var mapDiv = document.createElement('div');
+      mapDiv.className = 'card-map';
+      card.appendChild(mapDiv);
+
       card.style.position = 'relative';
       container.appendChild(card);
 

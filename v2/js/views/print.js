@@ -81,6 +81,11 @@ window.App.Views = window.App.Views || {};
           card.appendChild(qrContainer);
         }
 
+        // Dedicated map div inside the card
+        var mapDiv = document.createElement('div');
+        mapDiv.className = 'card-map';
+        card.appendChild(mapDiv);
+
         grid.appendChild(card);
         var cardCleanup = App.Components.CardMap.renderCardMap(card, territory);
         cleanups.push(cardCleanup);
