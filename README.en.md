@@ -4,6 +4,8 @@
 
 A lightweight, zero-installation web app for managing congregation territory cards. No server, no database — just open `index.html` in your browser.
 
+![Main view with territories](docs/screenshots/02-index.png)
+
 ## Features
 
 - **Territory management** — Create, edit, and delete territories with polygon boundaries drawn on a Leaflet map.
@@ -23,6 +25,30 @@ A lightweight, zero-installation web app for managing congregation territory car
 3. Done!
 
 No server, no Node.js, no build step. Works offline and from `file://`.
+
+![Welcome screen](docs/screenshots/01-welcome.png)
+
+## Views
+
+### Territory detail
+Shows the map with the polygon and landmarks. Click the map to add new landmarks.
+
+![Detail view](docs/screenshots/03-show.png)
+
+### Printable card
+Card ready to print or download as PNG.
+
+![Card view](docs/screenshots/04-card.png)
+
+### Edit form
+Edit the territory name, number, group, and draw the polygon.
+
+![Edit form](docs/screenshots/05-edit.png)
+
+### Light mode
+The app supports both dark and light mode.
+
+![Light mode](docs/screenshots/07-light-mode.png)
 
 ## Saving Your Data
 
@@ -44,7 +70,3 @@ No server, no Node.js, no build step. Works offline and from `file://`.
 - qrcodejs (QR code generation)
 - JSZip (KMZ extraction)
 - localStorage for data persistence
-
-## Data Format
-
-Territory polygons are stored as JSON arrays of `[longitude, latitude]` coordinate pairs (GeoJSON order). Leaflet expects `[lat, lng]` so the code reverses coordinate order when rendering.

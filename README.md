@@ -4,6 +4,8 @@
 
 Una aplicación web ligera, sin instalación, para gestionar tarjetas de territorio de congregaciones. Sin servidor, sin base de datos — solo abre `index.html` en tu navegador.
 
+![Vista principal con territorios](docs/screenshots/02-index.png)
+
 ## Funcionalidades
 
 - **Gestión de territorios** — Crea, edita y elimina territorios con polígonos dibujados sobre un mapa interactivo (Leaflet).
@@ -23,6 +25,30 @@ Una aplicación web ligera, sin instalación, para gestionar tarjetas de territo
 3. ¡Listo!
 
 Sin servidor, sin Node.js, sin paso de compilación. Funciona offline y desde `file://`.
+
+![Pantalla de bienvenida](docs/screenshots/01-welcome.png)
+
+## Vistas
+
+### Detalle del territorio
+Muestra el mapa con el polígono y los puntos de referencia. Haz clic en el mapa para agregar nuevos puntos.
+
+![Vista de detalle](docs/screenshots/03-show.png)
+
+### Tarjeta imprimible
+Tarjeta lista para imprimir o descargar como PNG.
+
+![Vista de tarjeta](docs/screenshots/04-card.png)
+
+### Formulario de edición
+Edita el nombre, número, grupo y dibuja el polígono del territorio.
+
+![Formulario de edición](docs/screenshots/05-edit.png)
+
+### Modo claro
+La aplicación soporta modo oscuro y claro.
+
+![Modo claro](docs/screenshots/07-light-mode.png)
 
 ## Guardar tus Datos
 
@@ -44,7 +70,3 @@ Sin servidor, sin Node.js, sin paso de compilación. Funciona offline y desde `f
 - qrcodejs (generación de códigos QR)
 - JSZip (extracción de KMZ)
 - localStorage para persistencia de datos
-
-## Formato de Datos
-
-Los polígonos de territorio se almacenan como arrays JSON de pares `[longitud, latitud]` (orden GeoJSON). Leaflet espera `[lat, lng]`, por lo que el código invierte el orden de coordenadas al renderizar.
