@@ -9,7 +9,9 @@ window.App.Components = window.App.Components || {};
   // Render all territories on index map
   // Returns cleanup function
   function renderOverviewMap(container, territories) {
-    var map = L.map(container, { center: [19.500, -70.707], zoom: 15 });
+    var defaultCenter = App.Store.getDefaultCenter ? App.Store.getDefaultCenter() : [0, 0];
+    var defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
+    var map = L.map(container, { center: defaultCenter, zoom: defaultZoom });
 
     var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
@@ -70,9 +72,12 @@ window.App.Components = window.App.Components || {};
 
   // Render single territory with landmarks
   // onMapClick(latlng) is called when user clicks the map
+  // onMapReady(map) is called with the Leaflet map instance
   // Returns cleanup function
-  function renderSingleMap(container, territory, onMapClick) {
-    var map = L.map(container, { center: [19.500, -70.707], zoom: 15 });
+  function renderSingleMap(container, territory, onMapClick, onMapReady) {
+    var defaultCenter = App.Store.getDefaultCenter ? App.Store.getDefaultCenter() : [0, 0];
+    var defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
+    var map = L.map(container, { center: defaultCenter, zoom: defaultZoom });
 
     var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
@@ -126,6 +131,10 @@ window.App.Components = window.App.Components || {};
 
     if (onMapClick) {
       map.on('click', function (e) { onMapClick(e.latlng); });
+    }
+
+    if (onMapReady) {
+      onMapReady(map);
     }
 
     return function () { map.remove(); };

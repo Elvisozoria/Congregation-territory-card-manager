@@ -2,6 +2,13 @@
 
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
+    // Detect user location for map defaults
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        App.Store.setDefaultCenter(pos.coords.latitude, pos.coords.longitude);
+      });
+    }
+
     // Load sample data
     App.Store.loadSample();
 
@@ -12,24 +19,31 @@
     var fileInput = document.getElementById('file-input');
     var kmlInput = document.getElementById('kml-input');
 
-    btnLoad.addEventListener('click', function () { fileInput.click(); });
+    btnLoad.addEventListener('click', function () {
+      if (App.Store.getAll().length > 0) {
+        if (!confirm('Loading a file will replace all current data. Continue?')) return;
+      }
+      fileInput.click();
+    });
     btnSave.addEventListener('click', function () { App.Store.saveToFile(); });
     btnImportKml.addEventListener('click', function () { kmlInput.click(); });
 
     fileInput.addEventListener('change', function () {
       if (fileInput.files.length > 0) {
+        btnLoad.disabled = true;
         App.Store.loadFromFile(fileInput.files[0]).then(function () {
           fileInput.value = '';
           App.Router.refresh();
         }).catch(function (err) {
           alert('Error loading JSON: ' + err.message);
           fileInput.value = '';
-        });
+        }).then(function () { btnLoad.disabled = false; });
       }
     });
 
     kmlInput.addEventListener('change', function () {
       if (kmlInput.files.length > 0) {
+        btnImportKml.disabled = true;
         App.Store.importKML(kmlInput.files[0]).then(function () {
           kmlInput.value = '';
           App.Router.refresh();
@@ -37,7 +51,7 @@
         }).catch(function (err) {
           alert('Error importing KML: ' + err.message);
           kmlInput.value = '';
-        });
+        }).then(function () { btnImportKml.disabled = false; });
       }
     });
 

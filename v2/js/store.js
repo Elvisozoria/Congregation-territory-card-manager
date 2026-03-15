@@ -26,6 +26,7 @@ window.App = window.App || {};
 
   var data = { territories: [] };
   var listeners = [];
+  var defaultCenter = [0, 0];
 
   function notify() {
     listeners.forEach(function (fn) { fn(); });
@@ -33,7 +34,7 @@ window.App = window.App || {};
 
   function nextId(items) {
     if (items.length === 0) return 1;
-    return Math.max.apply(null, items.map(function (i) { return i.id; })) + 1;
+    return items.reduce(function (max, i) { return i.id > max ? i.id : max; }, 0) + 1;
   }
 
   window.App.Store = {
@@ -148,7 +149,7 @@ window.App = window.App || {};
       link.download = 'territories.json';
       link.href = url;
       link.click();
-      URL.revokeObjectURL(url);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     },
 
     // Import KML — delegates to App.KmlImport
@@ -180,6 +181,15 @@ window.App = window.App || {};
       var lat = lats.reduce(function (a, b) { return a + b; }, 0) / lats.length;
       var lng = lngs.reduce(function (a, b) { return a + b; }, 0) / lngs.length;
       return 'https://www.google.com/maps/@' + lat + ',' + lng + ',17z';
+    },
+
+    // Default map center (set via geolocation)
+    setDefaultCenter: function (lat, lng) {
+      defaultCenter = [lat, lng];
+    },
+
+    getDefaultCenter: function () {
+      return defaultCenter;
     },
 
     // Replace all data (used internally)

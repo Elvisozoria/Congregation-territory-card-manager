@@ -109,6 +109,10 @@ window.App = window.App || {};
 
     if (polygon.length < 3) return null;
 
+    // Strip closing ring point (KML repeats first coord as last)
+    var first = polygon[0], last = polygon[polygon.length - 1];
+    if (first[0] === last[0] && first[1] === last[1]) polygon.pop();
+
     return {
       number: number,
       name: fullName,

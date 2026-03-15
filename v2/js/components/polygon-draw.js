@@ -9,7 +9,9 @@ window.App.Components = window.App.Components || {};
   // existingPolygon: array of [lng, lat] coords or empty array
   // Returns cleanup function
   function initPolygonDraw(mapContainer, hiddenInput, existingPolygon) {
-    var map = L.map(mapContainer, { center: [19.500, -70.707], zoom: 15 });
+    var defaultCenter = App.Store.getDefaultCenter ? App.Store.getDefaultCenter() : [0, 0];
+    var defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
+    var map = L.map(mapContainer, { center: defaultCenter, zoom: defaultZoom });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'

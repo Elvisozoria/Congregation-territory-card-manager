@@ -98,7 +98,12 @@ window.App.Views = window.App.Views || {};
         if (!name) errors.push('Name is required');
 
         if (errors.length > 0) {
-          errorDiv.innerHTML = errors.map(function (msg) { return '<p>' + msg + '</p>'; }).join('');
+          errorDiv.innerHTML = '';
+          errors.forEach(function (msg) {
+            var p = document.createElement('p');
+            p.textContent = msg;
+            errorDiv.appendChild(p);
+          });
           errorDiv.style.display = 'block';
           return;
         }

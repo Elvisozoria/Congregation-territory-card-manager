@@ -14,12 +14,14 @@ window.App.Views = window.App.Views || {};
         return null;
       }
 
-      var cleanup = null;
+      var mapCleanup = null;
+      var currentMap = null;
+      var landmarksSection = null;
 
       // Header
       var header = document.createElement('div');
       header.className = 'header-row';
-      header.innerHTML = '<h1>' + escapeHtml(territory.number) + ' - ' + escapeHtml(territory.name) + '</h1>' +
+      header.innerHTML = '<h1>' + App.Utils.escapeHtml(territory.number) + ' - ' + App.Utils.escapeHtml(territory.name) + '</h1>' +
         '<div>' +
           '<a href="#/territories/' + territory.id + '/card" class="btn btn-primary">Card</a> ' +
           '<a href="#/territories/' + territory.id + '/edit" class="btn btn-secondary">Edit</a> ' +
@@ -32,7 +34,7 @@ window.App.Views = window.App.Views || {};
       mapDiv.className = 'map-container';
       container.appendChild(mapDiv);
 
-      cleanup = App.Components.Map.renderSingleMap(mapDiv, territory, function (latlng) {
+      mapCleanup = App.Components.Map.renderSingleMap(mapDiv, territory, function (latlng) {
         var name = prompt('Landmark name:');
         if (!name || name.trim() === '') return;
         var color = LANDMARK_COLORS[territory.landmarks.length % LANDMARK_COLORS.length];
@@ -42,7 +44,12 @@ window.App.Views = window.App.Views || {};
           lng: latlng.lng,
           color: color
         });
-        App.Router.refresh();
+        // Re-render only the landmarks list + add marker to existing map
+        territory = App.Store.getById(params.id);
+        rerenderLandmarks();
+        addMarkerToMap(territory.landmarks[territory.landmarks.length - 1]);
+      }, function (map) {
+        currentMap = map;
       });
 
       // Helper text
@@ -51,78 +58,107 @@ window.App.Views = window.App.Views || {};
       helper.textContent = 'Click on the map to add a landmark';
       container.appendChild(helper);
 
-      // Landmarks heading
-      var h3 = document.createElement('h3');
-      h3.textContent = 'Landmarks';
-      container.appendChild(h3);
-
-      // Landmarks list
-      if (territory.landmarks.length === 0) {
-        var empty = document.createElement('p');
-        empty.className = 'empty-state';
-        empty.textContent = 'No landmarks yet. Click the map to add one.';
-        container.appendChild(empty);
-      } else {
-        var ul = document.createElement('ul');
-        ul.className = 'landmarks-list';
-
-        territory.landmarks.forEach(function (lm) {
-          var li = document.createElement('li');
-          li.className = 'landmark-item';
-
-          var dot = document.createElement('span');
-          dot.className = 'landmark-dot';
-          dot.style.background = lm.color;
-          li.appendChild(dot);
-
-          li.innerHTML +=
-            '<span class="landmark-name">' + escapeHtml(lm.name) + '</span>' +
-            '<span class="landmark-coords">' + lm.lat.toFixed(6) + ' - ' + lm.lng.toFixed(6) + '</span>' +
-            '<span class="landmark-actions"></span>';
-
-          var deleteBtn = document.createElement('button');
-          deleteBtn.className = 'btn btn-danger btn-sm';
-          deleteBtn.textContent = 'Delete';
-          deleteBtn.addEventListener('click', function () {
-            if (confirm('Delete this landmark?')) {
-              App.Store.deleteLandmark(territory.id, lm.id);
-              App.Router.refresh();
-            }
-          });
-          li.querySelector('.landmark-actions').appendChild(deleteBtn);
-
-          ul.appendChild(li);
-        });
-
-        container.appendChild(ul);
-      }
+      // Landmarks section container (for partial re-render)
+      landmarksSection = document.createElement('div');
+      container.appendChild(landmarksSection);
+      rerenderLandmarks();
 
       // Delete territory button
       var deleteSection = document.createElement('div');
       deleteSection.style.marginTop = '2rem';
       deleteSection.style.paddingTop = '1rem';
       deleteSection.style.borderTop = '1px solid #E5E7EB';
-      var deleteBtn = document.createElement('button');
-      deleteBtn.className = 'btn btn-danger';
-      deleteBtn.textContent = 'Delete Territory';
-      deleteBtn.addEventListener('click', function () {
+      var deleteTerritoryBtn = document.createElement('button');
+      deleteTerritoryBtn.className = 'btn btn-danger';
+      deleteTerritoryBtn.textContent = 'Delete Territory';
+      deleteTerritoryBtn.addEventListener('click', function () {
         if (confirm('Delete territory "' + territory.number + ' - ' + territory.name + '"? This cannot be undone.')) {
           App.Store.deleteTerritory(territory.id);
           window.location.hash = '#/';
         }
       });
-      deleteSection.appendChild(deleteBtn);
+      deleteSection.appendChild(deleteTerritoryBtn);
       container.appendChild(deleteSection);
 
+      function addMarkerToMap(lm) {
+        if (!currentMap) return;
+        var marker = L.circleMarker([lm.lat, lm.lng], {
+          radius: 8,
+          fillColor: lm.color || '#3B82F6',
+          color: '#1F2937',
+          weight: 2,
+          fillOpacity: 1
+        }).addTo(currentMap);
+        marker.bindTooltip(lm.name, {
+          permanent: true,
+          direction: 'right',
+          offset: [10, 0],
+          className: 'landmark-tooltip'
+        });
+      }
+
+      function rerenderLandmarks() {
+        territory = App.Store.getById(params.id);
+        landmarksSection.innerHTML = '';
+
+        var h3 = document.createElement('h3');
+        h3.textContent = 'Landmarks';
+        landmarksSection.appendChild(h3);
+
+        if (territory.landmarks.length === 0) {
+          var empty = document.createElement('p');
+          empty.className = 'empty-state';
+          empty.textContent = 'No landmarks yet. Click the map to add one.';
+          landmarksSection.appendChild(empty);
+        } else {
+          var ul = document.createElement('ul');
+          ul.className = 'landmarks-list';
+
+          territory.landmarks.forEach(function (lm) {
+            var li = document.createElement('li');
+            li.className = 'landmark-item';
+
+            var dot = document.createElement('span');
+            dot.className = 'landmark-dot';
+            dot.style.background = lm.color;
+
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'landmark-name';
+            nameSpan.textContent = lm.name;
+
+            var lat = typeof lm.lat === 'number' ? lm.lat.toFixed(6) : String(lm.lat || 0);
+            var lng = typeof lm.lng === 'number' ? lm.lng.toFixed(6) : String(lm.lng || 0);
+            var coordsSpan = document.createElement('span');
+            coordsSpan.className = 'landmark-coords';
+            coordsSpan.textContent = lat + ' - ' + lng;
+
+            var actionsSpan = document.createElement('span');
+            actionsSpan.className = 'landmark-actions';
+            var deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger btn-sm';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', function () {
+              if (confirm('Delete this landmark?')) {
+                App.Store.deleteLandmark(territory.id, lm.id);
+                rerenderLandmarks();
+              }
+            });
+            actionsSpan.appendChild(deleteBtn);
+
+            li.appendChild(dot);
+            li.appendChild(nameSpan);
+            li.appendChild(coordsSpan);
+            li.appendChild(actionsSpan);
+            ul.appendChild(li);
+          });
+
+          landmarksSection.appendChild(ul);
+        }
+      }
+
       return function () {
-        if (cleanup) cleanup();
+        if (mapCleanup) mapCleanup();
       };
     }
   };
-
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 })();
