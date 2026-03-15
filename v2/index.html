@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Territory Cards</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="#/" class="navbar-brand">Territory Cards</a>
+      <div class="navbar-actions">
+        <a href="#/print" class="btn btn-secondary btn-sm">Print All</a>
+        <button id="btn-load" class="btn btn-secondary btn-sm">Load JSON</button>
+        <button id="btn-save" class="btn btn-secondary btn-sm">Save JSON</button>
+        <button id="btn-import-kml" class="btn btn-secondary btn-sm">Import KML</button>
+        <input type="file" id="file-input" accept=".json" style="display:none" />
+        <input type="file" id="kml-input" accept=".kml,.kmz" style="display:none" />
+      </div>
+    </div>
+  </nav>
+  <div class="container" id="app"></div>
+
+  <!-- All JS as plain scripts (NOT modules — modules are blocked on file:// by CORS) -->
+  <script src="js/store.js"></script>
+  <script src="js/utils/kml-import.js"></script>
+  <script src="js/components/map.js"></script>
+  <script src="js/components/card-map.js"></script>
+  <script src="js/components/polygon-draw.js"></script>
+  <script src="js/views/index.js"></script>
+  <script src="js/views/show.js"></script>
+  <script src="js/views/form.js"></script>
+  <script src="js/views/card.js"></script>
+  <script src="js/views/print.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
