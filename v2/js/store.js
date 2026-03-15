@@ -58,13 +58,30 @@ window.App = window.App || {};
     ]
   };
 
+  var STORAGE_KEY = 'territory-cards-data';
   var data = { territories: [] };
   var listeners = [];
   var defaultCenter = [0, 0];
 
+  function persist() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { /* quota exceeded or unavailable */ }
+  }
+
   function notify() {
+    persist();
     listeners.forEach(function (fn) { fn(); });
   }
+
+  // Restore from localStorage on load
+  try {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      var parsed = JSON.parse(saved);
+      if (parsed.territories && Array.isArray(parsed.territories)) {
+        data = parsed;
+      }
+    }
+  } catch (e) { /* ignore parse errors */ }
 
   function nextId(items) {
     if (items.length === 0) return 1;
@@ -216,6 +233,13 @@ window.App = window.App || {};
         });
         notify();
       });
+    },
+
+    // Reset all data and clear localStorage
+    reset: function () {
+      data = { territories: [] };
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      notify();
     },
 
     // Google Maps URL from territory centroid

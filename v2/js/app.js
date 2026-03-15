@@ -37,6 +37,15 @@
     });
     btnImportKml.addEventListener('click', function () { kmlInput.click(); });
 
+    var btnReset = document.getElementById('btn-reset');
+    btnReset.addEventListener('click', function () {
+      if (App.Store.getAll().length === 0) return;
+      if (confirm('This will clear all territory data stored in this browser. Your exported JSON files are not affected. Continue?')) {
+        App.Store.reset();
+        App.Router.refresh();
+      }
+    });
+
     fileInput.addEventListener('change', function () {
       if (fileInput.files.length > 0) {
         btnLoad.disabled = true;

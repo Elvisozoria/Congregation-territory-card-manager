@@ -13,6 +13,8 @@ a:hover { color: #1D4ED8; }
 .navbar-brand { color: white; font-weight: 700; font-size: 1.125rem; text-decoration: none; }
 a.navbar-brand:hover { color: white; }
 .navbar-actions { display: flex; gap: 0.5rem; align-items: center; }
+.btn-navbar-text { background: none; border: none; color: #9CA3AF; font-size: 0.75rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s; }
+.btn-navbar-text:hover { color: #F87171; }
 
 /* Container */
 .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
