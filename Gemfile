@@ -62,3 +62,5 @@ end
 gem "rspec-rails", "~> 7.1", :groups => [:development, :test]
 
 gem "factory_bot_rails", "~> 6.5", :groups => [:development, :test]
+
+gem "rubyzip", "~> 3.2"
