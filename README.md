@@ -1,56 +1,56 @@
 # Congregation Territory Card Manager
 
-Aplicacion para gestionar tarjetas de territorios de congregaciones. Los territorios se definen dibujando poligonos en un mapa interactivo y cada uno se puede ver como una tarjeta imprimible con mapa y codigo QR opcional.
+An application for managing congregation territory cards. Territories are defined by drawing polygons on an interactive map and each one can be viewed as a printable card with a map and optional QR code.
 
-## Capturas de pantalla
+## Screenshots
 
-### Pagina principal — Lista de territorios con mapa
+### Main page — Territory list with map
 
-![Pagina principal](docs/screenshots/01-index.png)
+![Main page](docs/screenshots/01-index.png)
 
-Muestra todos los territorios en una tabla y en un mapa interactivo con poligonos de colores. Desde aqui puedes crear, editar o ver la tarjeta de cada territorio.
+Shows all territories in a table and on an interactive map with colored polygons. From here you can create, edit, or view the card for each territory.
 
-### Crear nuevo territorio
+### Create new territory
 
-![Nuevo territorio](docs/screenshots/02-new-territory.png)
+![New territory](docs/screenshots/02-new-territory.png)
 
-Formulario para crear un territorio nuevo. Dibuja el poligono directamente en el mapa usando las herramientas de dibujo.
+Form to create a new territory. Draw the polygon directly on the map using the drawing tools.
 
-### Ver territorio con landmarks
+### View territory with landmarks
 
-![Ver territorio](docs/screenshots/03-show-territory.png)
+![View territory](docs/screenshots/03-show-territory.png)
 
-Vista de un territorio individual con su poligono en el mapa. Puedes hacer clic en el mapa para agregar puntos de referencia (landmarks) con colores.
+Individual territory view with its polygon on the map. You can click on the map to add colored landmarks (points of reference).
 
-### Tarjeta imprimible
+### Printable card
 
-![Tarjeta](docs/screenshots/04-card-view.png)
+![Card](docs/screenshots/04-card-view.png)
 
-Tarjeta lista para imprimir o descargar como imagen PNG. Incluye el mapa del territorio, nombre, numero y codigo QR.
+Card ready to print or download as a PNG image. Includes the territory map, name, number, and QR code.
 
-### Imprimir todas las tarjetas
+### Print all cards
 
-![Imprimir todas](docs/screenshots/05-print-all.png)
+![Print all](docs/screenshots/05-print-all.png)
 
-Vista con todas las tarjetas para imprimir en lote.
+View with all cards for bulk printing.
 
 ---
 
-## Requisitos previos
+## Prerequisites
 
-Antes de instalar la aplicacion necesitas tener instalado lo siguiente en tu computadora:
+Before installing the application you need the following installed on your computer:
 
-### 1. Ruby (version 3.1 o superior)
+### 1. Ruby (version 3.1 or higher)
 
-Ruby es el lenguaje de programacion que usa la aplicacion.
+Ruby is the programming language used by the application.
 
-- **Mac:** Viene preinstalado pero puede ser una version vieja. Se recomienda instalar con [rbenv](https://github.com/rbenv/rbenv#installation):
+- **Mac:** It comes preinstalled but it may be an old version. We recommend installing with [rbenv](https://github.com/rbenv/rbenv#installation):
   ```bash
   brew install rbenv ruby-build
   rbenv install 3.1.3
   rbenv global 3.1.3
   ```
-- **Windows:** Usa [RubyInstaller](https://rubyinstaller.org/) — descarga el instalador y sigue los pasos.
+- **Windows:** Use [RubyInstaller](https://rubyinstaller.org/) — download the installer and follow the steps.
 - **Linux (Ubuntu/Debian):**
   ```bash
   sudo apt update
@@ -59,34 +59,34 @@ Ruby es el lenguaje de programacion que usa la aplicacion.
   rbenv global 3.1.3
   ```
 
-Para verificar que Ruby esta instalado, abre una terminal y escribe:
+To verify Ruby is installed, open a terminal and type:
 ```bash
 ruby --version
 ```
-Deberia mostrar algo como `ruby 3.1.3`.
+It should show something like `ruby 3.1.3`.
 
 ### 2. Rails 7
 
-Rails es el framework web que usa la aplicacion. Una vez instalado Ruby, instala Rails:
+Rails is the web framework used by the application. Once Ruby is installed, install Rails:
 
 ```bash
 gem install rails -v '~> 7.0'
 ```
 
-Guia oficial de instalacion: [https://guides.rubyonrails.org/getting_started.html](https://guides.rubyonrails.org/getting_started.html)
+Official installation guide: [https://guides.rubyonrails.org/getting_started.html](https://guides.rubyonrails.org/getting_started.html)
 
 ### 3. PostgreSQL
 
-PostgreSQL es la base de datos que usa la aplicacion.
+PostgreSQL is the database used by the application.
 
 - **Mac:**
   ```bash
   brew install postgresql@14
   brew services start postgresql@14
   ```
-  O descarga [Postgres.app](https://postgresapp.com/) que es mas facil — solo arrastra a Aplicaciones y abrela.
+  Or download [Postgres.app](https://postgresapp.com/) which is easier — just drag it to Applications and open it.
 
-- **Windows:** Descarga el instalador de [postgresql.org/download](https://www.postgresql.org/download/windows/) y sigue el asistente. Recuerda la contraseña que pongas.
+- **Windows:** Download the installer from [postgresql.org/download](https://www.postgresql.org/download/windows/) and follow the wizard. Remember the password you set.
 
 - **Linux (Ubuntu/Debian):**
   ```bash
@@ -96,15 +96,15 @@ PostgreSQL es la base de datos que usa la aplicacion.
 
 ### 4. Git
 
-Git es para descargar el codigo de la aplicacion.
+Git is used to download the application code.
 
-- **Mac:** Viene preinstalado. Si no, instala con `brew install git`.
-- **Windows:** Descarga de [git-scm.com](https://git-scm.com/download/win).
+- **Mac:** It comes preinstalled. If not, install with `brew install git`.
+- **Windows:** Download from [git-scm.com](https://git-scm.com/download/win).
 - **Linux:** `sudo apt install git`
 
-### 5. Homebrew (solo Mac)
+### 5. Homebrew (Mac only)
 
-Si usas Mac y no tienes Homebrew, instalalo primero:
+If you're on Mac and don't have Homebrew, install it first:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -112,146 +112,146 @@ Si usas Mac y no tienes Homebrew, instalalo primero:
 
 ---
 
-## Instalacion paso a paso
+## Step-by-step installation
 
-### Paso 1: Descargar el codigo
+### Step 1: Download the code
 
-Abre una terminal y ejecuta:
+Open a terminal and run:
 
 ```bash
-git clone https://github.com/TU-USUARIO/congregation-territory-card-manager.git
+git clone https://github.com/YOUR-USERNAME/congregation-territory-card-manager.git
 cd congregation-territory-card-manager
 ```
 
-> Reemplaza `TU-USUARIO` con el nombre de usuario de GitHub donde esta el repositorio.
+> Replace `YOUR-USERNAME` with the GitHub username where the repository is hosted.
 
-### Paso 2: Instalar dependencias de Ruby
+### Step 2: Install Ruby dependencies
 
-Dentro de la carpeta del proyecto, ejecuta:
+Inside the project folder, run:
 
 ```bash
 bundle install
 ```
 
-Si ves un error sobre `pg`, asegurate de que PostgreSQL esta instalado y corriendo.
+If you see an error about `pg`, make sure PostgreSQL is installed and running.
 
-### Paso 3: Crear la base de datos
+### Step 3: Create the database
 
 ```bash
 bin/rails db:create
 bin/rails db:migrate
 ```
 
-Esto crea las tablas necesarias (territorios y landmarks) en PostgreSQL.
+This creates the necessary tables (territories and landmarks) in PostgreSQL.
 
-### Paso 4: Iniciar el servidor
+### Step 4: Start the server
 
 ```bash
 bin/rails server
 ```
 
-### Paso 5: Abrir en el navegador
+### Step 5: Open in the browser
 
-Abre tu navegador y ve a:
+Open your browser and go to:
 
 ```
 http://localhost:3000
 ```
 
-Ya puedes empezar a crear territorios.
+You can now start creating territories.
 
 ---
 
-## Como usar la aplicacion
+## How to use the application
 
-### Crear un territorio
+### Create a territory
 
-1. En la pagina principal, haz clic en **"New Territory"**
-2. Llena los campos:
-   - **Number:** Numero del territorio (ej: "1", "2", "3")
-   - **Name:** Nombre del territorio (ej: "Centro", "Norte")
-   - **Group:** Nombre del grupo (opcional)
-   - **QR Link:** URL para el codigo QR (opcional — si lo dejas vacio, se genera un link a Google Maps automaticamente)
-3. Dibuja el poligono del territorio en el mapa:
-   - Haz clic en el icono de poligono en la barra de herramientas del mapa
-   - Haz clic en el mapa para cada punto del poligono
-   - Haz clic en el primer punto para cerrar el poligono
-4. Haz clic en **"Create Territory"**
+1. On the main page, click **"New Territory"**
+2. Fill in the fields:
+   - **Number:** Territory number (e.g., "1", "2", "3")
+   - **Name:** Territory name (e.g., "Downtown", "North")
+   - **Group:** Group name (optional)
+   - **QR Link:** URL for the QR code (optional — if left empty, a Google Maps link is generated automatically)
+3. Draw the territory polygon on the map:
+   - Click the polygon icon on the map toolbar
+   - Click on the map for each point of the polygon
+   - Click the first point to close the polygon
+4. Click **"Create Territory"**
 
-### Agregar landmarks (puntos de referencia)
+### Add landmarks (points of reference)
 
-1. Ve a la pagina de un territorio (haz clic en su nombre en la lista)
-2. Haz clic en cualquier punto del mapa
-3. Escribe el nombre del punto de referencia (ej: "Farmacia", "Escuela")
-4. El punto se agrega automaticamente con un color diferente
+1. Go to a territory page (click its name in the list)
+2. Click anywhere on the map
+3. Type the name of the landmark (e.g., "Pharmacy", "School")
+4. The point is added automatically with a different color
 
-### Ver e imprimir tarjetas
+### View and print cards
 
-1. En la lista de territorios, haz clic en **"Card"** junto al territorio que quieres
-2. Para descargar como imagen: haz clic en **"Download PNG"**
-3. Para imprimir: haz clic en **"Print"**
-4. Para imprimir todas las tarjetas de una vez: haz clic en **"Print All Cards"** en la pagina principal
+1. In the territory list, click **"Card"** next to the territory you want
+2. To download as an image: click **"Download PNG"**
+3. To print: click **"Print"**
+4. To print all cards at once: click **"Print All Cards"** on the main page
 
-### Importar territorios desde Google Earth (KML)
+### Import territories from Google Earth (KML)
 
-Si tienes territorios dibujados en Google Earth, puedes importarlos:
+If you have territories drawn in Google Earth, you can import them:
 
-1. En Google Earth, exporta tus territorios como archivo `.kml` o `.kmz`
-2. Copia el archivo a la carpeta del proyecto
-3. Ejecuta en la terminal:
+1. In Google Earth, export your territories as a `.kml` or `.kmz` file
+2. Copy the file to the project folder
+3. Run in the terminal:
    ```bash
-   bin/rails territories:import_kml[ruta/al/archivo.kml]
+   bin/rails territories:import_kml[path/to/file.kml]
    ```
 
 ---
 
-## Solucion de problemas comunes
+## Troubleshooting
 
-### "Could not find gem 'pg'" o error al instalar pg
+### "Could not find gem 'pg'" or error installing pg
 
-PostgreSQL no esta instalado o no se encuentra. Instala PostgreSQL siguiendo los pasos de la seccion de requisitos.
+PostgreSQL is not installed or cannot be found. Install PostgreSQL following the steps in the prerequisites section.
 
-### "FATAL: role 'tu_usuario' does not exist"
+### "FATAL: role 'your_user' does not exist"
 
-Necesitas crear un usuario en PostgreSQL:
+You need to create a user in PostgreSQL:
 ```bash
 sudo -u postgres createuser --superuser $(whoami)
 ```
 
-### El mapa no carga o se ve gris
+### The map doesn't load or appears gray
 
-Verifica que tienes conexion a internet. Los tiles del mapa se cargan desde OpenStreetMap y requieren internet.
+Check that you have an internet connection. Map tiles are loaded from OpenStreetMap and require internet access.
 
-### "Address already in use" al iniciar el servidor
+### "Address already in use" when starting the server
 
-Otro proceso esta usando el puerto 3000. Puedes usar otro puerto:
+Another process is using port 3000. You can use a different port:
 ```bash
 bin/rails server -p 3001
 ```
-Y luego abre `http://localhost:3001` en el navegador.
+Then open `http://localhost:3001` in your browser.
 
 ---
 
-## Referencia tecnica
+## Technical reference
 
-### Stack tecnologico
+### Tech stack
 
-| Componente | Tecnologia |
-|------------|-----------|
+| Component | Technology |
+|-----------|-----------|
 | Backend | Ruby on Rails 7 |
-| Base de datos | PostgreSQL |
+| Database | PostgreSQL |
 | Frontend | Hotwire (Turbo + Stimulus) |
-| Mapas | Leaflet.js + Leaflet.draw |
-| Exportar PNG | html2canvas |
-| Codigo QR | qrcodejs |
-| JavaScript | Importmap (no requiere Node.js) |
+| Maps | Leaflet.js + Leaflet.draw |
+| PNG export | html2canvas |
+| QR code | qrcodejs |
+| JavaScript | Importmap (no Node.js required) |
 
-### Rutas principales
+### Main routes
 
-| Ruta | Descripcion |
-|------|-------------|
-| `GET /` | Pagina principal con lista y mapa de territorios |
-| `GET /territories/new` | Crear nuevo territorio |
-| `GET /territories/:id` | Ver territorio con landmarks |
-| `GET /territories/:id/card` | Tarjeta imprimible del territorio |
-| `GET /print` | Todas las tarjetas para imprimir en lote |
+| Route | Description |
+|-------|-------------|
+| `GET /` | Main page with territory list and map |
+| `GET /territories/new` | Create new territory |
+| `GET /territories/:id` | View territory with landmarks |
+| `GET /territories/:id/card` | Printable territory card |
+| `GET /print` | All cards for bulk printing |
