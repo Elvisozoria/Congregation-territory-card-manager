@@ -21,7 +21,7 @@ window.App = window.App || {};
         qr_url: '',
         landmarks: [
           { id: 1, name: 'Colmado Mireya', lat: 19.4591, lng: -70.7133, color: '#EF4444' },
-          { id: 2, name: 'Iglesia San José', lat: 19.4593, lng: -70.7139, color: '#3B82F6' }
+          { id: 2, name: 'Panadería Don Luis', lat: 19.4593, lng: -70.7139, color: '#3B82F6' }
         ]
       },
       {
