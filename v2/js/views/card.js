@@ -19,7 +19,7 @@ window.App.Views = window.App.Views || {};
       // Controls (no-print)
       var controls = document.createElement('div');
       controls.className = 'card-controls no-print';
-      controls.innerHTML = '<h2>' + escapeHtml(territory.number) + ' - ' + escapeHtml(territory.name) + '</h2>';
+      controls.innerHTML = '<h2>' + App.Utils.escapeHtml(territory.number) + ' - ' + App.Utils.escapeHtml(territory.name) + '</h2>';
 
       var downloadBtn = document.createElement('a');
       downloadBtn.href = '#';
@@ -94,10 +94,4 @@ window.App.Views = window.App.Views || {};
       };
     }
   };
-
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 })();
