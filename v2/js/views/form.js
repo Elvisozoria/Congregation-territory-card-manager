@@ -5,7 +5,11 @@ window.App.Views = window.App.Views || {};
 
 (function () {
   window.App.Views.Form = {
+    // Expose dirty flag so app.js can warn on Save JSON
+    isDirty: false,
+
     render: function (container, params) {
+      var self = this;
       var isEdit = params.id !== null;
       var territory = isEdit ? App.Store.getById(params.id) : null;
 
@@ -15,6 +19,7 @@ window.App.Views = window.App.Views || {};
       }
 
       var cleanup = null;
+      self.isDirty = false;
 
       // Header
       var header = document.createElement('div');
@@ -50,10 +55,13 @@ window.App.Views = window.App.Views || {};
           '<input type="text" id="field-group" placeholder="Oeste" value="' + escapeAttr(territory ? territory.group_name : '') + '" />' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="field-qr">QR Link</label>' +
-          '<input type="text" id="field-qr" placeholder="https://..." value="' + escapeAttr(territory ? territory.qr_url : '') + '" />' +
+          '<label for="field-qr">QR Link (optional)</label>' +
+          '<input type="url" id="field-qr" placeholder="https://..." value="' + escapeAttr(territory ? territory.qr_url : '') + '" />' +
         '</div>' +
         '<p class="helper-text">Draw the polygon on the map below</p>';
+
+      // Track dirty state on input changes
+      form.addEventListener('input', function () { self.isDirty = true; });
 
       // Map container for polygon draw
       var mapDiv = document.createElement('div');
@@ -64,6 +72,15 @@ window.App.Views = window.App.Views || {};
       hiddenInput.type = 'hidden';
       hiddenInput.id = 'field-polygon';
       hiddenInput.value = territory ? JSON.stringify(territory.polygon) : '[]';
+
+      // Watch for polygon changes via MutationObserver on hidden input value
+      var originalPolygon = hiddenInput.value;
+      var polygonObserver = setInterval(function () {
+        if (hiddenInput.value !== originalPolygon) {
+          self.isDirty = true;
+          clearInterval(polygonObserver);
+        }
+      }, 500);
 
       form.appendChild(mapDiv);
       form.appendChild(hiddenInput);
@@ -76,6 +93,24 @@ window.App.Views = window.App.Views || {};
       submitBtn.style.width = '100%';
       submitBtn.textContent = 'Save Territory';
       form.appendChild(submitBtn);
+
+      // Delete button (edit mode only)
+      if (isEdit) {
+        var deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'btn btn-danger';
+        deleteBtn.style.marginTop = '0.5rem';
+        deleteBtn.style.width = '100%';
+        deleteBtn.textContent = 'Delete Territory';
+        deleteBtn.addEventListener('click', function () {
+          if (confirm('Delete territory "' + territory.number + ' - ' + territory.name + '"? This cannot be undone.')) {
+            self.isDirty = false;
+            App.Store.deleteTerritory(territory.id);
+            window.location.hash = '#/';
+          }
+        });
+        form.appendChild(deleteBtn);
+      }
 
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -97,6 +132,17 @@ window.App.Views = window.App.Views || {};
         if (!number) errors.push('Number is required');
         if (!name) errors.push('Name is required');
 
+        // Validate QR URL format if provided
+        if (qr_url && !/^https?:\/\//i.test(qr_url)) {
+          errors.push('QR Link must start with http:// or https://');
+        }
+
+        // Validate unique territory number
+        var duplicate = App.Store.getAll().find(function (t) {
+          return t.number === number && (!isEdit || t.id !== territory.id);
+        });
+        if (duplicate) errors.push('Territory number "' + number + '" already exists');
+
         if (errors.length > 0) {
           errorDiv.innerHTML = '';
           errors.forEach(function (msg) {
@@ -116,6 +162,7 @@ window.App.Views = window.App.Views || {};
           polygon: polygon
         };
 
+        self.isDirty = false;
         var result;
         if (isEdit) {
           result = App.Store.updateTerritory(territory.id, attrs);
@@ -134,6 +181,7 @@ window.App.Views = window.App.Views || {};
       cleanup = App.Components.PolygonDraw.init(mapDiv, hiddenInput, existingPolygon);
 
       return function () {
+        clearInterval(polygonObserver);
         if (cleanup) cleanup();
       };
     }

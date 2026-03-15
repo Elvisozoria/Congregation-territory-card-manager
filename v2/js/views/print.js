@@ -106,6 +106,9 @@ window.App.Views = window.App.Views || {};
             link.download = label + '.png';
             link.href = canvas.toDataURL();
             link.click();
+          }).catch(function (err) {
+            console.error('Failed to render card ' + i + ':', err);
+          }).then(function () {
             i++;
             setTimeout(downloadNext, 500);
           });

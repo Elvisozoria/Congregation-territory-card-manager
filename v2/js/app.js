@@ -25,7 +25,13 @@
       }
       fileInput.click();
     });
-    btnSave.addEventListener('click', function () { App.Store.saveToFile(); });
+    btnSave.addEventListener('click', function () {
+      if (App.Views.Form && App.Views.Form.isDirty) {
+        alert('You have unsaved changes in the form. Save the territory first, then export the JSON.');
+        return;
+      }
+      App.Store.saveToFile();
+    });
     btnImportKml.addEventListener('click', function () { kmlInput.click(); });
 
     fileInput.addEventListener('change', function () {

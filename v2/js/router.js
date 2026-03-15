@@ -5,7 +5,9 @@ window.App = window.App || {};
 
 (function () {
   var currentCleanup = null;
+  var currentView = null;
   var container = null;
+  var previousHash = null;
 
   var routes = [
     { pattern: /^#\/territories\/new$/, view: 'Form', params: function () { return { id: null }; } },
@@ -19,11 +21,28 @@ window.App = window.App || {};
   function navigate() {
     var hash = window.location.hash || '#/';
 
+    // Guard: if leaving a dirty form, ask for confirmation
+    if (currentView && App.Views[currentView] && App.Views[currentView].isDirty) {
+      if (!confirm('You have unsaved changes. Leave this page?')) {
+        // Restore previous hash without triggering navigate again
+        if (previousHash) {
+          window.removeEventListener('hashchange', navigate);
+          window.location.hash = previousHash;
+          window.addEventListener('hashchange', navigate);
+        }
+        return;
+      }
+      App.Views[currentView].isDirty = false;
+    }
+
+    previousHash = hash;
+
     // Clean up previous view
     if (currentCleanup) {
       currentCleanup();
       currentCleanup = null;
     }
+    currentView = null;
 
     container.innerHTML = '';
 
@@ -34,6 +53,7 @@ window.App = window.App || {};
         var params = routes[i].params(match);
         var view = App.Views[viewName];
         if (view && view.render) {
+          currentView = viewName;
           currentCleanup = view.render(container, params);
         }
         return;
