@@ -1,48 +1,50 @@
-# Congregation Territory Card Manager
+🌐 *[English](README.en.md)*
 
-A lightweight, zero-installation web app for managing congregation territory cards. No server, no database — just open `index.html` in your browser.
+# Tarjetas de Territorio — Gestor para Congregaciones
 
-## Features
+Una aplicación web ligera, sin instalación, para gestionar tarjetas de territorio de congregaciones. Sin servidor, sin base de datos — solo abre `index.html` en tu navegador.
 
-- **Territory management** — Create, edit, and delete territories with polygon boundaries drawn on a Leaflet map.
-- **Landmark management** — Click the map to add colored landmark markers to each territory.
-- **Territory cards** — Printable card view with non-interactive map, polygon mask, landmark labels, and optional QR code.
-- **PNG download** — Download any card as a 2x resolution PNG.
-- **Print all** — Render all territory cards for bulk printing.
-- **KML/KMZ import** — Import territory polygons from Google Earth files.
-- **Dark/Light mode** — Theme toggle with localStorage persistence.
-- **Bilingual** — Spanish and English UI with automatic language detection.
-- **Cards/Table view** — Toggle between card grid and table list for territories.
+## Funcionalidades
 
-## How to Use
+- **Gestión de territorios** — Crea, edita y elimina territorios con polígonos dibujados sobre un mapa interactivo (Leaflet).
+- **Puntos de referencia** — Haz clic en el mapa para agregar marcadores de colores a cada territorio.
+- **Tarjetas de territorio** — Vista de tarjeta imprimible con mapa estático, máscara de polígono, etiquetas de puntos y código QR opcional.
+- **Descarga PNG** — Descarga cualquier tarjeta como imagen PNG en alta resolución (2x).
+- **Imprimir todo** — Renderiza todas las tarjetas para impresión masiva.
+- **Importar KML/KMZ** — Importa polígonos de territorios desde archivos de Google Earth.
+- **Modo oscuro/claro** — Alternador de tema con persistencia en localStorage.
+- **Bilingüe** — Interfaz en español e inglés.
+- **Vista de tarjetas/tabla** — Alterna entre vista de cuadrícula y lista de tabla para los territorios.
 
-1. Download or clone this repository
-2. Open `index.html` in your browser
-3. Done!
+## Cómo Usar
 
-No server, no Node.js, no build step. Works offline and from `file://`.
+1. Descarga o clona este repositorio
+2. Abre `index.html` en tu navegador
+3. ¡Listo!
 
-## Saving Your Data
+Sin servidor, sin Node.js, sin paso de compilación. Funciona offline y desde `file://`.
 
-- Click **Save JSON** to download your territories as a file
-- Click **Load JSON** to restore from a saved file
-- **Tip:** Save your JSON file in Google Drive or Dropbox for automatic backup
+## Guardar tus Datos
 
-## Importing from Google Earth
+- Haz clic en **Guardar JSON** para descargar tus territorios como archivo
+- Haz clic en **Cargar JSON** para restaurar desde un archivo guardado
+- **Consejo:** Guarda tu archivo JSON en Google Drive o Dropbox para respaldo automático
 
-1. Export your territories as KML or KMZ from Google Earth
-2. Click **Import KML** and select the file
-3. Territories will be added automatically
+## Importar desde Google Earth
 
-## Tech Stack
+1. Exporta tus territorios como KML o KMZ desde Google Earth
+2. Haz clic en **Importar KML** y selecciona el archivo
+3. Los territorios se agregarán automáticamente
 
-- Pure HTML, CSS, and vanilla JavaScript (no frameworks)
-- Leaflet.js + Leaflet.draw (maps and polygon drawing)
-- html2canvas (PNG export)
-- qrcodejs (QR code generation)
-- JSZip (KMZ extraction)
-- localStorage for data persistence
+## Stack Tecnológico
 
-## Data Format
+- HTML, CSS y JavaScript puro (sin frameworks)
+- Leaflet.js + Leaflet.draw (mapas y dibujo de polígonos)
+- html2canvas (exportación PNG)
+- qrcodejs (generación de códigos QR)
+- JSZip (extracción de KMZ)
+- localStorage para persistencia de datos
 
-Territory polygons are stored as JSON arrays of `[longitude, latitude]` coordinate pairs (GeoJSON order). Leaflet expects `[lat, lng]` so the code reverses coordinate order when rendering.
+## Formato de Datos
+
+Los polígonos de territorio se almacenan como arrays JSON de pares `[longitud, latitud]` (orden GeoJSON). Leaflet espera `[lat, lng]`, por lo que el código invierte el orden de coordenadas al renderizar.
