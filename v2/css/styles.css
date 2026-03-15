@@ -15,11 +15,14 @@ a.navbar-brand:hover { color: white; }
 .navbar-actions { display: flex; gap: 0.5rem; align-items: center; }
 .btn-navbar-text { background: none; border: none; color: #9CA3AF; font-size: 0.75rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s; }
 .btn-navbar-text:hover { color: #F87171; }
-.lang-switcher { display: flex; gap: 0; margin-right: 0.75rem; border: 1px solid #4B5563; border-radius: 6px; overflow: hidden; }
-.lang-btn { background: none; border: none; color: #9CA3AF; font-size: 0.75rem; padding: 0.375rem 0.625rem; cursor: pointer; font-weight: 600; transition: all 0.2s; line-height: 1; }
-.lang-btn + .lang-btn { border-left: 1px solid #4B5563; }
-.lang-btn.active { background: #4B5563; color: white; }
-.lang-btn:hover:not(.active) { color: white; background: rgba(75,85,99,0.3); }
+.lang-switcher { position: relative; margin-right: 0.5rem; }
+.lang-toggle { background: none; border: 1px solid #4B5563; border-radius: 6px; color: #9CA3AF; cursor: pointer; padding: 0.3rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.lang-toggle:hover { color: white; border-color: #6B7280; background: rgba(75,85,99,0.3); }
+.lang-menu { display: none; position: absolute; top: calc(100% + 6px); right: 0; background: #1F2937; border: 1px solid #374151; border-radius: 8px; min-width: 140px; padding: 0.25rem; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 9999; }
+.lang-menu.open { display: block; }
+.lang-menu-item { display: block; width: 100%; background: none; border: none; color: #D1D5DB; font-size: 0.8125rem; padding: 0.5rem 0.75rem; cursor: pointer; text-align: left; border-radius: 6px; transition: all 0.15s; }
+.lang-menu-item:hover { background: #374151; color: white; }
+.lang-menu-item.active { color: #60A5FA; font-weight: 600; }
 .navbar-separator { width: 1px; height: 20px; background: #374151; margin: 0 0.25rem; }
 
 /* Container */

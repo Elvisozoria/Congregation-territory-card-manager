@@ -4,22 +4,42 @@
   document.addEventListener('DOMContentLoaded', function () {
     var t = App.I18n.t;
 
-    // Build language switcher
+    // Build language switcher (icon + dropdown)
     var langSwitcher = document.getElementById('lang-switcher');
     var languages = App.I18n.getAvailableLanguages();
+
+    var langToggle = document.createElement('button');
+    langToggle.className = 'lang-toggle';
+    langToggle.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 0"/><path d="M4 6l8 0"/><path d="M8 6l0-2"/><path d="M6 12c.53-2.27 2.05-4 4-4"/><path d="M13 18l2-5 2 5"/><path d="M13.5 16.5h3"/><path d="M3 21c3-4.5 6-7.5 12-10.5"/></svg>';
+    langSwitcher.appendChild(langToggle);
+
+    var langMenu = document.createElement('div');
+    langMenu.className = 'lang-menu';
+
     languages.forEach(function (lang) {
-      var btn = document.createElement('button');
-      btn.className = 'lang-btn' + (lang === App.I18n.getLang() ? ' active' : '');
-      btn.textContent = App.I18n.languages[lang]._label;
-      btn.addEventListener('click', function () {
+      var item = document.createElement('button');
+      item.className = 'lang-menu-item' + (lang === App.I18n.getLang() ? ' active' : '');
+      item.textContent = App.I18n.languages[lang]._name;
+      item.addEventListener('click', function () {
         App.I18n.setLang(lang);
-        // Update active state on all lang buttons
-        langSwitcher.querySelectorAll('.lang-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
+        langMenu.querySelectorAll('.lang-menu-item').forEach(function (b) { b.classList.remove('active'); });
+        item.classList.add('active');
+        langMenu.classList.remove('open');
         updateNavbarText();
         App.Router.refresh();
       });
-      langSwitcher.appendChild(btn);
+      langMenu.appendChild(item);
+    });
+
+    langSwitcher.appendChild(langMenu);
+
+    langToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      langMenu.classList.toggle('open');
+    });
+
+    document.addEventListener('click', function () {
+      langMenu.classList.remove('open');
     });
 
     function updateNavbarText() {
