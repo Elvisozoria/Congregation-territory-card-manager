@@ -1,67 +1,48 @@
 # Congregation Territory Card Manager
 
-A Rails 7 application for managing congregation territory cards. Territories are defined by geographic polygons and can contain landmarks. Each territory can be viewed as a printable card with a map and optional QR code.
+A lightweight, zero-installation web app for managing congregation territory cards. No server, no database — just open `index.html` in your browser.
 
 ## Features
 
 - **Territory management** — Create, edit, and delete territories with polygon boundaries drawn on a Leaflet map.
-- **Landmark management** — Click the map on the territory show page to add colored landmark markers.
-- **Territory cards** — Each territory has a card view (480×288px) showing a non-interactive map with:
-  - Polygon mask that darkens the area outside the territory boundary
-  - Colored landmark markers with permanent labels
-  - Optional QR code (bottom-right corner)
-  - Territory number and name label (top-left corner)
-- **PNG download** — Download any card as a 2× resolution PNG via `html2canvas`.
-- **Print all** — Render all territory cards in print layout for bulk printing.
-- **KML/KMZ import** — Rake task to import territory polygons from KML/KMZ files.
+- **Landmark management** — Click the map to add colored landmark markers to each territory.
+- **Territory cards** — Printable card view with non-interactive map, polygon mask, landmark labels, and optional QR code.
+- **PNG download** — Download any card as a 2x resolution PNG.
+- **Print all** — Render all territory cards for bulk printing.
+- **KML/KMZ import** — Import territory polygons from Google Earth files.
+- **Dark/Light mode** — Theme toggle with localStorage persistence.
+- **Bilingual** — Spanish and English UI with automatic language detection.
+- **Cards/Table view** — Toggle between card grid and table list for territories.
+
+## How to Use
+
+1. Download or clone this repository
+2. Open `index.html` in your browser
+3. Done!
+
+No server, no Node.js, no build step. Works offline and from `file://`.
+
+## Saving Your Data
+
+- Click **Save JSON** to download your territories as a file
+- Click **Load JSON** to restore from a saved file
+- **Tip:** Save your JSON file in Google Drive or Dropbox for automatic backup
+
+## Importing from Google Earth
+
+1. Export your territories as KML or KMZ from Google Earth
+2. Click **Import KML** and select the file
+3. Territories will be added automatically
 
 ## Tech Stack
 
-- Ruby on Rails 7 with Hotwire (Turbo + Stimulus)
-- PostgreSQL
-- Leaflet.js (maps) + Leaflet.draw (polygon drawing)
+- Pure HTML, CSS, and vanilla JavaScript (no frameworks)
+- Leaflet.js + Leaflet.draw (maps and polygon drawing)
 - html2canvas (PNG export)
 - qrcodejs (QR code generation)
-- Importmap (no Node/webpack required)
+- JSZip (KMZ extraction)
+- localStorage for data persistence
 
-## Setup
+## Data Format
 
-```bash
-bundle install
-bin/rails db:create db:migrate
-bin/rails server
-```
-
-## Importing Territories from KML
-
-```bash
-bin/rails territories:import_kml[path/to/file.kml]
-```
-
-## Key Routes
-
-| Route | Description |
-|-------|-------------|
-| `GET /territories` | Index with interactive map overview |
-| `GET /territories/:id` | Show territory with editable polygon and landmarks |
-| `GET /territories/:id/card` | Printable territory card |
-| `GET /print` | All territory cards for bulk printing |
-
-## Architecture
-
-### Stimulus Controllers
-
-| Controller | File | Purpose |
-|------------|------|---------|
-| `map` | `map_controller.js` | Index + show map: renders all territories or single territory with landmarks |
-| `card-map` | `card_map_controller.js` | Card view: non-interactive map with polygon mask and QR generation |
-| `polygon-draw` | `polygon_draw_controller.js` | Polygon drawing tool on new/edit forms |
-| `landmark` | `landmark_controller.js` | Click-to-add landmark on show page |
-
-### Polygon Mask
-
-The card map uses an inverted polygon technique: a world-covering outer ring with the territory polygon as a hole, rendered with semi-transparent dark fill. This focuses attention on the territory boundary.
-
-### Data Format
-
-Territory polygons are stored as JSON arrays of `[longitude, latitude]` coordinate pairs (GeoJSON order). Leaflet expects `[lat, lng]` so all controllers reverse the coordinate order when rendering.
+Territory polygons are stored as JSON arrays of `[longitude, latitude]` coordinate pairs (GeoJSON order). Leaflet expects `[lat, lng]` so the code reverses coordinate order when rendering.
