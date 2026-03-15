@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Territory Cards</title>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' />
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css' />
+  <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'></script>
+  <%= stylesheet_link_tag 'application', 'data-turbo-track': 'reload' %>
+  <%= javascript_importmap_tags %>
+</head>
+<body>
+  <nav class='navbar'>
+    <div class='navbar-content'>
+      <span class='navbar-brand'>Territory Cards</span>
+      <%= link_to 'Print All', print_path, class: 'btn btn-secondary btn-sm' %>
+    </div>
+  </nav>
+  <div class='container'>
+    <% if notice %><div class='flash flash-notice'><%= notice %></div><% end %>
+    <% if alert %><div class='flash flash-alert'><%= alert %></div><% end %>
+    <%= yield %>
+  </div>
+</body>
+</html>
