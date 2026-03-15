@@ -7,19 +7,46 @@ window.App = window.App || {};
   var SAMPLE_DATA = {
     territories: [
       {
-        id: 1, number: '1', name: 'Los Prados', group_name: 'Oeste',
-        polygon: [[-70.710, 19.502], [-70.705, 19.502], [-70.705, 19.498], [-70.710, 19.498]],
+        id: 1, number: '1', name: 'Villa Olga Norte', group_name: 'Sur',
+        polygon: [
+          [-70.6891, 19.4530], [-70.6885, 19.4533], [-70.6878, 19.4529],
+          [-70.6874, 19.4524], [-70.6871, 19.4518], [-70.6876, 19.4514],
+          [-70.6882, 19.4511], [-70.6889, 19.4513], [-70.6893, 19.4517],
+          [-70.6895, 19.4523], [-70.6894, 19.4527]
+        ],
         qr_url: '',
         landmarks: [
-          { id: 1, name: 'Pharmacy', lat: 19.501, lng: -70.708, color: '#EF4444' },
-          { id: 2, name: 'School', lat: 19.500, lng: -70.706, color: '#3B82F6' }
+          { id: 1, name: 'Colmado Don Pedro', lat: 19.4522, lng: -70.6884, color: '#EF4444' },
+          { id: 2, name: 'Iglesia Adventista', lat: 19.4518, lng: -70.6878, color: '#3B82F6' },
+          { id: 3, name: 'Cancha', lat: 19.4526, lng: -70.6888, color: '#10B981' }
         ]
       },
       {
-        id: 2, number: '2', name: 'La Mina', group_name: 'Este',
-        polygon: [[-70.700, 19.505], [-70.695, 19.505], [-70.695, 19.500], [-70.700, 19.500]],
+        id: 2, number: '2', name: 'Reparto Universitario', group_name: 'Sur',
+        polygon: [
+          [-70.6871, 19.4518], [-70.6874, 19.4524], [-70.6878, 19.4529],
+          [-70.6870, 19.4534], [-70.6862, 19.4531], [-70.6856, 19.4527],
+          [-70.6853, 19.4521], [-70.6855, 19.4515], [-70.6860, 19.4510],
+          [-70.6866, 19.4512], [-70.6870, 19.4515]
+        ],
         qr_url: '',
-        landmarks: []
+        landmarks: [
+          { id: 1, name: 'Farmacia Carol', lat: 19.4520, lng: -70.6863, color: '#EF4444' },
+          { id: 2, name: 'Escuela Basica', lat: 19.4525, lng: -70.6868, color: '#8B5CF6' }
+        ]
+      },
+      {
+        id: 3, number: '3', name: 'Los Jardines', group_name: 'Sur',
+        polygon: [
+          [-70.6895, 19.4523], [-70.6893, 19.4517], [-70.6896, 19.4511],
+          [-70.6900, 19.4506], [-70.6907, 19.4504], [-70.6913, 19.4507],
+          [-70.6916, 19.4513], [-70.6914, 19.4519], [-70.6910, 19.4524],
+          [-70.6904, 19.4527], [-70.6898, 19.4526]
+        ],
+        qr_url: '',
+        landmarks: [
+          { id: 1, name: 'Super Mercado', lat: 19.4515, lng: -70.6906, color: '#F59E0B' }
+        ]
       }
     ]
   };
