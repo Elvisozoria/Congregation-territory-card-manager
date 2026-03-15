@@ -57,7 +57,7 @@ window.App.Views = window.App.Views || {};
       grid.className = 'cards-grid';
 
       territories.forEach(function (territory) {
-        var qrUrl = territory.qr_url || App.Store.googleMapsUrl(territory);
+        var qrUrl = territory.qr_url || '';
 
         var card = document.createElement('div');
         card.className = 'territory-card';

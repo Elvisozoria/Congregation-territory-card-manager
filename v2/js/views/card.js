@@ -13,7 +13,7 @@ window.App.Views = window.App.Views || {};
       }
 
       var cleanup = null;
-      var qrUrl = territory.qr_url || App.Store.googleMapsUrl(territory);
+      var qrUrl = territory.qr_url || '';
       var fileName = territory.number + '-' + territory.name.toLowerCase().replace(/\s+/g, '-');
 
       // Controls (no-print)

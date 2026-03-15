@@ -28,21 +28,65 @@ window.App.Views = window.App.Views || {};
       var thead = '<thead><tr><th>#</th><th>Name</th><th>Group</th><th>Landmarks</th><th>Actions</th></tr></thead>';
       var tbody = '<tbody>';
 
-      territories.forEach(function (t) {
-        tbody += '<tr>' +
-          '<td class="number">' + escapeHtml(t.number) + '</td>' +
-          '<td><a href="#/territories/' + t.id + '">' + escapeHtml(t.name) + '</a></td>' +
-          '<td>' + escapeHtml(t.group_name || '') + '</td>' +
-          '<td>' + t.landmarks.length + '</td>' +
-          '<td class="actions">' +
-            '<a href="#/territories/' + t.id + '/card" class="btn btn-secondary btn-sm">Card</a>' +
-            '<a href="#/territories/' + t.id + '/edit" class="btn btn-primary btn-sm">Edit</a>' +
-          '</td>' +
-        '</tr>';
-      });
-
       tbody += '</tbody>';
       table.innerHTML = thead + tbody;
+
+      // Build rows with DOM so delete buttons get event listeners
+      var tbodyEl = table.querySelector('tbody');
+      territories.forEach(function (t) {
+        var tr = document.createElement('tr');
+
+        var tdNum = document.createElement('td');
+        tdNum.className = 'number';
+        tdNum.textContent = t.number;
+
+        var tdName = document.createElement('td');
+        var nameLink = document.createElement('a');
+        nameLink.href = '#/territories/' + t.id;
+        nameLink.textContent = t.name;
+        tdName.appendChild(nameLink);
+
+        var tdGroup = document.createElement('td');
+        tdGroup.textContent = t.group_name || '';
+
+        var tdLandmarks = document.createElement('td');
+        tdLandmarks.textContent = t.landmarks.length;
+
+        var tdActions = document.createElement('td');
+        tdActions.className = 'actions';
+
+        var cardLink = document.createElement('a');
+        cardLink.href = '#/territories/' + t.id + '/card';
+        cardLink.className = 'btn btn-secondary btn-sm';
+        cardLink.textContent = 'Card';
+
+        var editLink = document.createElement('a');
+        editLink.href = '#/territories/' + t.id + '/edit';
+        editLink.className = 'btn btn-primary btn-sm';
+        editLink.textContent = 'Edit';
+
+        var deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-danger btn-sm';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.addEventListener('click', function () {
+          if (confirm('Delete territory "' + t.number + ' - ' + t.name + '"?')) {
+            App.Store.deleteTerritory(t.id);
+            App.Router.refresh();
+          }
+        });
+
+        tdActions.appendChild(cardLink);
+        tdActions.appendChild(editLink);
+        tdActions.appendChild(deleteBtn);
+
+        tr.appendChild(tdNum);
+        tr.appendChild(tdName);
+        tr.appendChild(tdGroup);
+        tr.appendChild(tdLandmarks);
+        tr.appendChild(tdActions);
+        tbodyEl.appendChild(tr);
+      });
+
       container.appendChild(table);
 
       return function () {
@@ -51,9 +95,4 @@ window.App.Views = window.App.Views || {};
     }
   };
 
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
 })();
