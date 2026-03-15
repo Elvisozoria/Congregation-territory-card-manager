@@ -28,6 +28,12 @@ window.App.Views = window.App.Views || {};
           '<a href="#/territories/' + territory.id + '/edit" class="btn btn-secondary">Edit</a> ' +
           '<a href="#/" class="btn btn-secondary">Back</a>' +
         '</div>';
+      if (territory.group_name) {
+        var groupBadge = document.createElement('span');
+        groupBadge.style.cssText = 'font-size:0.8125rem;color:#6B7280;font-weight:400;margin-left:0.75rem;';
+        groupBadge.textContent = territory.group_name;
+        header.querySelector('h1').appendChild(groupBadge);
+      }
       container.appendChild(header);
 
       // Map
@@ -64,14 +70,12 @@ window.App.Views = window.App.Views || {};
       container.appendChild(landmarksSection);
       rerenderLandmarks();
 
-      // Delete territory button
+      // Delete territory link
       var deleteSection = document.createElement('div');
-      deleteSection.style.marginTop = '2rem';
-      deleteSection.style.paddingTop = '1rem';
-      deleteSection.style.borderTop = '1px solid #E5E7EB';
+      deleteSection.className = 'delete-section';
       var deleteTerritoryBtn = document.createElement('button');
-      deleteTerritoryBtn.className = 'btn btn-danger';
-      deleteTerritoryBtn.textContent = 'Delete Territory';
+      deleteTerritoryBtn.className = 'btn-text-danger';
+      deleteTerritoryBtn.textContent = 'Delete this territory';
       deleteTerritoryBtn.addEventListener('click', function () {
         if (confirm('Delete territory "' + territory.number + ' - ' + territory.name + '"? This cannot be undone.')) {
           App.Store.deleteTerritory(territory.id);
@@ -133,12 +137,6 @@ window.App.Views = window.App.Views || {};
             nameSpan.className = 'landmark-name';
             nameSpan.textContent = lm.name;
 
-            var lat = typeof lm.lat === 'number' ? lm.lat.toFixed(6) : String(lm.lat || 0);
-            var lng = typeof lm.lng === 'number' ? lm.lng.toFixed(6) : String(lm.lng || 0);
-            var coordsSpan = document.createElement('span');
-            coordsSpan.className = 'landmark-coords';
-            coordsSpan.textContent = lat + ' - ' + lng;
-
             var actionsSpan = document.createElement('span');
             actionsSpan.className = 'landmark-actions';
             var deleteBtn = document.createElement('button');
@@ -158,7 +156,6 @@ window.App.Views = window.App.Views || {};
 
             li.appendChild(dot);
             li.appendChild(nameSpan);
-            li.appendChild(coordsSpan);
             li.appendChild(actionsSpan);
             ul.appendChild(li);
           });

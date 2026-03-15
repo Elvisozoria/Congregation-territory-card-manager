@@ -16,6 +16,10 @@ window.App.Views = window.App.Views || {};
       var qrUrl = territory.qr_url || '';
       var fileName = territory.number + '-' + territory.name.toLowerCase().replace(/\s+/g, '-');
 
+      // Wrapper to center everything
+      var wrapper = document.createElement('div');
+      wrapper.className = 'card-view-wrapper';
+
       // Controls (no-print)
       var controls = document.createElement('div');
       controls.className = 'card-controls no-print';
@@ -47,7 +51,7 @@ window.App.Views = window.App.Views || {};
       controls.appendChild(downloadBtn);
       controls.appendChild(printBtn);
       controls.appendChild(backBtn);
-      container.appendChild(controls);
+      wrapper.appendChild(controls);
 
       // Card
       var card = document.createElement('div');
@@ -76,7 +80,8 @@ window.App.Views = window.App.Views || {};
       card.appendChild(mapDiv);
 
       card.style.position = 'relative';
-      container.appendChild(card);
+      wrapper.appendChild(card);
+      container.appendChild(wrapper);
 
       cleanup = App.Components.CardMap.renderCardMap(card, territory);
 

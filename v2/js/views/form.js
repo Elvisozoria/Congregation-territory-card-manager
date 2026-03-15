@@ -58,7 +58,7 @@ window.App.Views = window.App.Views || {};
           '<label for="field-qr">QR Link (optional)</label>' +
           '<input type="url" id="field-qr" placeholder="https://..." value="' + escapeAttr(territory ? territory.qr_url : '') + '" />' +
         '</div>' +
-        '<p class="helper-text">Draw the polygon on the map below</p>';
+        '<div class="form-instruction">Click the <strong>pentagon icon</strong> on the map, then click points to draw your territory boundary. Click the first point again to close the shape.</div>';
 
       // Track dirty state on input changes
       form.addEventListener('input', function () { self.isDirty = true; });
@@ -94,14 +94,14 @@ window.App.Views = window.App.Views || {};
       submitBtn.textContent = 'Save Territory';
       form.appendChild(submitBtn);
 
-      // Delete button (edit mode only)
+      // Delete link (edit mode only)
       if (isEdit) {
+        var deleteSection = document.createElement('div');
+        deleteSection.className = 'delete-section';
         var deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
-        deleteBtn.className = 'btn btn-danger';
-        deleteBtn.style.marginTop = '0.5rem';
-        deleteBtn.style.width = '100%';
-        deleteBtn.textContent = 'Delete Territory';
+        deleteBtn.className = 'btn-text-danger';
+        deleteBtn.textContent = 'Delete this territory';
         deleteBtn.addEventListener('click', function () {
           if (confirm('Delete territory "' + territory.number + ' - ' + territory.name + '"? This cannot be undone.')) {
             self.isDirty = false;
@@ -109,7 +109,8 @@ window.App.Views = window.App.Views || {};
             window.location.hash = '#/';
           }
         });
-        form.appendChild(deleteBtn);
+        deleteSection.appendChild(deleteBtn);
+        form.appendChild(deleteSection);
       }
 
       form.addEventListener('submit', function (e) {

@@ -13,45 +13,61 @@ window.App.Views = window.App.Views || {};
       if (territories.length === 0) {
         var welcome = document.createElement('div');
         welcome.className = 'welcome-screen';
-        welcome.innerHTML =
-          '<h2>You don\'t have any territories yet</h2>' +
-          '<p>Get started by choosing one of the options below:</p>';
 
-        var actions = document.createElement('div');
-        actions.className = 'welcome-actions';
+        // Map pin SVG icon
+        var icon = document.createElement('div');
+        icon.className = 'welcome-icon';
+        icon.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>';
+        welcome.appendChild(icon);
 
-        var loadDemoBtn = document.createElement('button');
-        loadDemoBtn.className = 'btn btn-primary';
-        loadDemoBtn.textContent = 'Load Demo Territories';
-        loadDemoBtn.addEventListener('click', function () {
+        var h2 = document.createElement('h2');
+        h2.textContent = 'No territories yet';
+        welcome.appendChild(h2);
+
+        var p = document.createElement('p');
+        p.textContent = 'Get started by creating your first territory or loading existing data.';
+        welcome.appendChild(p);
+
+        // Primary actions as cards
+        var primary = document.createElement('div');
+        primary.className = 'welcome-primary';
+
+        var createCard = document.createElement('a');
+        createCard.href = '#/territories/new';
+        createCard.className = 'welcome-card';
+        createCard.innerHTML = '<div class="welcome-card-icon blue">+</div><span class="welcome-card-title">Create Territory</span>';
+
+        var demoCard = document.createElement('div');
+        demoCard.className = 'welcome-card';
+        demoCard.innerHTML = '<div class="welcome-card-icon green">&#9654;</div><span class="welcome-card-title">Load Demo</span>';
+        demoCard.addEventListener('click', function () {
           App.Store.loadSample();
           App.Router.refresh();
         });
 
-        var createBtn = document.createElement('a');
-        createBtn.href = '#/territories/new';
-        createBtn.className = 'btn btn-primary';
-        createBtn.textContent = 'Create a Territory';
+        primary.appendChild(createCard);
+        primary.appendChild(demoCard);
+        welcome.appendChild(primary);
 
-        var loadJsonBtn = document.createElement('button');
-        loadJsonBtn.className = 'btn btn-secondary';
-        loadJsonBtn.textContent = 'Load JSON File';
-        loadJsonBtn.addEventListener('click', function () {
+        // Secondary actions as text links
+        var secondary = document.createElement('div');
+        secondary.className = 'welcome-secondary';
+
+        var loadJsonLink = document.createElement('button');
+        loadJsonLink.textContent = 'Load JSON file';
+        loadJsonLink.addEventListener('click', function () {
           document.getElementById('file-input').click();
         });
 
-        var importKmlBtn = document.createElement('button');
-        importKmlBtn.className = 'btn btn-secondary';
-        importKmlBtn.textContent = 'Import KML/KMZ';
-        importKmlBtn.addEventListener('click', function () {
+        var importKmlLink = document.createElement('button');
+        importKmlLink.textContent = 'Import KML/KMZ';
+        importKmlLink.addEventListener('click', function () {
           document.getElementById('kml-input').click();
         });
 
-        actions.appendChild(loadDemoBtn);
-        actions.appendChild(createBtn);
-        actions.appendChild(loadJsonBtn);
-        actions.appendChild(importKmlBtn);
-        welcome.appendChild(actions);
+        secondary.appendChild(loadJsonLink);
+        secondary.appendChild(importKmlLink);
+        welcome.appendChild(secondary);
         container.appendChild(welcome);
         return null;
       }
@@ -72,16 +88,18 @@ window.App.Views = window.App.Views || {};
       var table = document.createElement('table');
       table.className = 'territory-table';
 
-      var thead = '<thead><tr><th>#</th><th>Name</th><th>Group</th><th>Landmarks</th><th>Actions</th></tr></thead>';
-      var tbody = '<tbody>';
+      var thead = '<thead><tr><th>#</th><th>Name</th><th>Group</th><th>Landmarks</th><th></th></tr></thead>';
+      table.innerHTML = thead + '<tbody></tbody>';
 
-      tbody += '</tbody>';
-      table.innerHTML = thead + tbody;
-
-      // Build rows with DOM so delete buttons get event listeners
       var tbodyEl = table.querySelector('tbody');
       territories.forEach(function (t) {
         var tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.addEventListener('click', function (e) {
+          // Don't navigate if clicking a button or link
+          if (e.target.closest('a') || e.target.closest('button')) return;
+          window.location.hash = '#/territories/' + t.id;
+        });
 
         var tdNum = document.createElement('td');
         tdNum.className = 'number';
@@ -109,11 +127,11 @@ window.App.Views = window.App.Views || {};
 
         var editLink = document.createElement('a');
         editLink.href = '#/territories/' + t.id + '/edit';
-        editLink.className = 'btn btn-primary btn-sm';
+        editLink.className = 'btn btn-secondary btn-sm';
         editLink.textContent = 'Edit';
 
         var deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn btn-danger btn-sm';
+        deleteBtn.className = 'btn-outline-danger btn-sm';
         deleteBtn.textContent = 'Delete';
         deleteBtn.addEventListener('click', function () {
           if (confirm('Delete territory "' + t.number + ' - ' + t.name + '"?')) {

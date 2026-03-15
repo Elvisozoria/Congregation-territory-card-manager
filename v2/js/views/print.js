@@ -15,8 +15,8 @@ window.App.Views = window.App.Views || {};
       // Controls (no-print)
       var controls = document.createElement('div');
       controls.className = 'no-print';
-      controls.style.cssText = 'padding:1rem;text-align:center;';
-      controls.innerHTML = '<h2>All Territory Cards (' + territories.length + ')</h2>';
+      controls.style.cssText = 'padding:1.5rem;text-align:center;';
+      controls.innerHTML = '<h2 style="font-size:1.25rem;">All Territory Cards (' + territories.length + ')</h2>';
 
       var btnRow = document.createElement('div');
       btnRow.style.marginTop = '0.5rem';
