@@ -1,10 +1,32 @@
-// app.js — Entry point: wires store, router, UI buttons, and i18n
+// app.js — Entry point: wires store, router, UI buttons, i18n, and theme
 
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
     var t = App.I18n.t;
+    var THEME_KEY = 'territory-cards-theme';
 
-    // Build language switcher (icon + dropdown)
+    // --- Theme toggle ---
+    var themeToggle = document.getElementById('theme-toggle');
+    var sunIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+    var moonIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
+    function getTheme() {
+      try { return localStorage.getItem(THEME_KEY) || 'dark'; } catch (e) { return 'dark'; }
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      themeToggle.innerHTML = theme === 'dark' ? sunIcon : moonIcon;
+      try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    }
+
+    applyTheme(getTheme());
+
+    themeToggle.addEventListener('click', function () {
+      applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+    });
+
+    // --- Language switcher (icon + dropdown) ---
     var langSwitcher = document.getElementById('lang-switcher');
     var languages = App.I18n.getAvailableLanguages();
 
@@ -35,25 +57,60 @@
 
     langToggle.addEventListener('click', function (e) {
       e.stopPropagation();
+      moreMenu.classList.remove('open');
       langMenu.classList.toggle('open');
     });
 
+    // --- More menu (overflow: Load/Save/Import/Reset) ---
+    var moreMenu = document.getElementById('more-menu');
+    var moreToggle = document.getElementById('more-toggle');
+    var fileInput = document.getElementById('file-input');
+    var kmlInput = document.getElementById('kml-input');
+
+    function buildMoreMenu() {
+      moreMenu.innerHTML = '';
+      var items = [
+        { id: 'more-load', key: 'nav.loadJson', action: function () { handleLoad(); } },
+        { id: 'more-save', key: 'nav.saveJson', action: function () { handleSave(); } },
+        { id: 'more-import', key: 'nav.importKml', action: function () { kmlInput.click(); } },
+        { id: 'more-reset', key: 'nav.reset', action: function () { handleReset(); }, danger: true }
+      ];
+      items.forEach(function (item) {
+        var btn = document.createElement('button');
+        btn.className = 'more-menu-item' + (item.danger ? ' danger' : '');
+        btn.id = item.id;
+        btn.textContent = t(item.key);
+        btn.addEventListener('click', function () {
+          moreMenu.classList.remove('open');
+          item.action();
+        });
+        moreMenu.appendChild(btn);
+      });
+    }
+
+    buildMoreMenu();
+
+    moreToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      langMenu.classList.remove('open');
+      moreMenu.classList.toggle('open');
+    });
+
+    // Close all dropdowns on outside click
     document.addEventListener('click', function () {
       langMenu.classList.remove('open');
+      moreMenu.classList.remove('open');
     });
 
     function updateNavbarText() {
       document.getElementById('nav-brand').textContent = t('nav.brand');
       document.getElementById('nav-print').textContent = t('nav.printAll');
-      document.getElementById('btn-load').textContent = t('nav.loadJson');
-      document.getElementById('btn-save').textContent = t('nav.saveJson');
-      document.getElementById('btn-import-kml').textContent = t('nav.importKml');
-      document.getElementById('btn-reset').textContent = t('nav.reset');
+      buildMoreMenu();
     }
 
     updateNavbarText();
 
-    // Initialize router first (before geolocation callback)
+    // --- Router ---
     var appContainer = document.getElementById('app');
     App.Router.init(appContainer);
 
@@ -61,58 +118,48 @@
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(function (pos) {
         App.Store.setDefaultCenter(pos.coords.latitude, pos.coords.longitude);
-        // Re-render current view so the map uses the new center
         App.Router.refresh();
       });
     }
 
-    // Wire file buttons
-    var btnLoad = document.getElementById('btn-load');
-    var btnSave = document.getElementById('btn-save');
-    var btnImportKml = document.getElementById('btn-import-kml');
-    var fileInput = document.getElementById('file-input');
-    var kmlInput = document.getElementById('kml-input');
-
-    btnLoad.addEventListener('click', function () {
+    // --- File handlers ---
+    function handleLoad() {
       if (App.Store.getAll().length > 0) {
         if (!confirm(t('confirm.loadReplace'))) return;
       }
       fileInput.click();
-    });
-    btnSave.addEventListener('click', function () {
+    }
+
+    function handleSave() {
       if (App.Views.Form && App.Views.Form.isDirty) {
         alert(t('alert.unsavedForm'));
         return;
       }
       App.Store.saveToFile();
-    });
-    btnImportKml.addEventListener('click', function () { kmlInput.click(); });
+    }
 
-    var btnReset = document.getElementById('btn-reset');
-    btnReset.addEventListener('click', function () {
+    function handleReset() {
       if (App.Store.getAll().length === 0) return;
       if (confirm(t('confirm.reset'))) {
         App.Store.reset();
         App.Router.refresh();
       }
-    });
+    }
 
     fileInput.addEventListener('change', function () {
       if (fileInput.files.length > 0) {
-        btnLoad.disabled = true;
         App.Store.loadFromFile(fileInput.files[0]).then(function () {
           fileInput.value = '';
           App.Router.refresh();
         }).catch(function (err) {
           alert(t('alert.errorLoadJson') + err.message);
           fileInput.value = '';
-        }).then(function () { btnLoad.disabled = false; });
+        });
       }
     });
 
     kmlInput.addEventListener('change', function () {
       if (kmlInput.files.length > 0) {
-        btnImportKml.disabled = true;
         App.Store.importKML(kmlInput.files[0]).then(function () {
           kmlInput.value = '';
           App.Router.refresh();
@@ -120,7 +167,7 @@
         }).catch(function (err) {
           alert(t('alert.errorImportKml') + err.message);
           kmlInput.value = '';
-        }).then(function () { btnImportKml.disabled = false; });
+        });
       }
     });
   });

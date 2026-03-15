@@ -18,7 +18,7 @@ window.App.Views = window.App.Views || {};
         // Map pin SVG icon
         var icon = document.createElement('div');
         icon.className = 'welcome-icon';
-        icon.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>';
+        icon.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>';
         welcome.appendChild(icon);
 
         var h2 = document.createElement('h2');
@@ -85,75 +85,79 @@ window.App.Views = window.App.Views || {};
       container.appendChild(mapDiv);
       cleanup = App.Components.Map.renderOverviewMap(mapDiv, territories);
 
-      // Table
-      var table = document.createElement('table');
-      table.className = 'territory-table';
+      // Territory cards grid
+      var grid = document.createElement('div');
+      grid.className = 'territory-grid';
 
-      var thead = '<thead><tr><th>' + App.Utils.escapeHtml(t('index.colNumber')) + '</th><th>' + App.Utils.escapeHtml(t('index.colName')) + '</th><th>' + App.Utils.escapeHtml(t('index.colGroup')) + '</th><th>' + App.Utils.escapeHtml(t('index.colLandmarks')) + '</th><th></th></tr></thead>';
-      table.innerHTML = thead + '<tbody></tbody>';
-
-      var tbodyEl = table.querySelector('tbody');
       territories.forEach(function (territory) {
-        var tr = document.createElement('tr');
-        tr.style.cursor = 'pointer';
-        tr.addEventListener('click', function (e) {
-          // Don't navigate if clicking a button or link
-          if (e.target.closest('a') || e.target.closest('button')) return;
-          window.location.hash = '#/territories/' + territory.id;
-        });
+        var card = document.createElement('a');
+        card.href = '#/territories/' + territory.id;
+        card.className = 'territory-grid-card';
 
-        var tdNum = document.createElement('td');
-        tdNum.className = 'number';
-        tdNum.textContent = territory.number;
+        var cardHeader = document.createElement('div');
+        cardHeader.className = 'territory-grid-card-header';
 
-        var tdName = document.createElement('td');
-        var nameLink = document.createElement('a');
-        nameLink.href = '#/territories/' + territory.id;
-        nameLink.textContent = territory.name;
-        tdName.appendChild(nameLink);
+        var num = document.createElement('span');
+        num.className = 'territory-grid-card-number';
+        num.textContent = territory.number;
+        cardHeader.appendChild(num);
 
-        var tdGroup = document.createElement('td');
-        tdGroup.textContent = territory.group_name || '';
+        if (territory.group_name) {
+          var group = document.createElement('span');
+          group.className = 'territory-grid-card-group';
+          group.textContent = territory.group_name;
+          cardHeader.appendChild(group);
+        }
 
-        var tdLandmarks = document.createElement('td');
-        tdLandmarks.textContent = territory.landmarks.length;
+        card.appendChild(cardHeader);
 
-        var tdActions = document.createElement('td');
-        tdActions.className = 'actions';
+        var name = document.createElement('div');
+        name.className = 'territory-grid-card-name';
+        name.textContent = territory.name;
+        card.appendChild(name);
+
+        var meta = document.createElement('div');
+        meta.className = 'territory-grid-card-meta';
+        meta.innerHTML = '<span>' + territory.landmarks.length + ' ' + App.Utils.escapeHtml(t('index.colLandmarks').toLowerCase()) + '</span>';
+        card.appendChild(meta);
+
+        // Actions row
+        var actions = document.createElement('div');
+        actions.className = 'territory-grid-card-actions';
 
         var cardLink = document.createElement('a');
         cardLink.href = '#/territories/' + territory.id + '/card';
         cardLink.className = 'btn btn-secondary btn-sm';
         cardLink.textContent = t('index.btnCard');
+        cardLink.addEventListener('click', function (e) { e.stopPropagation(); });
 
         var editLink = document.createElement('a');
         editLink.href = '#/territories/' + territory.id + '/edit';
         editLink.className = 'btn btn-secondary btn-sm';
         editLink.textContent = t('index.btnEdit');
+        editLink.addEventListener('click', function (e) { e.stopPropagation(); });
 
         var deleteBtn = document.createElement('button');
         deleteBtn.className = 'btn-outline-danger btn-sm';
         deleteBtn.textContent = t('index.btnDelete');
-        deleteBtn.addEventListener('click', function () {
+        deleteBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
           if (confirm(t('confirm.deleteTerritory', { number: territory.number, name: territory.name }))) {
             App.Store.deleteTerritory(territory.id);
             App.Router.refresh();
           }
         });
 
-        tdActions.appendChild(cardLink);
-        tdActions.appendChild(editLink);
-        tdActions.appendChild(deleteBtn);
+        actions.appendChild(cardLink);
+        actions.appendChild(editLink);
+        actions.appendChild(deleteBtn);
+        card.appendChild(actions);
 
-        tr.appendChild(tdNum);
-        tr.appendChild(tdName);
-        tr.appendChild(tdGroup);
-        tr.appendChild(tdLandmarks);
-        tr.appendChild(tdActions);
-        tbodyEl.appendChild(tr);
+        grid.appendChild(card);
       });
 
-      container.appendChild(table);
+      container.appendChild(grid);
 
       return function () {
         if (cleanup) cleanup();
