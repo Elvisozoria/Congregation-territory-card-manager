@@ -38,9 +38,12 @@ window.App = window.App || {};
   }
 
   window.App.Store = {
-    // Subscribe to changes
+    // Subscribe to changes (returns unsubscribe function)
     onChange: function (fn) {
       listeners.push(fn);
+      return function () {
+        listeners = listeners.filter(function (f) { return f !== fn; });
+      };
     },
 
     // Load embedded sample data
@@ -125,6 +128,14 @@ window.App = window.App || {};
           try {
             var parsed = JSON.parse(e.target.result);
             if (parsed.territories && Array.isArray(parsed.territories)) {
+              // Normalize each territory to ensure required fields exist
+              parsed.territories.forEach(function (t) {
+                if (typeof t.id !== 'number') t.id = parseInt(t.id, 10) || 0;
+                if (!Array.isArray(t.landmarks)) t.landmarks = [];
+                if (t.number === undefined) t.number = '';
+                if (t.name === undefined) t.name = '';
+                if (t.qr_url === undefined) t.qr_url = '';
+              });
               data = parsed;
               notify();
               resolve();
@@ -149,13 +160,13 @@ window.App = window.App || {};
       link.download = 'territories.json';
       link.href = url;
       link.click();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
     },
 
     // Import KML — delegates to App.KmlImport
     importKML: function (file) {
       var self = this;
-      return App.KmlImport.parse(file).then(function (imported) {
+      return window.App.KmlImport.parse(file).then(function (imported) {
         imported.forEach(function (t) {
           var existing = data.territories.find(function (e) { return e.number === t.number; });
           if (existing) {

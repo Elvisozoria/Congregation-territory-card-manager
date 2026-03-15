@@ -22,7 +22,7 @@ window.App.Components = window.App.Components || {};
       boxZoom: false
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
     if (territory.polygon && territory.polygon.length >= 3) {
       var coords = territory.polygon.map(function (c) { return [c[1], c[0]]; });

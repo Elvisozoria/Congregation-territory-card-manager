@@ -7,7 +7,7 @@ window.App = window.App || {};
   var currentCleanup = null;
   var currentView = null;
   var container = null;
-  var previousHash = null;
+  var previousHash = '#/';
 
   var routes = [
     { pattern: /^#\/territories\/new$/, view: 'Form', params: function () { return { id: null }; } },
@@ -25,11 +25,9 @@ window.App = window.App || {};
     if (currentView && App.Views[currentView] && App.Views[currentView].isDirty) {
       if (!confirm('You have unsaved changes. Leave this page?')) {
         // Restore previous hash without triggering navigate again
-        if (previousHash) {
-          window.removeEventListener('hashchange', navigate);
-          window.location.hash = previousHash;
-          window.addEventListener('hashchange', navigate);
-        }
+        window.removeEventListener('hashchange', navigate);
+        window.location.hash = previousHash;
+        window.addEventListener('hashchange', navigate);
         return;
       }
       App.Views[currentView].isDirty = false;
@@ -37,9 +35,9 @@ window.App = window.App || {};
 
     previousHash = hash;
 
-    // Clean up previous view
+    // Clean up previous view (wrapped in try-catch to prevent orphaned state)
     if (currentCleanup) {
-      currentCleanup();
+      try { currentCleanup(); } catch (e) { console.error('View cleanup error:', e); }
       currentCleanup = null;
     }
     currentView = null;
@@ -54,7 +52,13 @@ window.App = window.App || {};
         var view = App.Views[viewName];
         if (view && view.render) {
           currentView = viewName;
-          currentCleanup = view.render(container, params);
+          try {
+            currentCleanup = view.render(container, params);
+          } catch (e) {
+            console.error('View render error:', e);
+            container.innerHTML = '<p style="padding:2rem;color:#991B1B;">Something went wrong rendering this page.</p>' +
+              '<a href="#/" class="btn btn-secondary" style="margin-left:2rem;">Back to Home</a>';
+          }
         }
         return;
       }

@@ -13,8 +13,8 @@ window.App.Components = window.App.Components || {};
     var defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
     var map = L.map(container, { center: defaultCenter, zoom: defaultZoom });
 
-    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    var osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
     }).addTo(map);
 
     var satellite = L.tileLayer(
@@ -27,10 +27,10 @@ window.App.Components = window.App.Components || {};
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         { attribution: 'Tiles &copy; Esri' }
       ),
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { opacity: 0.4 })
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.7 })
     ]);
 
-    L.control.layers({ 'OpenStreetMap': osm, 'Satellite': satellite, 'Hybrid': hybrid }).addTo(map);
+    L.control.layers({ 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid }).addTo(map);
 
     var bounds = [];
 
@@ -50,7 +50,7 @@ window.App.Components = window.App.Components || {};
       var center = polygon.getBounds().getCenter();
       var labelIcon = L.divIcon({
         className: '',
-        html: '<span style="background:rgba(255,255,255,0.8);padding:2px 5px;font-size:11px;font-weight:bold;border-radius:3px;white-space:nowrap;">' + territory.number + ' - ' + territory.name + '</span>',
+        html: '<span style="background:rgba(255,255,255,0.8);padding:2px 5px;font-size:11px;font-weight:bold;border-radius:3px;white-space:nowrap;">' + App.Utils.escapeHtml(territory.number) + ' - ' + App.Utils.escapeHtml(territory.name) + '</span>',
         iconSize: null,
         iconAnchor: null
       });
@@ -79,8 +79,8 @@ window.App.Components = window.App.Components || {};
     var defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
     var map = L.map(container, { center: defaultCenter, zoom: defaultZoom });
 
-    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    var osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
     }).addTo(map);
 
     var satellite = L.tileLayer(
@@ -93,10 +93,10 @@ window.App.Components = window.App.Components || {};
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         { attribution: 'Tiles &copy; Esri' }
       ),
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { opacity: 0.4 })
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.7 })
     ]);
 
-    L.control.layers({ 'OpenStreetMap': osm, 'Satellite': satellite, 'Hybrid': hybrid }).addTo(map);
+    L.control.layers({ 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid }).addTo(map);
 
     if (territory.polygon && territory.polygon.length >= 3) {
       var coords = territory.polygon.map(function (c) { return [c[1], c[0]]; });

@@ -2,15 +2,18 @@
 
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
+    // Initialize router first (before geolocation callback)
+    var appContainer = document.getElementById('app');
+    App.Router.init(appContainer);
+
     // Detect user location for map defaults
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(function (pos) {
         App.Store.setDefaultCenter(pos.coords.latitude, pos.coords.longitude);
+        // Re-render current view so the map uses the new center
+        App.Router.refresh();
       });
     }
-
-    // Load sample data
-    App.Store.loadSample();
 
     // Wire file buttons
     var btnLoad = document.getElementById('btn-load');
@@ -60,9 +63,5 @@
         }).then(function () { btnImportKml.disabled = false; });
       }
     });
-
-    // Initialize router
-    var appContainer = document.getElementById('app');
-    App.Router.init(appContainer);
   });
 })();

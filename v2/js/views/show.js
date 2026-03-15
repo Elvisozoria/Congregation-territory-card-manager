@@ -17,6 +17,7 @@ window.App.Views = window.App.Views || {};
       var mapCleanup = null;
       var currentMap = null;
       var landmarksSection = null;
+      var landmarkMarkers = [];
 
       // Header
       var header = document.createElement('div');
@@ -80,6 +81,11 @@ window.App.Views = window.App.Views || {};
       deleteSection.appendChild(deleteTerritoryBtn);
       container.appendChild(deleteSection);
 
+      function clearMapMarkers() {
+        landmarkMarkers.forEach(function (m) { if (currentMap) currentMap.removeLayer(m); });
+        landmarkMarkers = [];
+      }
+
       function addMarkerToMap(lm) {
         if (!currentMap) return;
         var marker = L.circleMarker([lm.lat, lm.lng], {
@@ -95,6 +101,7 @@ window.App.Views = window.App.Views || {};
           offset: [10, 0],
           className: 'landmark-tooltip'
         });
+        landmarkMarkers.push(marker);
       }
 
       function rerenderLandmarks() {
@@ -140,6 +147,10 @@ window.App.Views = window.App.Views || {};
             deleteBtn.addEventListener('click', function () {
               if (confirm('Delete this landmark?')) {
                 App.Store.deleteLandmark(territory.id, lm.id);
+                // Remove all markers from map and re-add remaining ones
+                clearMapMarkers();
+                territory = App.Store.getById(params.id);
+                territory.landmarks.forEach(function (l) { addMarkerToMap(l); });
                 rerenderLandmarks();
               }
             });

@@ -9,6 +9,53 @@ window.App.Views = window.App.Views || {};
       var territories = App.Store.getAll();
       var cleanup = null;
 
+      // Empty state: welcome screen
+      if (territories.length === 0) {
+        var welcome = document.createElement('div');
+        welcome.className = 'welcome-screen';
+        welcome.innerHTML =
+          '<h2>You don\'t have any territories yet</h2>' +
+          '<p>Get started by choosing one of the options below:</p>';
+
+        var actions = document.createElement('div');
+        actions.className = 'welcome-actions';
+
+        var loadDemoBtn = document.createElement('button');
+        loadDemoBtn.className = 'btn btn-primary';
+        loadDemoBtn.textContent = 'Load Demo Territories';
+        loadDemoBtn.addEventListener('click', function () {
+          App.Store.loadSample();
+          App.Router.refresh();
+        });
+
+        var createBtn = document.createElement('a');
+        createBtn.href = '#/territories/new';
+        createBtn.className = 'btn btn-primary';
+        createBtn.textContent = 'Create a Territory';
+
+        var loadJsonBtn = document.createElement('button');
+        loadJsonBtn.className = 'btn btn-secondary';
+        loadJsonBtn.textContent = 'Load JSON File';
+        loadJsonBtn.addEventListener('click', function () {
+          document.getElementById('file-input').click();
+        });
+
+        var importKmlBtn = document.createElement('button');
+        importKmlBtn.className = 'btn btn-secondary';
+        importKmlBtn.textContent = 'Import KML/KMZ';
+        importKmlBtn.addEventListener('click', function () {
+          document.getElementById('kml-input').click();
+        });
+
+        actions.appendChild(loadDemoBtn);
+        actions.appendChild(createBtn);
+        actions.appendChild(loadJsonBtn);
+        actions.appendChild(importKmlBtn);
+        welcome.appendChild(actions);
+        container.appendChild(welcome);
+        return null;
+      }
+
       // Header row
       var header = document.createElement('div');
       header.className = 'header-row';
