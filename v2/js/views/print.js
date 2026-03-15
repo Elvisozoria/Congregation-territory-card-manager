@@ -6,6 +6,7 @@ window.App.Views = window.App.Views || {};
 (function () {
   window.App.Views.Print = {
     render: function (container) {
+      var t = App.I18n.t;
       var territories = App.Store.getAll();
       var cleanups = [];
 
@@ -16,7 +17,7 @@ window.App.Views = window.App.Views || {};
       var controls = document.createElement('div');
       controls.className = 'no-print';
       controls.style.cssText = 'padding:1.5rem;text-align:center;';
-      controls.innerHTML = '<h2 style="font-size:1.25rem;">All Territory Cards (' + territories.length + ')</h2>';
+      controls.innerHTML = '<h2 style="font-size:1.25rem;">' + App.Utils.escapeHtml(t('print.title', { count: territories.length })) + '</h2>';
 
       var btnRow = document.createElement('div');
       btnRow.style.marginTop = '0.5rem';
@@ -24,7 +25,7 @@ window.App.Views = window.App.Views || {};
       var printBtn = document.createElement('a');
       printBtn.href = '#';
       printBtn.className = 'btn btn-primary';
-      printBtn.textContent = 'Print All';
+      printBtn.textContent = t('print.printAll');
       printBtn.addEventListener('click', function (e) {
         e.preventDefault();
         window.print();
@@ -33,7 +34,7 @@ window.App.Views = window.App.Views || {};
       var downloadBtn = document.createElement('a');
       downloadBtn.href = '#';
       downloadBtn.className = 'btn btn-primary';
-      downloadBtn.textContent = 'Download All PNGs';
+      downloadBtn.textContent = t('print.downloadAll');
       downloadBtn.addEventListener('click', function (e) {
         e.preventDefault();
         downloadAllCards();
@@ -42,7 +43,7 @@ window.App.Views = window.App.Views || {};
       var backBtn = document.createElement('a');
       backBtn.href = '#/';
       backBtn.className = 'btn btn-secondary';
-      backBtn.textContent = 'Back';
+      backBtn.textContent = t('print.back');
 
       btnRow.appendChild(printBtn);
       btnRow.appendChild(document.createTextNode(' '));

@@ -9,12 +9,13 @@ window.App.Views = window.App.Views || {};
     isDirty: false,
 
     render: function (container, params) {
+      var t = App.I18n.t;
       var self = this;
       var isEdit = params.id !== null;
       var territory = isEdit ? App.Store.getById(params.id) : null;
 
       if (isEdit && !territory) {
-        container.innerHTML = '<p>Territory not found.</p><a href="#/" class="btn btn-secondary">Back</a>';
+        container.innerHTML = '<p>' + App.Utils.escapeHtml(t('alert.notFound')) + '</p><a href="#/" class="btn btn-secondary">' + App.Utils.escapeHtml(t('show.btnBack')) + '</a>';
         return null;
       }
 
@@ -24,8 +25,8 @@ window.App.Views = window.App.Views || {};
       // Header
       var header = document.createElement('div');
       header.className = 'header-row';
-      header.innerHTML = '<h1>' + (isEdit ? 'Edit Territory' : 'New Territory') + '</h1>' +
-        '<a href="' + (isEdit ? '#/territories/' + territory.id : '#/') + '" class="btn btn-secondary">Cancel</a>';
+      header.innerHTML = '<h1>' + App.Utils.escapeHtml(isEdit ? t('form.titleEdit') : t('form.titleNew')) + '</h1>' +
+        '<a href="' + (isEdit ? '#/territories/' + territory.id : '#/') + '" class="btn btn-secondary">' + App.Utils.escapeHtml(t('form.cancel')) + '</a>';
       container.appendChild(header);
 
       // Form container
@@ -43,22 +44,22 @@ window.App.Views = window.App.Views || {};
 
       form.innerHTML =
         '<div class="form-group">' +
-          '<label for="field-number">Number</label>' +
+          '<label for="field-number">' + App.Utils.escapeHtml(t('form.fieldNumber')) + '</label>' +
           '<input type="text" id="field-number" placeholder="1A" value="' + escapeAttr(territory ? territory.number : '') + '" />' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="field-name">Name</label>' +
+          '<label for="field-name">' + App.Utils.escapeHtml(t('form.fieldName')) + '</label>' +
           '<input type="text" id="field-name" placeholder="Los Prados" value="' + escapeAttr(territory ? territory.name : '') + '" />' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="field-group">Group</label>' +
+          '<label for="field-group">' + App.Utils.escapeHtml(t('form.fieldGroup')) + '</label>' +
           '<input type="text" id="field-group" placeholder="Oeste" value="' + escapeAttr(territory ? territory.group_name : '') + '" />' +
         '</div>' +
         '<div class="form-group">' +
-          '<label for="field-qr">QR Link (optional)</label>' +
+          '<label for="field-qr">' + App.Utils.escapeHtml(t('form.fieldQr')) + '</label>' +
           '<input type="url" id="field-qr" placeholder="https://..." value="' + escapeAttr(territory ? territory.qr_url : '') + '" />' +
         '</div>' +
-        '<div class="form-instruction">Click the <strong>pentagon icon</strong> on the map, then click points to draw your territory boundary. Click the first point again to close the shape.</div>';
+        '<div class="form-instruction">' + t('form.drawInstruction') + '</div>';
 
       // Track dirty state on input changes
       form.addEventListener('input', function () { self.isDirty = true; });
@@ -91,7 +92,7 @@ window.App.Views = window.App.Views || {};
       submitBtn.className = 'btn btn-primary';
       submitBtn.style.marginTop = '1rem';
       submitBtn.style.width = '100%';
-      submitBtn.textContent = 'Save Territory';
+      submitBtn.textContent = t('form.save');
       form.appendChild(submitBtn);
 
       // Delete link (edit mode only)
@@ -101,9 +102,9 @@ window.App.Views = window.App.Views || {};
         var deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'btn-text-danger';
-        deleteBtn.textContent = 'Delete this territory';
+        deleteBtn.textContent = t('form.deleteTerritory');
         deleteBtn.addEventListener('click', function () {
-          if (confirm('Delete territory "' + territory.number + ' - ' + territory.name + '"? This cannot be undone.')) {
+          if (confirm(t('form.confirmDelete', { name: territory.number + ' - ' + territory.name }))) {
             self.isDirty = false;
             App.Store.deleteTerritory(territory.id);
             window.location.hash = '#/';
@@ -130,19 +131,19 @@ window.App.Views = window.App.Views || {};
 
         // Validate
         var errors = [];
-        if (!number) errors.push('Number is required');
-        if (!name) errors.push('Name is required');
+        if (!number) errors.push(t('form.errorNumber'));
+        if (!name) errors.push(t('form.errorName'));
 
         // Validate QR URL format if provided
         if (qr_url && !/^https?:\/\//i.test(qr_url)) {
-          errors.push('QR Link must start with http:// or https://');
+          errors.push(t('form.errorQrFormat'));
         }
 
         // Validate unique territory number
-        var duplicate = App.Store.getAll().find(function (t) {
-          return t.number === number && (!isEdit || t.id !== territory.id);
+        var duplicate = App.Store.getAll().find(function (existing) {
+          return existing.number === number && (!isEdit || existing.id !== territory.id);
         });
-        if (duplicate) errors.push('Territory number "' + number + '" already exists');
+        if (duplicate) errors.push(t('form.errorDuplicate', { number: number }));
 
         if (errors.length > 0) {
           errorDiv.innerHTML = '';

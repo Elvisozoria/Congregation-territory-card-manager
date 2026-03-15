@@ -8,9 +8,10 @@ window.App.Views = window.App.Views || {};
 
   window.App.Views.Show = {
     render: function (container, params) {
+      var t = App.I18n.t;
       var territory = App.Store.getById(params.id);
       if (!territory) {
-        container.innerHTML = '<p>Territory not found.</p><a href="#/" class="btn btn-secondary">Back</a>';
+        container.innerHTML = '<p>' + App.Utils.escapeHtml(t('alert.notFound')) + '</p><a href="#/" class="btn btn-secondary">' + App.Utils.escapeHtml(t('show.btnBack')) + '</a>';
         return null;
       }
 
@@ -24,9 +25,9 @@ window.App.Views = window.App.Views || {};
       header.className = 'header-row';
       header.innerHTML = '<h1>' + App.Utils.escapeHtml(territory.number) + ' - ' + App.Utils.escapeHtml(territory.name) + '</h1>' +
         '<div>' +
-          '<a href="#/territories/' + territory.id + '/card" class="btn btn-primary">Card</a> ' +
-          '<a href="#/territories/' + territory.id + '/edit" class="btn btn-secondary">Edit</a> ' +
-          '<a href="#/" class="btn btn-secondary">Back</a>' +
+          '<a href="#/territories/' + territory.id + '/card" class="btn btn-primary">' + App.Utils.escapeHtml(t('show.btnCard')) + '</a> ' +
+          '<a href="#/territories/' + territory.id + '/edit" class="btn btn-secondary">' + App.Utils.escapeHtml(t('show.btnEdit')) + '</a> ' +
+          '<a href="#/" class="btn btn-secondary">' + App.Utils.escapeHtml(t('show.btnBack')) + '</a>' +
         '</div>';
       if (territory.group_name) {
         var groupBadge = document.createElement('span');
@@ -42,7 +43,7 @@ window.App.Views = window.App.Views || {};
       container.appendChild(mapDiv);
 
       mapCleanup = App.Components.Map.renderSingleMap(mapDiv, territory, function (latlng) {
-        var name = prompt('Landmark name:');
+        var name = prompt(t('show.promptLandmarkName'));
         if (!name || name.trim() === '') return;
         var color = LANDMARK_COLORS[territory.landmarks.length % LANDMARK_COLORS.length];
         App.Store.addLandmark(territory.id, {
@@ -62,7 +63,7 @@ window.App.Views = window.App.Views || {};
       // Helper text
       var helper = document.createElement('p');
       helper.className = 'helper-text';
-      helper.textContent = 'Click on the map to add a landmark';
+      helper.textContent = t('show.clickToAdd');
       container.appendChild(helper);
 
       // Landmarks section container (for partial re-render)
@@ -75,9 +76,9 @@ window.App.Views = window.App.Views || {};
       deleteSection.className = 'delete-section';
       var deleteTerritoryBtn = document.createElement('button');
       deleteTerritoryBtn.className = 'btn-text-danger';
-      deleteTerritoryBtn.textContent = 'Delete this territory';
+      deleteTerritoryBtn.textContent = t('show.deleteTerritory');
       deleteTerritoryBtn.addEventListener('click', function () {
-        if (confirm('Delete territory "' + territory.number + ' - ' + territory.name + '"? This cannot be undone.')) {
+        if (confirm(t('show.confirmDeleteTerritory', { name: territory.number + ' - ' + territory.name }))) {
           App.Store.deleteTerritory(territory.id);
           window.location.hash = '#/';
         }
@@ -113,13 +114,13 @@ window.App.Views = window.App.Views || {};
         landmarksSection.innerHTML = '';
 
         var h3 = document.createElement('h3');
-        h3.textContent = 'Landmarks';
+        h3.textContent = t('show.landmarks');
         landmarksSection.appendChild(h3);
 
         if (territory.landmarks.length === 0) {
           var empty = document.createElement('p');
           empty.className = 'empty-state';
-          empty.textContent = 'No landmarks yet. Click the map to add one.';
+          empty.textContent = t('show.noLandmarks');
           landmarksSection.appendChild(empty);
         } else {
           var ul = document.createElement('ul');
@@ -141,9 +142,9 @@ window.App.Views = window.App.Views || {};
             actionsSpan.className = 'landmark-actions';
             var deleteBtn = document.createElement('button');
             deleteBtn.className = 'btn btn-danger btn-sm';
-            deleteBtn.textContent = 'Delete';
+            deleteBtn.textContent = t('show.deleteLandmark');
             deleteBtn.addEventListener('click', function () {
-              if (confirm('Delete this landmark?')) {
+              if (confirm(t('show.confirmDeleteLandmark'))) {
                 App.Store.deleteLandmark(territory.id, lm.id);
                 // Remove all markers from map and re-add remaining ones
                 clearMapMarkers();

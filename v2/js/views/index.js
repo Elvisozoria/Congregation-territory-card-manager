@@ -6,6 +6,7 @@ window.App.Views = window.App.Views || {};
 (function () {
   window.App.Views.Index = {
     render: function (container) {
+      var t = App.I18n.t;
       var territories = App.Store.getAll();
       var cleanup = null;
 
@@ -21,11 +22,11 @@ window.App.Views = window.App.Views || {};
         welcome.appendChild(icon);
 
         var h2 = document.createElement('h2');
-        h2.textContent = 'No territories yet';
+        h2.textContent = t('welcome.title');
         welcome.appendChild(h2);
 
         var p = document.createElement('p');
-        p.textContent = 'Get started by creating your first territory or loading existing data.';
+        p.textContent = t('welcome.subtitle');
         welcome.appendChild(p);
 
         // Primary actions as cards
@@ -35,11 +36,11 @@ window.App.Views = window.App.Views || {};
         var createCard = document.createElement('a');
         createCard.href = '#/territories/new';
         createCard.className = 'welcome-card';
-        createCard.innerHTML = '<div class="welcome-card-icon blue">+</div><span class="welcome-card-title">Create Territory</span>';
+        createCard.innerHTML = '<div class="welcome-card-icon blue">+</div><span class="welcome-card-title">' + App.Utils.escapeHtml(t('welcome.createTerritory')) + '</span>';
 
         var demoCard = document.createElement('div');
         demoCard.className = 'welcome-card';
-        demoCard.innerHTML = '<div class="welcome-card-icon green">&#9654;</div><span class="welcome-card-title">Load Demo</span>';
+        demoCard.innerHTML = '<div class="welcome-card-icon green">&#9654;</div><span class="welcome-card-title">' + App.Utils.escapeHtml(t('welcome.loadDemo')) + '</span>';
         demoCard.addEventListener('click', function () {
           App.Store.loadSample();
           App.Router.refresh();
@@ -54,13 +55,13 @@ window.App.Views = window.App.Views || {};
         secondary.className = 'welcome-secondary';
 
         var loadJsonLink = document.createElement('button');
-        loadJsonLink.textContent = 'Load JSON file';
+        loadJsonLink.textContent = t('welcome.loadJson');
         loadJsonLink.addEventListener('click', function () {
           document.getElementById('file-input').click();
         });
 
         var importKmlLink = document.createElement('button');
-        importKmlLink.textContent = 'Import KML/KMZ';
+        importKmlLink.textContent = t('welcome.importKml');
         importKmlLink.addEventListener('click', function () {
           document.getElementById('kml-input').click();
         });
@@ -75,7 +76,7 @@ window.App.Views = window.App.Views || {};
       // Header row
       var header = document.createElement('div');
       header.className = 'header-row';
-      header.innerHTML = '<h1>Territories</h1><a href="#/territories/new" class="btn btn-primary">New Territory</a>';
+      header.innerHTML = '<h1>' + App.Utils.escapeHtml(t('index.title')) + '</h1><a href="#/territories/new" class="btn btn-primary">' + App.Utils.escapeHtml(t('index.newTerritory')) + '</a>';
       container.appendChild(header);
 
       // Map
@@ -88,54 +89,54 @@ window.App.Views = window.App.Views || {};
       var table = document.createElement('table');
       table.className = 'territory-table';
 
-      var thead = '<thead><tr><th>#</th><th>Name</th><th>Group</th><th>Landmarks</th><th></th></tr></thead>';
+      var thead = '<thead><tr><th>' + App.Utils.escapeHtml(t('index.colNumber')) + '</th><th>' + App.Utils.escapeHtml(t('index.colName')) + '</th><th>' + App.Utils.escapeHtml(t('index.colGroup')) + '</th><th>' + App.Utils.escapeHtml(t('index.colLandmarks')) + '</th><th></th></tr></thead>';
       table.innerHTML = thead + '<tbody></tbody>';
 
       var tbodyEl = table.querySelector('tbody');
-      territories.forEach(function (t) {
+      territories.forEach(function (territory) {
         var tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
         tr.addEventListener('click', function (e) {
           // Don't navigate if clicking a button or link
           if (e.target.closest('a') || e.target.closest('button')) return;
-          window.location.hash = '#/territories/' + t.id;
+          window.location.hash = '#/territories/' + territory.id;
         });
 
         var tdNum = document.createElement('td');
         tdNum.className = 'number';
-        tdNum.textContent = t.number;
+        tdNum.textContent = territory.number;
 
         var tdName = document.createElement('td');
         var nameLink = document.createElement('a');
-        nameLink.href = '#/territories/' + t.id;
-        nameLink.textContent = t.name;
+        nameLink.href = '#/territories/' + territory.id;
+        nameLink.textContent = territory.name;
         tdName.appendChild(nameLink);
 
         var tdGroup = document.createElement('td');
-        tdGroup.textContent = t.group_name || '';
+        tdGroup.textContent = territory.group_name || '';
 
         var tdLandmarks = document.createElement('td');
-        tdLandmarks.textContent = t.landmarks.length;
+        tdLandmarks.textContent = territory.landmarks.length;
 
         var tdActions = document.createElement('td');
         tdActions.className = 'actions';
 
         var cardLink = document.createElement('a');
-        cardLink.href = '#/territories/' + t.id + '/card';
+        cardLink.href = '#/territories/' + territory.id + '/card';
         cardLink.className = 'btn btn-secondary btn-sm';
-        cardLink.textContent = 'Card';
+        cardLink.textContent = t('index.btnCard');
 
         var editLink = document.createElement('a');
-        editLink.href = '#/territories/' + t.id + '/edit';
+        editLink.href = '#/territories/' + territory.id + '/edit';
         editLink.className = 'btn btn-secondary btn-sm';
-        editLink.textContent = 'Edit';
+        editLink.textContent = t('index.btnEdit');
 
         var deleteBtn = document.createElement('button');
         deleteBtn.className = 'btn-outline-danger btn-sm';
-        deleteBtn.textContent = 'Delete';
+        deleteBtn.textContent = t('index.btnDelete');
         deleteBtn.addEventListener('click', function () {
-          if (confirm('Delete territory "' + t.number + ' - ' + t.name + '"?')) {
-            App.Store.deleteTerritory(t.id);
+          if (confirm(t('confirm.deleteTerritory', { number: territory.number, name: territory.name }))) {
+            App.Store.deleteTerritory(territory.id);
             App.Router.refresh();
           }
         });

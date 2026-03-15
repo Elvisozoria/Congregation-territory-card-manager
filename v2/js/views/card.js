@@ -6,9 +6,10 @@ window.App.Views = window.App.Views || {};
 (function () {
   window.App.Views.Card = {
     render: function (container, params) {
+      var t = App.I18n.t;
       var territory = App.Store.getById(params.id);
       if (!territory) {
-        container.innerHTML = '<p>Territory not found.</p><a href="#/" class="btn btn-secondary">Back</a>';
+        container.innerHTML = '<p>' + App.Utils.escapeHtml(t('alert.notFound')) + '</p><a href="#/" class="btn btn-secondary">' + App.Utils.escapeHtml(t('card.back')) + '</a>';
         return null;
       }
 
@@ -28,7 +29,7 @@ window.App.Views = window.App.Views || {};
       var downloadBtn = document.createElement('a');
       downloadBtn.href = '#';
       downloadBtn.className = 'btn btn-primary btn-sm';
-      downloadBtn.textContent = 'Download PNG';
+      downloadBtn.textContent = t('card.downloadPng');
       downloadBtn.addEventListener('click', function (e) {
         e.preventDefault();
         downloadCard();
@@ -37,7 +38,7 @@ window.App.Views = window.App.Views || {};
       var printBtn = document.createElement('a');
       printBtn.href = '#';
       printBtn.className = 'btn btn-secondary btn-sm';
-      printBtn.textContent = 'Print';
+      printBtn.textContent = t('card.print');
       printBtn.addEventListener('click', function (e) {
         e.preventDefault();
         window.print();
@@ -46,7 +47,7 @@ window.App.Views = window.App.Views || {};
       var backBtn = document.createElement('a');
       backBtn.href = '#/territories/' + territory.id;
       backBtn.className = 'btn btn-secondary btn-sm';
-      backBtn.textContent = 'Back';
+      backBtn.textContent = t('card.back');
 
       controls.appendChild(downloadBtn);
       controls.appendChild(printBtn);

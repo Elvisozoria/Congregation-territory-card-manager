@@ -20,10 +20,11 @@ window.App = window.App || {};
 
   function navigate() {
     var hash = window.location.hash || '#/';
+    var t = App.I18n.t;
 
     // Guard: if leaving a dirty form, ask for confirmation
     if (currentView && App.Views[currentView] && App.Views[currentView].isDirty) {
-      if (!confirm('You have unsaved changes. Leave this page?')) {
+      if (!confirm(t('confirm.unsavedChanges'))) {
         // Restore previous hash without triggering navigate again
         window.removeEventListener('hashchange', navigate);
         window.location.hash = previousHash;
@@ -56,8 +57,8 @@ window.App = window.App || {};
             currentCleanup = view.render(container, params);
           } catch (e) {
             console.error('View render error:', e);
-            container.innerHTML = '<p style="padding:2rem;color:#991B1B;">Something went wrong rendering this page.</p>' +
-              '<a href="#/" class="btn btn-secondary" style="margin-left:2rem;">Back to Home</a>';
+            container.innerHTML = '<p style="padding:2rem;color:#991B1B;">' + App.Utils.escapeHtml(t('alert.renderError')) + '</p>' +
+              '<a href="#/" class="btn btn-secondary" style="margin-left:2rem;">' + App.Utils.escapeHtml(t('alert.backToHome')) + '</a>';
           }
         }
         return;

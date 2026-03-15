@@ -19,19 +19,25 @@
 <body>
   <nav class="navbar">
     <div class="navbar-content">
-      <a href="#/" class="navbar-brand">Territory Cards</a>
+      <a href="#/" class="navbar-brand" id="nav-brand">Territory Cards</a>
       <div class="navbar-actions">
-        <a href="#/print" class="btn btn-secondary btn-sm">Print All</a>
+        <a href="#/print" class="btn btn-secondary btn-sm" id="nav-print">Print All</a>
         <button id="btn-load" class="btn btn-secondary btn-sm">Load JSON</button>
         <button id="btn-save" class="btn btn-secondary btn-sm">Save JSON</button>
         <button id="btn-import-kml" class="btn btn-secondary btn-sm">Import KML</button>
         <button id="btn-reset" class="btn-navbar-text">Reset</button>
+        <div id="lang-switcher" class="lang-switcher"></div>
         <input type="file" id="file-input" accept=".json" style="display:none" />
         <input type="file" id="kml-input" accept=".kml,.kmz" style="display:none" />
       </div>
     </div>
   </nav>
   <div class="container" id="app"></div>
+
+  <!-- i18n (must load BEFORE all other app JS) -->
+  <script src="js/i18n/es.js"></script>
+  <script src="js/i18n/en.js"></script>
+  <script src="js/i18n/i18n.js"></script>
 
   <!-- All JS as plain scripts (NOT modules — modules are blocked on file:// by CORS) -->
   <script src="js/utils/helpers.js"></script>
