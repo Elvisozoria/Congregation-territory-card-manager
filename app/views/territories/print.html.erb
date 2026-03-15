@@ -2,6 +2,7 @@
   <h2>All Territory Cards (<%= @territories.count %>)</h2>
   <div style='margin-top: 0.5rem;'>
     <a href='#' class='btn btn-primary' onclick='window.print(); return false;'>Print All</a>
+    <a href='#' class='btn btn-primary' onclick='downloadAllCards(); return false;'>Download All PNGs</a>
     <%= link_to 'Back', territories_path, class: 'btn btn-secondary' %>
   </div>
 </div>
@@ -10,14 +11,31 @@
   <% @territories.each do |territory| %>
     <div id='territory-card-<%= territory.id %>' class='territory-card'
          data-controller='card-map'
-         data-card-map-territory-value='<%= { id: territory.id, number: territory.number, name: territory.name, polygon: territory.polygon, qr_url: territory.qr_url, landmarks: territory.landmarks.map { |l| { id: l.id, name: l.name, lat: l.lat, lng: l.lng, color: l.color } } }.to_json %>'>
+         data-card-map-territory-value='<%= { id: territory.id, number: territory.number, name: territory.name, polygon: territory.polygon, qr_url: territory.qr_url.presence || territory.google_maps_url, landmarks: territory.landmarks.map { |l| { id: l.id, name: l.name, lat: l.lat, lng: l.lng, color: l.color } } }.to_json %>'>
       <div class='card-label' style='position: absolute; top: 8px; left: 8px; z-index: 1000; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.875rem;'>
         <%= territory.number %> - <%= territory.name %>
       </div>
-      <% if territory.qr_url.present? %>
+      <% qr_url = territory.qr_url.presence || territory.google_maps_url %>
+      <% if qr_url.present? %>
         <div id='qr-<%= territory.id %>' class='qr-container' style='position: absolute; bottom: 8px; right: 8px; z-index: 1000; background: white; padding: 4px;'
-             data-qr-url='<%= territory.qr_url %>'></div>
+             data-qr-url='<%= qr_url %>'></div>
       <% end %>
     </div>
   <% end %>
 </div>
+
+<script>
+  async function downloadAllCards() {
+    const cards = document.querySelectorAll('.territory-card');
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      const canvas = await html2canvas(card, { scale: 2, useCORS: true });
+      const link = document.createElement('a');
+      const label = card.querySelector('.card-label').textContent.trim().toLowerCase().replace(/\s+/g, '-');
+      link.download = label + '.png';
+      link.href = canvas.toDataURL();
+      link.click();
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+</script>
