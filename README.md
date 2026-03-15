@@ -1,67 +1,72 @@
-# Congregation Territory Card Manager
+🌐 *[English](README.en.md)*
 
-A Rails 7 application for managing congregation territory cards. Territories are defined by geographic polygons and can contain landmarks. Each territory can be viewed as a printable card with a map and optional QR code.
+# Tarjetas de Territorio — Gestor para Congregaciones
 
-## Features
+Una aplicación web ligera, sin instalación, para gestionar tarjetas de territorio de congregaciones. Sin servidor, sin base de datos — solo abre `index.html` en tu navegador.
 
-- **Territory management** — Create, edit, and delete territories with polygon boundaries drawn on a Leaflet map.
-- **Landmark management** — Click the map on the territory show page to add colored landmark markers.
-- **Territory cards** — Each territory has a card view (480×288px) showing a non-interactive map with:
-  - Polygon mask that darkens the area outside the territory boundary
-  - Colored landmark markers with permanent labels
-  - Optional QR code (bottom-right corner)
-  - Territory number and name label (top-left corner)
-- **PNG download** — Download any card as a 2× resolution PNG via `html2canvas`.
-- **Print all** — Render all territory cards in print layout for bulk printing.
-- **KML/KMZ import** — Rake task to import territory polygons from KML/KMZ files.
+![Vista principal con territorios](docs/screenshots/02-index.png)
 
-## Tech Stack
+## Funcionalidades
 
-- Ruby on Rails 7 with Hotwire (Turbo + Stimulus)
-- PostgreSQL
-- Leaflet.js (maps) + Leaflet.draw (polygon drawing)
-- html2canvas (PNG export)
-- qrcodejs (QR code generation)
-- Importmap (no Node/webpack required)
+- **Gestión de territorios** — Crea, edita y elimina territorios con polígonos dibujados sobre un mapa interactivo (Leaflet).
+- **Puntos de referencia** — Haz clic en el mapa para agregar marcadores de colores a cada territorio.
+- **Tarjetas de territorio** — Vista de tarjeta imprimible con mapa estático, máscara de polígono, etiquetas de puntos y código QR opcional.
+- **Descarga PNG** — Descarga cualquier tarjeta como imagen PNG en alta resolución (2x).
+- **Imprimir todo** — Renderiza todas las tarjetas para impresión masiva.
+- **Importar KML/KMZ** — Importa polígonos de territorios desde archivos de Google Earth.
+- **Modo oscuro/claro** — Alternador de tema con persistencia en localStorage.
+- **Bilingüe** — Interfaz en español e inglés.
+- **Vista de tarjetas/tabla** — Alterna entre vista de cuadrícula y lista de tabla para los territorios.
 
-## Setup
+## Cómo Usar
 
-```bash
-bundle install
-bin/rails db:create db:migrate
-bin/rails server
-```
+1. Descarga o clona este repositorio
+2. Abre `index.html` en tu navegador
+3. ¡Listo!
 
-## Importing Territories from KML
+Sin servidor, sin Node.js, sin paso de compilación. Funciona offline y desde `file://`.
 
-```bash
-bin/rails territories:import_kml[path/to/file.kml]
-```
+![Pantalla de bienvenida](docs/screenshots/01-welcome.png)
 
-## Key Routes
+## Vistas
 
-| Route | Description |
-|-------|-------------|
-| `GET /territories` | Index with interactive map overview |
-| `GET /territories/:id` | Show territory with editable polygon and landmarks |
-| `GET /territories/:id/card` | Printable territory card |
-| `GET /print` | All territory cards for bulk printing |
+### Detalle del territorio
+Muestra el mapa con el polígono y los puntos de referencia. Haz clic en el mapa para agregar nuevos puntos.
 
-## Architecture
+![Vista de detalle](docs/screenshots/03-show.png)
 
-### Stimulus Controllers
+### Tarjeta imprimible
+Tarjeta lista para imprimir o descargar como PNG.
 
-| Controller | File | Purpose |
-|------------|------|---------|
-| `map` | `map_controller.js` | Index + show map: renders all territories or single territory with landmarks |
-| `card-map` | `card_map_controller.js` | Card view: non-interactive map with polygon mask and QR generation |
-| `polygon-draw` | `polygon_draw_controller.js` | Polygon drawing tool on new/edit forms |
-| `landmark` | `landmark_controller.js` | Click-to-add landmark on show page |
+![Vista de tarjeta](docs/screenshots/04-card.png)
 
-### Polygon Mask
+### Formulario de edición
+Edita el nombre, número, grupo y dibuja el polígono del territorio.
 
-The card map uses an inverted polygon technique: a world-covering outer ring with the territory polygon as a hole, rendered with semi-transparent dark fill. This focuses attention on the territory boundary.
+![Formulario de edición](docs/screenshots/05-edit.png)
 
-### Data Format
+### Modo claro
+La aplicación soporta modo oscuro y claro.
 
-Territory polygons are stored as JSON arrays of `[longitude, latitude]` coordinate pairs (GeoJSON order). Leaflet expects `[lat, lng]` so all controllers reverse the coordinate order when rendering.
+![Modo claro](docs/screenshots/07-light-mode.png)
+
+## Guardar tus Datos
+
+- Haz clic en **Guardar JSON** para descargar tus territorios como archivo
+- Haz clic en **Cargar JSON** para restaurar desde un archivo guardado
+- **Consejo:** Guarda tu archivo JSON en Google Drive o Dropbox para respaldo automático
+
+## Importar desde Google Earth
+
+1. Exporta tus territorios como KML o KMZ desde Google Earth
+2. Haz clic en **Importar KML** y selecciona el archivo
+3. Los territorios se agregarán automáticamente
+
+## Stack Tecnológico
+
+- HTML, CSS y JavaScript puro (sin frameworks)
+- Leaflet.js + Leaflet.draw (mapas y dibujo de polígonos)
+- html2canvas (exportación PNG)
+- qrcodejs (generación de códigos QR)
+- JSZip (extracción de KMZ)
+- localStorage para persistencia de datos
