@@ -1,0 +1,41 @@
+<div class='form-container'>
+  <%= form_with(model: territory) do |f| %>
+    <% if territory.errors.any? %>
+      <div class='flash flash-alert'>
+        <% territory.errors.full_messages.each do |msg| %>
+          <p><%= msg %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class='form-group'>
+      <%= f.label :number %>
+      <%= f.text_field :number, placeholder: '1A' %>
+    </div>
+
+    <div class='form-group'>
+      <%= f.label :name %>
+      <%= f.text_field :name, placeholder: 'Los Prados' %>
+    </div>
+
+    <div class='form-group'>
+      <%= f.label :group_name, 'Group' %>
+      <%= f.text_field :group_name, placeholder: 'Oeste' %>
+    </div>
+
+    <div class='form-group'>
+      <%= f.label :qr_url, 'QR Link' %>
+      <%= f.text_field :qr_url, placeholder: 'https://...' %>
+    </div>
+
+    <p class='helper-text'>Draw the polygon on the map below</p>
+
+    <div id='draw-map' class='map-container'
+         data-controller='polygon-draw'
+         data-polygon-draw-existing-polygon-value='<%= territory.polygon.to_json %>'>
+      <%= f.hidden_field :polygon, value: territory.polygon.to_json, data: { 'polygon-draw-target': 'polygonField' } %>
+    </div>
+
+    <%= f.submit 'Save Territory', class: 'btn btn-primary', style: 'margin-top: 1rem; width: 100%;' %>
+  <% end %>
+</div>

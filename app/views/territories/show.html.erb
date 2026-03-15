@@ -1,0 +1,35 @@
+<div class='header-row'>
+  <h1><%= @territory.number %> - <%= @territory.name %></h1>
+  <div>
+    <%= link_to 'Card', card_territory_path(@territory), class: 'btn btn-primary' %>
+    <%= link_to 'Edit', edit_territory_path(@territory), class: 'btn btn-secondary' %>
+    <%= link_to 'Back', territories_path, class: 'btn btn-secondary' %>
+  </div>
+</div>
+
+<div id='map' class='map-container'
+     data-controller='map landmark'
+     data-map-single-territory-value='<%= { id: @territory.id, number: @territory.number, name: @territory.name, polygon: @territory.polygon, landmarks: @territory.landmarks.map { |l| { id: l.id, name: l.name, lat: l.lat, lng: l.lng, color: l.color } } }.to_json %>'
+     data-landmark-create-url-value='<%= territory_landmarks_path(@territory) %>'
+     data-landmark-landmark-count-value='<%= @territory.landmarks.count %>'></div>
+
+<p class='helper-text'>Click on the map to add a landmark</p>
+
+<h3>Landmarks</h3>
+
+<% if @territory.landmarks.empty? %>
+  <p class='empty-state'>No landmarks yet. Click the map to add one.</p>
+<% else %>
+  <ul class='landmarks-list'>
+    <% @territory.landmarks.each do |landmark| %>
+      <li class='landmark-item'>
+        <span class='landmark-dot' style='background: <%= landmark.color %>'></span>
+        <span class='landmark-name'><%= landmark.name %></span>
+        <span class='landmark-coords'><%= landmark.lat %> - <%= landmark.lng %></span>
+        <span class='landmark-actions'>
+          <%= button_to 'Delete', territory_landmark_path(@territory, landmark), method: :delete, class: 'btn btn-danger btn-sm', form: { data: { turbo_confirm: 'Delete this landmark?' } } %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

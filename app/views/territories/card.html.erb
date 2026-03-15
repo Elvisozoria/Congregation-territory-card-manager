@@ -1,0 +1,29 @@
+<div class='card-controls no-print'>
+  <h2><%= @territory.number %> - <%= @territory.name %></h2>
+  <a href='#' class='btn btn-primary btn-sm' onclick='downloadCard(); return false;'>Download PNG</a>
+  <a href='#' class='btn btn-secondary btn-sm' onclick='window.print(); return false;'>Print</a>
+  <%= link_to 'Back', territory_path(@territory), class: 'btn btn-secondary btn-sm' %>
+</div>
+
+<div id='territory-card' class='territory-card'
+     data-controller='card-map'
+     data-card-map-territory-value='<%= { id: @territory.id, number: @territory.number, name: @territory.name, polygon: @territory.polygon, qr_url: @territory.qr_url, landmarks: @territory.landmarks.map { |l| { id: l.id, name: l.name, lat: l.lat, lng: l.lng, color: l.color } } }.to_json %>'>
+  <div class='card-label' style='position: absolute; top: 8px; left: 8px; z-index: 1000; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.875rem;'>
+    <%= @territory.number %> - <%= @territory.name %>
+  </div>
+  <% if @territory.qr_url.present? %>
+    <div id='qr-container' class='qr-container' style='position: absolute; bottom: 8px; right: 8px; z-index: 1000; background: white; padding: 4px;'
+         data-qr-url='<%= @territory.qr_url %>'></div>
+  <% end %>
+</div>
+
+<script>
+  function downloadCard() {
+    html2canvas(document.getElementById('territory-card')).then(function(canvas) {
+      var link = document.createElement('a');
+      link.download = 'territory-<%= @territory.number %>.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    });
+  }
+</script>
