@@ -50,7 +50,7 @@ window.App.Components = window.App.Components || {};
       var center = polygon.getBounds().getCenter();
       var labelIcon = L.divIcon({
         className: '',
-        html: '<span style="background:rgba(255,255,255,0.8);padding:2px 5px;font-size:11px;font-weight:bold;border-radius:3px;white-space:nowrap;">' + App.Utils.escapeHtml(territory.number) + ' - ' + App.Utils.escapeHtml(territory.name) + '</span>',
+        html: '<span class="map-label">' + App.Utils.escapeHtml(territory.number) + ' - ' + App.Utils.escapeHtml(territory.name) + '</span>',
         iconSize: null,
         iconAnchor: null
       });
