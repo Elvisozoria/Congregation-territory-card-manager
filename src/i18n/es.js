@@ -106,6 +106,77 @@ export default {
     deleteTerritory: '¿Eliminar el territorio "{number} - {name}"?'
   },
 
+  // Mode selection
+  modeSelect: {
+    title: 'Bienvenido a Tarjetas de Territorio',
+    subtitle: 'Elige cómo quieres usar la aplicación.',
+    offlineTitle: 'Usar sin conexión',
+    offlineDesc: 'Los datos se guardan en tu navegador. Puedes exportar e importar JSON.',
+    onlineTitle: 'Crear cuenta',
+    onlineDesc: 'Datos en la nube, compartidos con tu congregación.'
+  },
+
+  // Auth
+  auth: {
+    loginTitle: 'Iniciar Sesión',
+    loginButton: 'Iniciar Sesión',
+    loginError: 'Correo o contraseña incorrectos.',
+    registerTitle: 'Registrar Congregación',
+    registerButton: 'Crear Cuenta',
+    registerError: 'Error al crear la cuenta.',
+    registerLink: 'Registrar nueva congregación',
+    loginLink: '¿Ya tienes cuenta? Inicia sesión',
+    useOffline: 'Usar sin conexión',
+    email: 'Correo electrónico',
+    password: 'Contraseña',
+    displayName: 'Nombre',
+    congregationName: 'Nombre de la congregación',
+    emailInUse: 'Este correo ya está registrado.',
+    weakPassword: 'La contraseña debe tener al menos 6 caracteres.',
+    changePasswordTitle: 'Cambiar Contraseña',
+    changePasswordDesc: 'Debes cambiar tu contraseña temporal antes de continuar.',
+    changePasswordButton: 'Cambiar Contraseña',
+    changePasswordError: 'Error al cambiar la contraseña. Intenta cerrar sesión y entrar de nuevo.',
+    newPassword: 'Nueva contraseña',
+    confirmPassword: 'Confirmar contraseña',
+    passwordMismatch: 'Las contraseñas no coinciden.',
+    noPermission: 'No tienes permiso para ver esta página.'
+  },
+
+  // Admin panel
+  admin: {
+    title: 'Panel de Administración',
+    congregationInfo: 'Información de la Congregación',
+    congregationId: 'ID de congregación',
+    members: 'Miembros',
+    noMembers: 'No hay miembros.',
+    loading: 'Cargando...',
+    loadError: 'Error al cargar miembros.',
+    createUser: 'Crear Usuario',
+    createUserButton: 'Crear Usuario',
+    createUserError: 'Error al crear el usuario.',
+    userCreated: 'Usuario creado exitosamente',
+    shareCredentials: 'Comparte estas credenciales con el usuario (WhatsApp, en persona, etc.)',
+    tempPassword: 'Contraseña temporal',
+    role: 'Rol',
+    roleMember: 'Miembro',
+    roleAdmin: 'Administrador'
+  },
+
+  // Settings
+  settings: {
+    title: 'Configuración',
+    currentMode: 'Modo actual',
+    modeOffline: 'Sin conexión (datos locales)',
+    modeOnline: 'En línea (datos en la nube)',
+    switchToOnline: 'Cambiar a modo en línea',
+    profile: 'Perfil',
+    passwordChanged: 'Contraseña cambiada exitosamente.',
+    logout: 'Cerrar Sesión',
+    migrateTitle: 'Migrar datos a la nube',
+    migrateDesc: 'Si te registras en modo en línea, podrás subir tus datos locales a la nube.'
+  },
+
   // Alerts
   alert: {
     unsavedForm: 'Tienes cambios sin guardar en el formulario. Guarda el territorio primero, luego exporta el JSON.',

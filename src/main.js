@@ -3,12 +3,13 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import '../css/styles.css';
 
 import { t, getLang, setLang, getAvailableLanguages, languages } from './i18n/i18n.js';
-import { getStore, initStore } from './store/index.js';
+import { getStore, getMode, getUserProfile, initStore } from './store/index.js';
 import { init as initRouter, refresh } from './router.js';
 import { isDirty as isFormDirty } from './views/form.js';
 
 document.addEventListener('DOMContentLoaded', function () {
   const THEME_KEY = 'territory-cards-theme';
+  const mode = getMode();
 
   // --- Theme toggle ---
   const themeToggle = document.getElementById('theme-toggle');
@@ -62,61 +63,155 @@ document.addEventListener('DOMContentLoaded', function () {
 
   langToggle.addEventListener('click', function (e) {
     e.stopPropagation();
-    moreMenu.classList.remove('open');
+    const mm = document.getElementById('more-menu');
+    if (mm) mm.classList.remove('open');
     langMenu.classList.toggle('open');
   });
 
-  // --- More menu (overflow: Load/Save/Import/Reset) ---
-  const moreMenu = document.getElementById('more-menu');
-  const moreToggle = document.getElementById('more-toggle');
+  // --- Navbar: conditional based on mode ---
+  const navActions = document.querySelector('.navbar-actions');
+  const moreMenuWrapper = document.getElementById('more-menu-wrapper');
+  const navPrint = document.getElementById('nav-print');
   const fileInput = document.getElementById('file-input');
   const kmlInput = document.getElementById('kml-input');
 
-  function buildMoreMenu() {
-    moreMenu.innerHTML = '';
-    const items = [
-      { id: 'more-load', key: 'nav.loadJson', action: function () { handleLoad(); } },
-      { id: 'more-save', key: 'nav.saveJson', action: function () { handleSave(); } },
-      { id: 'more-import', key: 'nav.importKml', action: function () { kmlInput.click(); } },
-      { id: 'more-reset', key: 'nav.reset', action: function () { handleReset(); }, danger: true }
-    ];
-    items.forEach(function (item) {
-      const btn = document.createElement('button');
-      btn.className = 'more-menu-item' + (item.danger ? ' danger' : '');
-      btn.id = item.id;
-      btn.textContent = t(item.key);
-      btn.addEventListener('click', function () {
-        moreMenu.classList.remove('open');
-        item.action();
-      });
-      moreMenu.appendChild(btn);
+  // For online mode: add user menu items
+  if (mode === 'online') {
+    // Hide offline-only elements (file inputs, more menu)
+    if (moreMenuWrapper) moreMenuWrapper.style.display = 'none';
+    if (fileInput) fileInput.style.display = 'none';
+    if (kmlInput) kmlInput.style.display = 'none';
+
+    // Add user menu button (will show after auth resolves)
+    const userMenu = document.createElement('div');
+    userMenu.className = 'more-menu-wrapper';
+    userMenu.id = 'user-menu-wrapper';
+    userMenu.innerHTML =
+      '<button class="more-toggle user-menu-toggle" id="user-menu-toggle" title="User menu">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+      '</button>' +
+      '<div class="more-menu" id="user-menu"></div>';
+    navActions.insertBefore(userMenu, navPrint.nextSibling);
+
+    const userMenuBtn = document.getElementById('user-menu-toggle');
+    const userMenuDropdown = document.getElementById('user-menu');
+
+    userMenuBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      langMenu.classList.remove('open');
+      userMenuDropdown.classList.toggle('open');
     });
   }
 
-  buildMoreMenu();
+  // --- More menu (offline mode only) ---
+  if (mode !== 'online') {
+    const moreMenu = document.getElementById('more-menu');
+    const moreToggle = document.getElementById('more-toggle');
 
-  moreToggle.addEventListener('click', function (e) {
-    e.stopPropagation();
-    langMenu.classList.remove('open');
-    moreMenu.classList.toggle('open');
-  });
+    function buildMoreMenu() {
+      moreMenu.innerHTML = '';
+      const items = [
+        { id: 'more-load', key: 'nav.loadJson', action: function () { handleLoad(); } },
+        { id: 'more-save', key: 'nav.saveJson', action: function () { handleSave(); } },
+        { id: 'more-import', key: 'nav.importKml', action: function () { kmlInput.click(); } },
+        { id: 'more-settings', key: 'settings.title', action: function () { window.location.hash = '#/settings'; } },
+        { id: 'more-reset', key: 'nav.reset', action: function () { handleReset(); }, danger: true }
+      ];
+      items.forEach(function (item) {
+        const btn = document.createElement('button');
+        btn.className = 'more-menu-item' + (item.danger ? ' danger' : '');
+        btn.id = item.id;
+        btn.textContent = t(item.key);
+        btn.addEventListener('click', function () {
+          moreMenu.classList.remove('open');
+          item.action();
+        });
+        moreMenu.appendChild(btn);
+      });
+    }
+
+    buildMoreMenu();
+
+    moreToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      langMenu.classList.remove('open');
+      moreMenu.classList.toggle('open');
+    });
+
+    // Store buildMoreMenu for navbar text update
+    window._buildMoreMenu = buildMoreMenu;
+  }
 
   // Close all dropdowns on outside click
   document.addEventListener('click', function () {
     langMenu.classList.remove('open');
-    moreMenu.classList.remove('open');
+    const mm = document.getElementById('more-menu');
+    if (mm) mm.classList.remove('open');
+    const um = document.getElementById('user-menu');
+    if (um) um.classList.remove('open');
   });
 
   function updateNavbarText() {
     document.getElementById('nav-brand').textContent = t('nav.brand');
     document.getElementById('nav-print').textContent = t('nav.printAll');
-    buildMoreMenu();
+    if (window._buildMoreMenu) window._buildMoreMenu();
+    if (mode === 'online') buildUserMenu();
+  }
+
+  function buildUserMenu() {
+    const userMenuDropdown = document.getElementById('user-menu');
+    if (!userMenuDropdown) return;
+    const profile = getUserProfile();
+    userMenuDropdown.innerHTML = '';
+
+    if (!profile) return;
+
+    // Display name header
+    const nameItem = document.createElement('div');
+    nameItem.className = 'more-menu-item';
+    nameItem.style.cssText = 'font-weight:600;cursor:default;opacity:0.7;';
+    nameItem.textContent = profile.displayName || profile.email;
+    userMenuDropdown.appendChild(nameItem);
+
+    const items = [
+      { key: 'settings.title', action: function () { window.location.hash = '#/settings'; } }
+    ];
+
+    if (profile.role === 'admin') {
+      items.unshift({ key: 'admin.title', action: function () { window.location.hash = '#/admin'; } });
+    }
+
+    items.push({
+      key: 'settings.logout',
+      action: async function () {
+        const { signOut } = await import('./firebase/auth.js');
+        await signOut();
+        window.location.hash = '#/login';
+        window.location.reload();
+      },
+      danger: true
+    });
+
+    items.forEach(function (item) {
+      const btn = document.createElement('button');
+      btn.className = 'more-menu-item' + (item.danger ? ' danger' : '');
+      btn.textContent = t(item.key);
+      btn.addEventListener('click', function () {
+        userMenuDropdown.classList.remove('open');
+        item.action();
+      });
+      userMenuDropdown.appendChild(btn);
+    });
   }
 
   updateNavbarText();
 
   // --- Initialize store and router ---
   initStore().then(function () {
+    if (mode === 'online') {
+      buildUserMenu();
+    }
+
     const appContainer = document.getElementById('app');
     initRouter(appContainer);
 
@@ -124,13 +219,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(function (pos) {
         const store = getStore();
-        store.setDefaultCenter(pos.coords.latitude, pos.coords.longitude);
-        refresh();
+        if (store) {
+          store.setDefaultCenter(pos.coords.latitude, pos.coords.longitude);
+          refresh();
+        }
       });
     }
   });
 
-  // --- File handlers ---
+  // --- File handlers (offline mode only) ---
   function handleLoad() {
     const store = getStore();
     if (store.getAll().length > 0) {
@@ -157,30 +254,48 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  fileInput.addEventListener('change', function () {
-    if (fileInput.files.length > 0) {
-      const store = getStore();
-      store.loadFromFile(fileInput.files[0]).then(function () {
-        fileInput.value = '';
-        refresh();
-      }).catch(function (err) {
-        alert(t('alert.errorLoadJson') + err.message);
-        fileInput.value = '';
-      });
-    }
-  });
+  if (fileInput) {
+    fileInput.addEventListener('change', function () {
+      if (fileInput.files.length > 0) {
+        const store = getStore();
+        store.loadFromFile(fileInput.files[0]).then(function () {
+          fileInput.value = '';
+          refresh();
+        }).catch(function (err) {
+          alert(t('alert.errorLoadJson') + err.message);
+          fileInput.value = '';
+        });
+      }
+    });
+  }
 
-  kmlInput.addEventListener('change', function () {
-    if (kmlInput.files.length > 0) {
-      const store = getStore();
-      store.importKML(kmlInput.files[0]).then(function () {
-        kmlInput.value = '';
-        refresh();
-        alert(t('alert.kmlSuccess'));
-      }).catch(function (err) {
-        alert(t('alert.errorImportKml') + err.message);
-        kmlInput.value = '';
-      });
-    }
-  });
+  if (kmlInput) {
+    kmlInput.addEventListener('click', function () {
+      if (kmlInput.files && kmlInput.files.length > 0) {
+        const store = getStore();
+        store.importKML(kmlInput.files[0]).then(function () {
+          kmlInput.value = '';
+          refresh();
+          alert(t('alert.kmlSuccess'));
+        }).catch(function (err) {
+          alert(t('alert.errorImportKml') + err.message);
+          kmlInput.value = '';
+        });
+      }
+    });
+
+    kmlInput.addEventListener('change', function () {
+      if (kmlInput.files.length > 0) {
+        const store = getStore();
+        store.importKML(kmlInput.files[0]).then(function () {
+          kmlInput.value = '';
+          refresh();
+          alert(t('alert.kmlSuccess'));
+        }).catch(function (err) {
+          alert(t('alert.errorImportKml') + err.message);
+          kmlInput.value = '';
+        });
+      }
+    });
+  }
 });

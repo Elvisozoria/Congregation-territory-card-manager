@@ -12,6 +12,7 @@
     "vite": "^8.0.5"
   },
   "dependencies": {
+    "firebase": "^12.11.0",
     "html2canvas": "^1.4.1",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.4",

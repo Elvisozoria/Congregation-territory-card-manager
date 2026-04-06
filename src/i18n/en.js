@@ -106,6 +106,77 @@ export default {
     deleteTerritory: 'Delete territory "{number} - {name}"?'
   },
 
+  // Mode selection
+  modeSelect: {
+    title: 'Welcome to Territory Cards',
+    subtitle: 'Choose how you want to use the app.',
+    offlineTitle: 'Use offline',
+    offlineDesc: 'Data stays in your browser. Export and import JSON to share.',
+    onlineTitle: 'Create account',
+    onlineDesc: 'Cloud data, shared with your congregation.'
+  },
+
+  // Auth
+  auth: {
+    loginTitle: 'Sign In',
+    loginButton: 'Sign In',
+    loginError: 'Invalid email or password.',
+    registerTitle: 'Register Congregation',
+    registerButton: 'Create Account',
+    registerError: 'Failed to create account.',
+    registerLink: 'Register new congregation',
+    loginLink: 'Already have an account? Sign in',
+    useOffline: 'Use offline',
+    email: 'Email',
+    password: 'Password',
+    displayName: 'Name',
+    congregationName: 'Congregation name',
+    emailInUse: 'This email is already registered.',
+    weakPassword: 'Password must be at least 6 characters.',
+    changePasswordTitle: 'Change Password',
+    changePasswordDesc: 'You must change your temporary password before continuing.',
+    changePasswordButton: 'Change Password',
+    changePasswordError: 'Failed to change password. Try signing out and back in.',
+    newPassword: 'New password',
+    confirmPassword: 'Confirm password',
+    passwordMismatch: 'Passwords do not match.',
+    noPermission: 'You do not have permission to view this page.'
+  },
+
+  // Admin panel
+  admin: {
+    title: 'Admin Panel',
+    congregationInfo: 'Congregation Info',
+    congregationId: 'Congregation ID',
+    members: 'Members',
+    noMembers: 'No members.',
+    loading: 'Loading...',
+    loadError: 'Failed to load members.',
+    createUser: 'Create User',
+    createUserButton: 'Create User',
+    createUserError: 'Failed to create user.',
+    userCreated: 'User created successfully',
+    shareCredentials: 'Share these credentials with the user (WhatsApp, in person, etc.)',
+    tempPassword: 'Temporary password',
+    role: 'Role',
+    roleMember: 'Member',
+    roleAdmin: 'Admin'
+  },
+
+  // Settings
+  settings: {
+    title: 'Settings',
+    currentMode: 'Current mode',
+    modeOffline: 'Offline (local data)',
+    modeOnline: 'Online (cloud data)',
+    switchToOnline: 'Switch to online mode',
+    profile: 'Profile',
+    passwordChanged: 'Password changed successfully.',
+    logout: 'Sign Out',
+    migrateTitle: 'Migrate data to cloud',
+    migrateDesc: 'If you register for online mode, you can upload your local data to the cloud.'
+  },
+
   // Alerts
   alert: {
     unsavedForm: 'You have unsaved changes in the form. Save the territory first, then export the JSON.',
