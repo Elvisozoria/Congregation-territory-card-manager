@@ -71,6 +71,12 @@ export function render(container, params) {
   container.appendChild(landmarksSection);
   rerenderLandmarks();
 
+  // History section
+  const historySection = document.createElement('div');
+  historySection.className = 'history-section';
+  container.appendChild(historySection);
+  rerenderHistory();
+
   // Delete territory link
   const deleteSection = document.createElement('div');
   deleteSection.className = 'delete-section';
@@ -162,6 +168,166 @@ export function render(container, params) {
 
       landmarksSection.appendChild(ul);
     }
+  }
+
+  function rerenderHistory() {
+    historySection.innerHTML = '';
+
+    const headerRow = document.createElement('div');
+    headerRow.className = 'history-header';
+
+    const h3 = document.createElement('h3');
+    h3.textContent = t('show.history');
+    headerRow.appendChild(h3);
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn btn-secondary btn-sm';
+    addBtn.textContent = t('show.addHistory');
+    addBtn.addEventListener('click', function () {
+      showHistoryForm(null);
+    });
+    headerRow.appendChild(addBtn);
+    historySection.appendChild(headerRow);
+
+    const entries = store.getHistoryForTerritory(params.id);
+
+    if (entries.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'empty-state';
+      empty.textContent = t('show.noHistory');
+      historySection.appendChild(empty);
+    } else {
+      const list = document.createElement('div');
+      list.className = 'history-list';
+
+      entries.forEach(function (entry) {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+
+        const info = document.createElement('div');
+        info.className = 'history-info';
+
+        const personRow = document.createElement('div');
+        personRow.className = 'history-person';
+        personRow.textContent = entry.person;
+        info.appendChild(personRow);
+
+        const dateRow = document.createElement('div');
+        dateRow.className = 'history-dates';
+        const startStr = entry.startDate || '?';
+        const endStr = entry.endDate || t('show.historyInProgress');
+        dateRow.textContent = startStr + ' → ' + endStr;
+        info.appendChild(dateRow);
+
+        if (entry.notes) {
+          const notesRow = document.createElement('div');
+          notesRow.className = 'history-notes';
+          notesRow.textContent = entry.notes;
+          info.appendChild(notesRow);
+        }
+
+        item.appendChild(info);
+
+        const actions = document.createElement('div');
+        actions.className = 'history-actions';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-secondary btn-sm';
+        editBtn.textContent = t('show.historyEdit');
+        editBtn.addEventListener('click', function () {
+          showHistoryForm(entry);
+        });
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn btn-danger btn-sm';
+        delBtn.textContent = t('show.historyDelete');
+        delBtn.addEventListener('click', function () {
+          if (confirm(t('show.confirmDeleteHistory'))) {
+            store.deleteHistoryEntry(entry.id);
+            rerenderHistory();
+          }
+        });
+
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        item.appendChild(actions);
+        list.appendChild(item);
+      });
+
+      historySection.appendChild(list);
+    }
+  }
+
+  function showHistoryForm(existingEntry) {
+    // Remove any existing form
+    const oldForm = historySection.querySelector('.history-form');
+    if (oldForm) oldForm.remove();
+
+    const form = document.createElement('div');
+    form.className = 'history-form';
+
+    form.innerHTML =
+      '<div class="form-group">' +
+        '<label>' + escapeHtml(t('show.historyPerson')) + '</label>' +
+        '<input type="text" class="history-input" data-field="person" value="' + (existingEntry ? escapeHtml(existingEntry.person) : '') + '" />' +
+      '</div>' +
+      '<div class="history-form-row">' +
+        '<div class="form-group">' +
+          '<label>' + escapeHtml(t('show.historyStartDate')) + '</label>' +
+          '<input type="date" class="history-input" data-field="startDate" value="' + (existingEntry ? existingEntry.startDate || '' : '') + '" />' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>' + escapeHtml(t('show.historyEndDate')) + '</label>' +
+          '<input type="date" class="history-input" data-field="endDate" value="' + (existingEntry && existingEntry.endDate ? existingEntry.endDate : '') + '" />' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>' + escapeHtml(t('show.historyNotes')) + '</label>' +
+        '<input type="text" class="history-input" data-field="notes" value="' + (existingEntry ? escapeHtml(existingEntry.notes || '') : '') + '" />' +
+      '</div>';
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'history-form-actions';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-primary btn-sm';
+    saveBtn.textContent = t('show.historySave');
+    saveBtn.addEventListener('click', function () {
+      const person = form.querySelector('[data-field="person"]').value.trim();
+      const startDate = form.querySelector('[data-field="startDate"]').value;
+      const endDate = form.querySelector('[data-field="endDate"]').value || null;
+      const notes = form.querySelector('[data-field="notes"]').value.trim();
+
+      if (!person || !startDate) return;
+
+      if (existingEntry) {
+        store.updateHistoryEntry(existingEntry.id, { person, startDate, endDate, notes });
+      } else {
+        store.addHistoryEntry({ territoryId: params.id, person, startDate, endDate, notes });
+      }
+      rerenderHistory();
+    });
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-secondary btn-sm';
+    cancelBtn.textContent = t('show.historyCancel');
+    cancelBtn.addEventListener('click', function () {
+      form.remove();
+    });
+
+    btnRow.appendChild(saveBtn);
+    btnRow.appendChild(cancelBtn);
+    form.appendChild(btnRow);
+
+    // Insert form after the header
+    const headerEl = historySection.querySelector('.history-header');
+    if (headerEl && headerEl.nextSibling) {
+      historySection.insertBefore(form, headerEl.nextSibling);
+    } else {
+      historySection.appendChild(form);
+    }
+
+    form.querySelector('[data-field="person"]').focus();
   }
 
   return function () {

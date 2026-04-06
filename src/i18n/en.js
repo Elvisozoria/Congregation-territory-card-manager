@@ -47,7 +47,21 @@ export default {
     deleteTerritory: 'Delete this territory',
     promptLandmarkName: 'Landmark name:',
     confirmDeleteLandmark: 'Delete this landmark?',
-    confirmDeleteTerritory: 'Delete territory "{name}"? This cannot be undone.'
+    confirmDeleteTerritory: 'Delete territory "{name}"? This cannot be undone.',
+    // History
+    history: 'Work History',
+    noHistory: 'No work records yet.',
+    addHistory: 'Add Record',
+    historyPerson: 'Person',
+    historyStartDate: 'Start date',
+    historyEndDate: 'End date',
+    historyNotes: 'Notes',
+    historyInProgress: 'In progress',
+    historySave: 'Save',
+    historyCancel: 'Cancel',
+    historyEdit: 'Edit',
+    historyDelete: 'Delete',
+    confirmDeleteHistory: 'Delete this work record?'
   },
 
   // Form view

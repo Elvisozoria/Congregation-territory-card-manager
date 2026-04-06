@@ -54,7 +54,7 @@ const SAMPLE_DATA = {
 const STORAGE_KEY = 'territory-cards-data';
 
 export function createLocalStore() {
-  let data = { territories: [] };
+  let data = { territories: [], history: [] };
   let listeners = [];
   let defaultCenter = [0, 0];
 
@@ -74,6 +74,8 @@ export function createLocalStore() {
       const parsed = JSON.parse(saved);
       if (parsed.territories && Array.isArray(parsed.territories)) {
         data = parsed;
+        // Ensure history array exists (migration from old format)
+        if (!Array.isArray(data.history)) data.history = [];
       }
     }
   } catch (e) { /* ignore parse errors */ }
@@ -133,6 +135,7 @@ export function createLocalStore() {
 
     deleteTerritory(id) {
       data.territories = data.territories.filter(function (t) { return t.id !== id; });
+      data.history = data.history.filter(function (h) { return h.territoryId !== id; });
       notify();
     },
 
@@ -158,6 +161,49 @@ export function createLocalStore() {
       notify();
     },
 
+    // --- History ---
+
+    getAllHistory() {
+      return data.history;
+    },
+
+    getHistoryForTerritory(territoryId) {
+      return data.history
+        .filter(function (h) { return h.territoryId === territoryId; })
+        .sort(function (a, b) { return b.startDate.localeCompare(a.startDate); });
+    },
+
+    addHistoryEntry(entry) {
+      const historyEntry = {
+        id: nextId(data.history),
+        territoryId: entry.territoryId,
+        startDate: entry.startDate || '',
+        endDate: entry.endDate || null,
+        person: entry.person || '',
+        notes: entry.notes || '',
+        createdAt: new Date().toISOString()
+      };
+      data.history.push(historyEntry);
+      notify();
+      return historyEntry;
+    },
+
+    updateHistoryEntry(id, attrs) {
+      const entry = data.history.find(function (h) { return h.id === id; });
+      if (!entry) return null;
+      if (attrs.startDate !== undefined) entry.startDate = attrs.startDate;
+      if (attrs.endDate !== undefined) entry.endDate = attrs.endDate;
+      if (attrs.person !== undefined) entry.person = attrs.person;
+      if (attrs.notes !== undefined) entry.notes = attrs.notes;
+      notify();
+      return entry;
+    },
+
+    deleteHistoryEntry(id) {
+      data.history = data.history.filter(function (h) { return h.id !== id; });
+      notify();
+    },
+
     loadFromFile(file) {
       return new Promise(function (resolve, reject) {
         const reader = new FileReader();
@@ -172,6 +218,7 @@ export function createLocalStore() {
                 if (t.name === undefined) t.name = '';
                 if (t.qr_url === undefined) t.qr_url = '';
               });
+              if (!Array.isArray(parsed.history)) parsed.history = [];
               data = parsed;
               notify();
               resolve();
@@ -219,7 +266,7 @@ export function createLocalStore() {
     },
 
     reset() {
-      data = { territories: [] };
+      data = { territories: [], history: [] };
       try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
       notify();
     },

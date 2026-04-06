@@ -47,7 +47,21 @@ export default {
     deleteTerritory: 'Eliminar este territorio',
     promptLandmarkName: 'Nombre del punto de referencia:',
     confirmDeleteLandmark: '¿Eliminar este punto de referencia?',
-    confirmDeleteTerritory: '¿Eliminar el territorio "{name}"? Esta acción no se puede deshacer.'
+    confirmDeleteTerritory: '¿Eliminar el territorio "{name}"? Esta acción no se puede deshacer.',
+    // History
+    history: 'Historial de Trabajo',
+    noHistory: 'Sin registros de trabajo aún.',
+    addHistory: 'Agregar Registro',
+    historyPerson: 'Persona',
+    historyStartDate: 'Fecha de inicio',
+    historyEndDate: 'Fecha de fin',
+    historyNotes: 'Notas',
+    historyInProgress: 'En progreso',
+    historySave: 'Guardar',
+    historyCancel: 'Cancelar',
+    historyEdit: 'Editar',
+    historyDelete: 'Eliminar',
+    confirmDeleteHistory: '¿Eliminar este registro de trabajo?'
   },
 
   // Form view
