@@ -1,8 +1,4 @@
-window.App = window.App || {};
-window.App.I18n = window.App.I18n || {};
-window.App.I18n.languages = window.App.I18n.languages || {};
-
-window.App.I18n.languages.es = {
+export default {
   _label: 'ES',
   _name: 'Español',
 
