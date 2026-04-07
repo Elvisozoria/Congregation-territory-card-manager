@@ -54,7 +54,7 @@ const SAMPLE_DATA = {
 const STORAGE_KEY = 'territory-cards-data';
 
 export function createLocalStore() {
-  let data = { territories: [], history: [] };
+  let data = { territories: [], history: [], globalLandmarks: [] };
   let listeners = [];
   let defaultCenter = [0, 0];
 
@@ -74,8 +74,9 @@ export function createLocalStore() {
       const parsed = JSON.parse(saved);
       if (parsed.territories && Array.isArray(parsed.territories)) {
         data = parsed;
-        // Ensure history array exists (migration from old format)
+        // Ensure arrays exist (migration from old format)
         if (!Array.isArray(data.history)) data.history = [];
+        if (!Array.isArray(data.globalLandmarks)) data.globalLandmarks = [];
       }
     }
   } catch (e) { /* ignore parse errors */ }
@@ -114,7 +115,9 @@ export function createLocalStore() {
         group_name: attrs.group_name || '',
         polygon: attrs.polygon || [],
         qr_url: attrs.qr_url || '',
-        landmarks: []
+        notes: attrs.notes || '',
+        landmarks: [],
+        blocks: []
       };
       data.territories.push(territory);
       notify();
@@ -129,6 +132,7 @@ export function createLocalStore() {
       if (attrs.group_name !== undefined) territory.group_name = attrs.group_name;
       if (attrs.polygon !== undefined) territory.polygon = attrs.polygon;
       if (attrs.qr_url !== undefined) territory.qr_url = attrs.qr_url;
+      if (attrs.notes !== undefined) territory.notes = attrs.notes;
       notify();
       return territory;
     },
@@ -145,6 +149,7 @@ export function createLocalStore() {
       const landmark = {
         id: nextId(territory.landmarks),
         name: attrs.name,
+        description: attrs.description || '',
         lat: attrs.lat,
         lng: attrs.lng,
         color: attrs.color || '#3B82F6'
@@ -161,6 +166,54 @@ export function createLocalStore() {
       notify();
     },
 
+    // --- Blocks (manzanas) ---
+
+    addBlock(territoryId, attrs) {
+      const territory = this.getById(territoryId);
+      if (!territory) return null;
+      if (!territory.blocks) territory.blocks = [];
+      const block = {
+        id: nextId(territory.blocks),
+        number: attrs.number || '',
+        polygon: attrs.polygon || []
+      };
+      territory.blocks.push(block);
+      notify();
+      return block;
+    },
+
+    deleteBlock(territoryId, blockId) {
+      const territory = this.getById(territoryId);
+      if (!territory || !territory.blocks) return;
+      territory.blocks = territory.blocks.filter(function (b) { return b.id !== blockId; });
+      notify();
+    },
+
+    // --- Global Landmarks ---
+
+    getGlobalLandmarks() {
+      return data.globalLandmarks;
+    },
+
+    addGlobalLandmark(attrs) {
+      const landmark = {
+        id: nextId(data.globalLandmarks),
+        name: attrs.name,
+        description: attrs.description || '',
+        lat: attrs.lat,
+        lng: attrs.lng,
+        color: attrs.color || '#9CA3AF'
+      };
+      data.globalLandmarks.push(landmark);
+      notify();
+      return landmark;
+    },
+
+    deleteGlobalLandmark(id) {
+      data.globalLandmarks = data.globalLandmarks.filter(function (l) { return l.id !== id; });
+      notify();
+    },
+
     // --- History ---
 
     getAllHistory() {
@@ -173,6 +226,12 @@ export function createLocalStore() {
         .sort(function (a, b) { return b.startDate.localeCompare(a.startDate); });
     },
 
+    getActiveAssignment(territoryId) {
+      return data.history.find(function (h) {
+        return h.territoryId === territoryId && (h.type === 'assignment' || !h.type) && h.status === 'active';
+      }) || null;
+    },
+
     addHistoryEntry(entry) {
       const historyEntry = {
         id: nextId(data.history),
@@ -181,6 +240,8 @@ export function createLocalStore() {
         endDate: entry.endDate || null,
         person: entry.person || '',
         notes: entry.notes || '',
+        type: entry.type || 'assignment',
+        status: entry.status || 'active',
         createdAt: new Date().toISOString()
       };
       data.history.push(historyEntry);
@@ -195,6 +256,8 @@ export function createLocalStore() {
       if (attrs.endDate !== undefined) entry.endDate = attrs.endDate;
       if (attrs.person !== undefined) entry.person = attrs.person;
       if (attrs.notes !== undefined) entry.notes = attrs.notes;
+      if (attrs.type !== undefined) entry.type = attrs.type;
+      if (attrs.status !== undefined) entry.status = attrs.status;
       notify();
       return entry;
     },
@@ -219,6 +282,7 @@ export function createLocalStore() {
                 if (t.qr_url === undefined) t.qr_url = '';
               });
               if (!Array.isArray(parsed.history)) parsed.history = [];
+              if (!Array.isArray(parsed.globalLandmarks)) parsed.globalLandmarks = [];
               data = parsed;
               notify();
               resolve();
@@ -266,7 +330,7 @@ export function createLocalStore() {
     },
 
     reset() {
-      data = { territories: [], history: [] };
+      data = { territories: [], history: [], globalLandmarks: [] };
       try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
       notify();
     },

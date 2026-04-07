@@ -56,6 +56,25 @@ export function renderCardMap(cardElement, territory) {
     });
   });
 
+  // Draw blocks (manzanas)
+  const blocks = territory.blocks || [];
+  const blockColors = ['#F59E0B', '#10B981', '#8B5CF6', '#3B82F6', '#EF4444', '#EC4899'];
+  blocks.forEach(function (block, index) {
+    if (!block.polygon || block.polygon.length < 3) return;
+    const bCoords = block.polygon.map(function (c) { return [c[1], c[0]]; });
+    const color = blockColors[index % blockColors.length];
+    const bPoly = L.polygon(bCoords, {
+      color: color, weight: 1.5, fillColor: color, fillOpacity: 0.1, dashArray: '4 4'
+    }).addTo(map);
+    const bCenter = bPoly.getBounds().getCenter();
+    const bLabel = L.divIcon({
+      className: '',
+      html: '<span style="background:rgba(245,158,11,0.85);color:white;padding:0 4px;font-size:9px;font-weight:bold;border-radius:2px;">' + block.number + '</span>',
+      iconSize: null
+    });
+    L.marker(bCenter, { icon: bLabel, interactive: false }).addTo(map);
+  });
+
   // Generate QR code
   const qrContainer = cardElement.querySelector('[data-qr-url]');
   if (qrContainer && qrContainer.dataset.qrUrl) {

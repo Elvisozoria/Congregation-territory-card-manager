@@ -172,6 +172,11 @@ a.navbar-brand:hover { color: white; }
 .form-container { max-width: 600px; }
 .form-group { margin-bottom: 1.25rem; }
 .form-group label { display: block; font-weight: 600; margin-bottom: 0.375rem; font-size: 0.875rem; color: var(--text-secondary); }
+.form-group textarea {
+  width: 100%; padding: 0.625rem 0.75rem; border: 1px solid var(--input-border); border-radius: 6px; font-size: 0.875rem;
+  transition: border-color 0.2s, box-shadow 0.2s; background: var(--input-bg); color: var(--text-primary); font-family: inherit; resize: vertical;
+}
+.form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 .form-group input[type='text'], .form-group input[type='url'] {
   width: 100%; padding: 0.625rem 0.75rem; border: 1px solid var(--input-border); border-radius: 6px; font-size: 0.875rem;
   transition: border-color 0.2s, box-shadow 0.2s; background: var(--input-bg); color: var(--text-primary);
@@ -305,6 +310,50 @@ body.print-layout .container { max-width: none; padding: 0; }
 .role-badge { font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 4px; font-weight: 600; }
 .role-admin { background: var(--accent-light); color: var(--accent-light-text); }
 .role-member { background: var(--bg-tertiary); color: var(--text-secondary); }
+
+/* Territory notes */
+.territory-notes { background: var(--accent-light); border: 1px solid var(--accent-light-border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; }
+.territory-notes h3 { font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--accent-light-text); }
+.territory-notes p { font-size: 0.875rem; color: var(--text-secondary); margin: 0; white-space: pre-wrap; }
+
+/* Landmark inline form */
+.landmark-form { background: var(--bg-secondary); border: 1px solid var(--accent-light-border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+.landmark-form h4 { margin-bottom: 0.75rem; font-size: 0.9375rem; }
+
+/* Scope toggle */
+.scope-toggle { display: flex; gap: 0; border: 1px solid var(--border-primary); border-radius: 6px; overflow: hidden; }
+.scope-btn { flex: 1; background: none; border: none; padding: 0.375rem 0.75rem; font-size: 0.8125rem; cursor: pointer; color: var(--text-secondary); transition: all 0.2s; }
+.scope-btn + .scope-btn { border-left: 1px solid var(--border-primary); }
+.scope-btn.active { background: var(--accent); color: white; }
+
+/* Landmark description */
+.landmark-info { flex: 1; min-width: 0; }
+.landmark-description { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem; }
+
+/* Global badge */
+.global-badge { display: inline-block; font-size: 0.625rem; background: var(--bg-tertiary); color: var(--text-muted); padding: 0.0625rem 0.375rem; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; vertical-align: middle; }
+.global-tooltip { opacity: 0.7; }
+
+/* Block labels on map */
+.block-label { background: rgba(245,158,11,0.9); color: white; padding: 1px 6px; font-size: 11px; font-weight: bold; border-radius: 3px; white-space: nowrap; }
+[data-theme="dark"] .block-label { background: rgba(245,158,11,0.85); }
+
+/* Blocks section */
+.blocks-section { margin-top: 1.5rem; }
+
+/* Assignment banner */
+.assignment-banner { margin-bottom: 1rem; }
+.assignment-banner.active { background: var(--accent-light); border: 1px solid var(--accent-light-border); border-radius: 8px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.assignment-info { font-size: 0.875rem; color: var(--accent-light-text); }
+.assignment-info span { font-weight: 400; opacity: 0.8; }
+.assignment-actions { display: flex; gap: 0.375rem; }
+
+/* Type and status badges */
+.type-badge { display: inline-block; font-size: 0.625rem; background: var(--bg-tertiary); color: var(--text-muted); padding: 0.0625rem 0.375rem; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; vertical-align: middle; }
+.status-badge { display: inline-block; font-size: 0.625rem; padding: 0.0625rem 0.375rem; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; vertical-align: middle; }
+.status-active { background: var(--accent-light); color: var(--accent-light-text); }
+.status-completed { background: var(--success-bg); color: var(--success-text); }
+.status-returned { background: var(--danger-bg); color: var(--danger-text); }
 
 /* Delete section (show & form) */
 .delete-section { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-secondary); text-align: center; }

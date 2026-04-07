@@ -162,6 +162,15 @@ export function render(container) {
       const meta = document.createElement('div');
       meta.className = 'territory-grid-card-meta';
       meta.innerHTML = '<span>' + territory.landmarks.length + ' ' + escapeHtml(t('index.colLandmarks').toLowerCase()) + '</span>';
+
+      // Assignment badge
+      const activeAssignment = store.getActiveAssignment ? store.getActiveAssignment(territory.id) : null;
+      if (activeAssignment) {
+        meta.innerHTML += '<span class="status-badge status-active">' + escapeHtml(activeAssignment.person) + '</span>';
+      } else {
+        meta.innerHTML += '<span class="status-badge status-completed" style="opacity:0.5">' + escapeHtml(t('show.available')) + '</span>';
+      }
+
       card.appendChild(meta);
 
       const actions = document.createElement('div');

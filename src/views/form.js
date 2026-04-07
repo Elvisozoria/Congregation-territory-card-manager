@@ -55,6 +55,10 @@ export function render(container, params) {
       '<label for="field-qr">' + escapeHtml(t('form.fieldQr')) + '</label>' +
       '<input type="url" id="field-qr" placeholder="https://..." value="' + escapeAttr(territory ? territory.qr_url : '') + '" />' +
     '</div>' +
+    '<div class="form-group">' +
+      '<label for="field-notes">' + escapeHtml(t('form.fieldNotes')) + '</label>' +
+      '<textarea id="field-notes" rows="3" placeholder="' + escapeAttr(t('form.fieldNotesPlaceholder')) + '">' + escapeHtml(territory ? territory.notes || '' : '') + '</textarea>' +
+    '</div>' +
     '<div class="form-instruction">' + t('form.drawInstruction') + '</div>';
 
   form.addEventListener('input', function () { isDirty = true; });
@@ -115,6 +119,7 @@ export function render(container, params) {
     const name = document.getElementById('field-name').value.trim();
     const group_name = document.getElementById('field-group').value.trim();
     const qr_url = document.getElementById('field-qr').value.trim();
+    const notes = document.getElementById('field-notes').value.trim();
     let polygon = [];
 
     try {
@@ -147,7 +152,7 @@ export function render(container, params) {
       return;
     }
 
-    const attrs = { number, name, group_name, qr_url, polygon };
+    const attrs = { number, name, group_name, qr_url, notes, polygon };
 
     isDirty = false;
     if (isEdit) {

@@ -61,7 +61,42 @@ export default {
     historyCancel: 'Cancel',
     historyEdit: 'Edit',
     historyDelete: 'Delete',
-    confirmDeleteHistory: 'Delete this work record?'
+    confirmDeleteHistory: 'Delete this work record?',
+    // Territory notes
+    notes: 'Notes',
+    // Landmark form (inline)
+    addLandmarkTitle: 'New Landmark',
+    addLandmarkName: 'Name',
+    addLandmarkDesc: 'Description (optional)',
+    addLandmarkSave: 'Save',
+    addLandmarkCancel: 'Cancel',
+    scopeLocal: 'This territory only',
+    scopeGlobal: 'All territories',
+    globalBadge: 'Global',
+    // Blocks
+    blocks: 'Blocks',
+    noBlocks: 'No blocks drawn yet.',
+    addBlock: 'Draw Block',
+    blockNumber: 'Block number:',
+    deleteBlock: 'Delete',
+    confirmDeleteBlock: 'Delete this block?',
+    drawBlockHint: 'Draw the block polygon on the map. Click the first point to close.',
+    // Assignment
+    assignTerritory: 'Assign Territory',
+    assignedTo: 'Assigned to {person}',
+    assignedSince: 'since {date}',
+    markCompleted: 'Completed',
+    markReturned: 'Return',
+    available: 'Available',
+    assignPerson: 'Person name:',
+    // History types & status
+    typeAssignment: 'Assignment',
+    typePreaching: 'Preaching',
+    statusActive: 'Active',
+    statusCompleted: 'Completed',
+    statusReturned: 'Returned',
+    historyType: 'Type',
+    historyStatus: 'Status'
   },
 
   // Form view
@@ -73,6 +108,8 @@ export default {
     fieldName: 'Name',
     fieldGroup: 'Group',
     fieldQr: 'QR Link (optional)',
+    fieldNotes: 'Notes / Access instructions',
+    fieldNotesPlaceholder: 'Directions, general references...',
     drawInstruction: 'Click the <strong>pentagon icon</strong> on the map, then click points to draw your territory boundary. Click the first point again to close the shape.',
     save: 'Save Territory',
     deleteTerritory: 'Delete this territory',

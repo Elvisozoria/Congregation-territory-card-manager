@@ -61,7 +61,42 @@ export default {
     historyCancel: 'Cancelar',
     historyEdit: 'Editar',
     historyDelete: 'Eliminar',
-    confirmDeleteHistory: '¿Eliminar este registro de trabajo?'
+    confirmDeleteHistory: '¿Eliminar este registro de trabajo?',
+    // Territory notes
+    notes: 'Notas',
+    // Landmark form (inline)
+    addLandmarkTitle: 'Nueva Referencia',
+    addLandmarkName: 'Nombre',
+    addLandmarkDesc: 'Descripción (opcional)',
+    addLandmarkSave: 'Guardar',
+    addLandmarkCancel: 'Cancelar',
+    scopeLocal: 'Solo este territorio',
+    scopeGlobal: 'Todos los territorios',
+    globalBadge: 'Global',
+    // Blocks (manzanas)
+    blocks: 'Manzanas',
+    noBlocks: 'Sin manzanas dibujadas aún.',
+    addBlock: 'Dibujar Manzana',
+    blockNumber: 'Número de manzana:',
+    deleteBlock: 'Eliminar',
+    confirmDeleteBlock: '¿Eliminar esta manzana?',
+    drawBlockHint: 'Dibuja el polígono de la manzana en el mapa. Haz clic en el primer punto para cerrar.',
+    // Assignment
+    assignTerritory: 'Asignar Territorio',
+    assignedTo: 'Asignado a {person}',
+    assignedSince: 'desde {date}',
+    markCompleted: 'Completado',
+    markReturned: 'Devolver',
+    available: 'Disponible',
+    assignPerson: 'Nombre de la persona:',
+    // History types & status
+    typeAssignment: 'Asignación',
+    typePreaching: 'Predicación',
+    statusActive: 'Activo',
+    statusCompleted: 'Completado',
+    statusReturned: 'Devuelto',
+    historyType: 'Tipo',
+    historyStatus: 'Estado'
   },
 
   // Form view
@@ -73,6 +108,8 @@ export default {
     fieldName: 'Nombre',
     fieldGroup: 'Grupo',
     fieldQr: 'Enlace QR (opcional)',
+    fieldNotes: 'Notas / Referencias de acceso',
+    fieldNotesPlaceholder: 'Instrucciones para llegar, referencias generales...',
     drawInstruction: 'Haz clic en el <strong>ícono del pentágono</strong> en el mapa, luego haz clic en puntos para dibujar el límite del territorio. Haz clic en el primer punto de nuevo para cerrar la forma.',
     save: 'Guardar Territorio',
     deleteTerritory: 'Eliminar este territorio',
