@@ -117,7 +117,8 @@ export default {
     errorNumber: 'Number is required',
     errorName: 'Name is required',
     errorQrFormat: 'QR Link must start with http:// or https://',
-    errorDuplicate: 'Territory number "{number}" already exists'
+    errorDuplicate: 'Territory number "{number}" already exists',
+    draftFound: 'An auto-saved draft was found. Would you like to restore it?'
   },
 
   // Card view

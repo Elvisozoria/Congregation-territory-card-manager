@@ -5,6 +5,27 @@ import { escapeHtml, escapeAttr } from '../utils/helpers.js';
 
 export let isDirty = false;
 
+const DRAFT_PREFIX = 'territory-draft-';
+
+function getDraftKey(id) {
+  return DRAFT_PREFIX + (id || 'new');
+}
+
+function saveDraft(id, formData) {
+  try { localStorage.setItem(getDraftKey(id), JSON.stringify(formData)); } catch (e) { /* ignore */ }
+}
+
+function loadDraft(id) {
+  try {
+    const saved = localStorage.getItem(getDraftKey(id));
+    return saved ? JSON.parse(saved) : null;
+  } catch (e) { return null; }
+}
+
+function clearDraft(id) {
+  try { localStorage.removeItem(getDraftKey(id)); } catch (e) { /* ignore */ }
+}
+
 export function render(container, params) {
   const store = getStore();
   const isEdit = params.id !== null;
@@ -16,7 +37,16 @@ export function render(container, params) {
   }
 
   let cleanup = null;
+  let draftTimer = null;
   isDirty = false;
+
+  // Check for existing draft
+  const draft = loadDraft(params.id);
+  let useDraft = false;
+  if (draft) {
+    useDraft = confirm(t('form.draftFound'));
+    if (!useDraft) clearDraft(params.id);
+  }
 
   // Header
   const header = document.createElement('div');
@@ -38,30 +68,56 @@ export function render(container, params) {
   // Form fields
   const form = document.createElement('form');
 
+  // Source values: draft takes priority if user accepted it
+  const src = useDraft && draft ? draft : territory;
+  const valNum = src ? src.number || '' : '';
+  const valName = src ? src.name || '' : '';
+  const valGroup = src ? src.group_name || '' : '';
+  const valQr = src ? src.qr_url || '' : '';
+  const valNotes = src ? src.notes || '' : '';
+
   form.innerHTML =
     '<div class="form-group">' +
       '<label for="field-number">' + escapeHtml(t('form.fieldNumber')) + '</label>' +
-      '<input type="text" id="field-number" placeholder="1A" value="' + escapeAttr(territory ? territory.number : '') + '" />' +
+      '<input type="text" id="field-number" placeholder="1A" value="' + escapeAttr(valNum) + '" />' +
     '</div>' +
     '<div class="form-group">' +
       '<label for="field-name">' + escapeHtml(t('form.fieldName')) + '</label>' +
-      '<input type="text" id="field-name" placeholder="Los Prados" value="' + escapeAttr(territory ? territory.name : '') + '" />' +
+      '<input type="text" id="field-name" placeholder="Los Prados" value="' + escapeAttr(valName) + '" />' +
     '</div>' +
     '<div class="form-group">' +
       '<label for="field-group">' + escapeHtml(t('form.fieldGroup')) + '</label>' +
-      '<input type="text" id="field-group" placeholder="Oeste" value="' + escapeAttr(territory ? territory.group_name : '') + '" />' +
+      '<input type="text" id="field-group" placeholder="Oeste" value="' + escapeAttr(valGroup) + '" />' +
     '</div>' +
     '<div class="form-group">' +
       '<label for="field-qr">' + escapeHtml(t('form.fieldQr')) + '</label>' +
-      '<input type="url" id="field-qr" placeholder="https://..." value="' + escapeAttr(territory ? territory.qr_url : '') + '" />' +
+      '<input type="url" id="field-qr" placeholder="https://..." value="' + escapeAttr(valQr) + '" />' +
     '</div>' +
     '<div class="form-group">' +
       '<label for="field-notes">' + escapeHtml(t('form.fieldNotes')) + '</label>' +
-      '<textarea id="field-notes" rows="3" placeholder="' + escapeAttr(t('form.fieldNotesPlaceholder')) + '">' + escapeHtml(territory ? territory.notes || '' : '') + '</textarea>' +
+      '<textarea id="field-notes" rows="3" placeholder="' + escapeAttr(t('form.fieldNotesPlaceholder')) + '">' + escapeHtml(valNotes) + '</textarea>' +
     '</div>' +
     '<div class="form-instruction">' + t('form.drawInstruction') + '</div>';
 
-  form.addEventListener('input', function () { isDirty = true; });
+  function onBeforeUnload(e) {
+    if (isDirty) { e.preventDefault(); e.returnValue = ''; }
+  }
+  window.addEventListener('beforeunload', onBeforeUnload);
+
+  form.addEventListener('input', function () {
+    isDirty = true;
+    // Debounced draft save
+    if (draftTimer) clearTimeout(draftTimer);
+    draftTimer = setTimeout(function () {
+      saveDraft(params.id, {
+        number: document.getElementById('field-number').value,
+        name: document.getElementById('field-name').value,
+        group_name: document.getElementById('field-group').value,
+        qr_url: document.getElementById('field-qr').value,
+        notes: document.getElementById('field-notes').value
+      });
+    }, 2000);
+  });
 
   // Map container for polygon draw
   const mapDiv = document.createElement('div');
@@ -155,6 +211,7 @@ export function render(container, params) {
     const attrs = { number, name, group_name, qr_url, notes, polygon };
 
     isDirty = false;
+    clearDraft(params.id);
     if (isEdit) {
       store.updateTerritory(territory.id, attrs);
       window.location.hash = '#/territories/' + territory.id;
@@ -172,6 +229,8 @@ export function render(container, params) {
 
   return function () {
     clearInterval(polygonObserver);
+    if (draftTimer) clearTimeout(draftTimer);
+    window.removeEventListener('beforeunload', onBeforeUnload);
     if (cleanup) cleanup();
   };
 }

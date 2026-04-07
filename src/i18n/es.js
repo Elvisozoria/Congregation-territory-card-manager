@@ -117,7 +117,8 @@ export default {
     errorNumber: 'El número es requerido',
     errorName: 'El nombre es requerido',
     errorQrFormat: 'El enlace QR debe comenzar con http:// o https://',
-    errorDuplicate: 'El número de territorio "{number}" ya existe'
+    errorDuplicate: 'El número de territorio "{number}" ya existe',
+    draftFound: 'Se encontró un borrador guardado automáticamente. ¿Deseas restaurarlo?'
   },
 
   // Card view
