@@ -118,6 +118,22 @@ export function render(container) {
     wrapper.appendChild(logoutSection);
   }
 
+  // Online user: switch back to offline
+  if (mode === 'online' && profile) {
+    const switchOfflineSection = document.createElement('div');
+    switchOfflineSection.className = 'admin-section';
+    const switchOfflineBtn = document.createElement('button');
+    switchOfflineBtn.className = 'btn btn-secondary';
+    switchOfflineBtn.textContent = t('settings.switchToOffline');
+    switchOfflineBtn.addEventListener('click', function () {
+      setMode('offline');
+      window.location.hash = '#/';
+      window.location.reload();
+    });
+    switchOfflineSection.appendChild(switchOfflineBtn);
+    wrapper.appendChild(switchOfflineSection);
+  }
+
   // Migration section (offline mode with data)
   if (mode === 'offline') {
     const migrateSection = document.createElement('div');
@@ -125,11 +141,15 @@ export function render(container) {
     migrateSection.innerHTML = '<h3>' + escapeHtml(t('settings.migrateTitle')) + '</h3>' +
       '<p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:0.75rem;">' + escapeHtml(t('settings.migrateDesc')) + '</p>';
 
-    const migrateInfo = document.createElement('div');
-    migrateInfo.className = 'flash flash-notice';
-    migrateInfo.style.display = 'none';
-    migrateSection.appendChild(migrateInfo);
-
+    const migrateBtn = document.createElement('button');
+    migrateBtn.className = 'btn btn-primary';
+    migrateBtn.textContent = t('settings.migrateButton');
+    migrateBtn.addEventListener('click', function () {
+      setMode('online');
+      window.location.hash = '#/register';
+      window.location.reload();
+    });
+    migrateSection.appendChild(migrateBtn);
     wrapper.appendChild(migrateSection);
   }
 

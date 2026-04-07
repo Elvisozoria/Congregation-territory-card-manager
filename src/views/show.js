@@ -37,7 +37,7 @@ export function render(container, params) {
     '</div>';
   if (territory.group_name) {
     const groupBadge = document.createElement('span');
-    groupBadge.style.cssText = 'font-size:0.8125rem;color:#6B7280;font-weight:400;margin-left:0.75rem;';
+    groupBadge.style.cssText = 'font-size:0.8125rem;color:var(--text-secondary);font-weight:400;margin-left:0.75rem;';
     groupBadge.textContent = territory.group_name;
     header.querySelector('h1').appendChild(groupBadge);
   }

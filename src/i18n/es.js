@@ -212,7 +212,9 @@ export default {
     passwordChanged: 'Contraseña cambiada exitosamente.',
     logout: 'Cerrar Sesión',
     migrateTitle: 'Migrar datos a la nube',
-    migrateDesc: 'Si te registras en modo en línea, podrás subir tus datos locales a la nube.'
+    migrateDesc: 'Si te registras en modo en línea, podrás subir tus datos locales a la nube.',
+    migrateButton: 'Registrarse y migrar datos',
+    switchToOffline: 'Cambiar a modo sin conexión'
   },
 
   // Alerts

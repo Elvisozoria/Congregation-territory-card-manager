@@ -96,6 +96,8 @@ export function createLocalStore() {
 
     loadSample() {
       data = JSON.parse(JSON.stringify(SAMPLE_DATA));
+      if (!Array.isArray(data.history)) data.history = [];
+      if (!Array.isArray(data.globalLandmarks)) data.globalLandmarks = [];
       notify();
     },
 
@@ -223,7 +225,7 @@ export function createLocalStore() {
     getHistoryForTerritory(territoryId) {
       return data.history
         .filter(function (h) { return h.territoryId === territoryId; })
-        .sort(function (a, b) { return b.startDate.localeCompare(a.startDate); });
+        .sort(function (a, b) { return (b.startDate || '').localeCompare(a.startDate || ''); });
     },
 
     getActiveAssignment(territoryId) {
@@ -280,6 +282,8 @@ export function createLocalStore() {
                 if (t.number === undefined) t.number = '';
                 if (t.name === undefined) t.name = '';
                 if (t.qr_url === undefined) t.qr_url = '';
+                if (t.notes === undefined) t.notes = '';
+                if (!Array.isArray(t.blocks)) t.blocks = [];
               });
               if (!Array.isArray(parsed.history)) parsed.history = [];
               if (!Array.isArray(parsed.globalLandmarks)) parsed.globalLandmarks = [];
@@ -321,7 +325,9 @@ export function createLocalStore() {
           } else {
             t.id = nextId(data.territories);
             t.qr_url = '';
+            t.notes = '';
             t.landmarks = [];
+            t.blocks = [];
             data.territories.push(t);
           }
         });

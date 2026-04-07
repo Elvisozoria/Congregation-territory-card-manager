@@ -157,10 +157,10 @@ export function render(container, params) {
     deleteBtn.type = 'button';
     deleteBtn.className = 'btn-text-danger';
     deleteBtn.textContent = t('form.deleteTerritory');
-    deleteBtn.addEventListener('click', function () {
+    deleteBtn.addEventListener('click', async function () {
       if (confirm(t('form.confirmDelete', { name: territory.number + ' - ' + territory.name }))) {
         isDirty = false;
-        store.deleteTerritory(territory.id);
+        await store.deleteTerritory(territory.id);
         window.location.hash = '#/';
       }
     });
@@ -168,7 +168,7 @@ export function render(container, params) {
     form.appendChild(deleteSection);
   }
 
-  form.addEventListener('submit', function (e) {
+  form.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const number = document.getElementById('field-number').value.trim();
@@ -213,10 +213,10 @@ export function render(container, params) {
     isDirty = false;
     clearDraft(params.id);
     if (isEdit) {
-      store.updateTerritory(territory.id, attrs);
+      await store.updateTerritory(territory.id, attrs);
       window.location.hash = '#/territories/' + territory.id;
     } else {
-      const result = store.createTerritory(attrs);
+      const result = await store.createTerritory(attrs);
       window.location.hash = '#/territories/' + result.id;
     }
   });

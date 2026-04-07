@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import QRCode from 'qrcodejs2';
+import { escapeHtml } from '../utils/helpers.js';
 
 const WORLD_BOUNDS = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
 
@@ -69,7 +70,7 @@ export function renderCardMap(cardElement, territory) {
     const bCenter = bPoly.getBounds().getCenter();
     const bLabel = L.divIcon({
       className: '',
-      html: '<span style="background:rgba(245,158,11,0.85);color:white;padding:0 4px;font-size:9px;font-weight:bold;border-radius:2px;">' + block.number + '</span>',
+      html: '<span style="background:rgba(245,158,11,0.85);color:white;padding:0 4px;font-size:9px;font-weight:bold;border-radius:2px;">' + escapeHtml(block.number) + '</span>',
       iconSize: null
     });
     L.marker(bCenter, { icon: bLabel, interactive: false }).addTo(map);

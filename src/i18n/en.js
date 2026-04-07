@@ -212,7 +212,9 @@ export default {
     passwordChanged: 'Password changed successfully.',
     logout: 'Sign Out',
     migrateTitle: 'Migrate data to cloud',
-    migrateDesc: 'If you register for online mode, you can upload your local data to the cloud.'
+    migrateDesc: 'If you register for online mode, you can upload your local data to the cloud.',
+    migrateButton: 'Register and migrate data',
+    switchToOffline: 'Switch to offline mode'
   },
 
   // Alerts

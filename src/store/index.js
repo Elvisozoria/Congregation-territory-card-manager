@@ -94,6 +94,7 @@ export async function migrateLocalToCloud() {
   const localStore = createLocalStore();
   const territories = localStore.getAll();
   const historyEntries = localStore.getAllHistory();
+  const localGlobals = localStore.getGlobalLandmarks();
   const cloudStore = getStore();
 
   const idMap = {};
@@ -111,12 +112,23 @@ export async function migrateLocalToCloud() {
       startDate: h.startDate,
       endDate: h.endDate,
       person: h.person,
-      notes: h.notes
+      notes: h.notes,
+      type: h.type || 'assignment',
+      status: h.status || 'active'
     });
   }
 
-  // Clear local data after successful migration
+  for (const gl of localGlobals) {
+    await cloudStore.addGlobalLandmark({
+      name: gl.name,
+      description: gl.description || '',
+      lat: gl.lat,
+      lng: gl.lng,
+      color: gl.color
+    });
+  }
+
   localStore.reset();
 
-  return { territories: territories.length, history: historyEntries.length };
+  return { territories: territories.length, history: historyEntries.length, globalLandmarks: localGlobals.length };
 }

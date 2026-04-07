@@ -7,6 +7,8 @@ import { getStore, getMode, getUserProfile, initStore } from './store/index.js';
 import { init as initRouter, refresh } from './router.js';
 import { isDirty as isFormDirty } from './views/form.js';
 
+let _buildMoreMenu = null;
+
 document.addEventListener('DOMContentLoaded', function () {
   const THEME_KEY = 'territory-cards-theme';
   const mode = getMode();
@@ -138,8 +140,8 @@ document.addEventListener('DOMContentLoaded', function () {
       moreMenu.classList.toggle('open');
     });
 
-    // Store buildMoreMenu for navbar text update
-    window._buildMoreMenu = buildMoreMenu;
+    // Store reference for navbar text update
+    _buildMoreMenu = buildMoreMenu;
   }
 
   // Close all dropdowns on outside click
@@ -154,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateNavbarText() {
     document.getElementById('nav-brand').textContent = t('nav.brand');
     document.getElementById('nav-print').textContent = t('nav.printAll');
-    if (window._buildMoreMenu) window._buildMoreMenu();
+    if (_buildMoreMenu) _buildMoreMenu();
     if (mode === 'online') buildUserMenu();
   }
 
@@ -270,20 +272,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (kmlInput) {
-    kmlInput.addEventListener('click', function () {
-      if (kmlInput.files && kmlInput.files.length > 0) {
-        const store = getStore();
-        store.importKML(kmlInput.files[0]).then(function () {
-          kmlInput.value = '';
-          refresh();
-          alert(t('alert.kmlSuccess'));
-        }).catch(function (err) {
-          alert(t('alert.errorImportKml') + err.message);
-          kmlInput.value = '';
-        });
-      }
-    });
-
     kmlInput.addEventListener('change', function () {
       if (kmlInput.files.length > 0) {
         const store = getStore();

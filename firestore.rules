@@ -2,7 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: get user's congregation ID
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -19,12 +18,26 @@ service cloud.firestore {
     match /users/{userId} {
       // Users can read their own profile
       allow read: if request.auth != null && request.auth.uid == userId;
-      // Users can update their own profile (e.g., change password flag)
-      allow update: if request.auth != null && request.auth.uid == userId;
-      // Admins can create/read users in their congregation
-      allow create: if request.auth != null;
-      // Admins can read all users in their congregation
+
+      // Users can only create their OWN profile (registration flow)
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Users can update their own profile BUT cannot change role or congregationId
+      allow update: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'congregationId']);
+
+      // Admins can read users in their congregation
       allow read: if request.auth != null
+        && resource.data.congregationId == getUserData().congregationId
+        && getUserData().role == 'admin';
+
+      // Admins can create users in their congregation (for the secondary-app pattern)
+      allow create: if request.auth != null
+        && getUserData().role == 'admin'
+        && request.resource.data.congregationId == getUserData().congregationId;
+
+      // Admins can update users in their congregation (e.g., change role)
+      allow update: if request.auth != null
         && resource.data.congregationId == getUserData().congregationId
         && getUserData().role == 'admin';
     }
@@ -48,7 +61,16 @@ service cloud.firestore {
       match /history/{histId} {
         allow read: if isMemberOf(congId);
         allow create: if isMemberOf(congId);
-        allow update, delete: if isMemberOf(congId);
+        // Members can only update/delete their own entries; admins can do any
+        allow update, delete: if isAdminOf(congId)
+          || (isMemberOf(congId) && resource.data.createdBy == request.auth.uid);
+      }
+
+      // Global Landmarks
+      match /globalLandmarks/{lmId} {
+        allow read: if isMemberOf(congId);
+        allow create: if isMemberOf(congId);
+        allow delete: if isMemberOf(congId);
       }
     }
   }

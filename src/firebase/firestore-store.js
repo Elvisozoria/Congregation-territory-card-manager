@@ -1,6 +1,6 @@
 import {
-  collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc,
-  onSnapshot, query, where, orderBy, serverTimestamp
+  collection, doc, addDoc, getDocs, updateDoc, deleteDoc,
+  onSnapshot, serverTimestamp
 } from 'firebase/firestore';
 import { db } from './config.js';
 
@@ -8,36 +8,37 @@ export async function createFirestoreStore(user, congregationId) {
   let listeners = [];
   let unsubTerritories = null;
   let unsubHistory = null;
+  let unsubGlobalLandmarks = null;
   let territories = [];
   let history = [];
+  let globalLandmarks = [];
   let defaultCenter = [0, 0];
 
   const terrCol = collection(db, 'congregations', congregationId, 'territories');
   const histCol = collection(db, 'congregations', congregationId, 'history');
+  const glCol = collection(db, 'congregations', congregationId, 'globalLandmarks');
 
   // Load initial data
-  const terrSnap = await getDocs(terrCol);
-  territories = terrSnap.docs.map(function (d) {
-    return { id: d.id, ...d.data() };
-  });
-
-  const histSnap = await getDocs(histCol);
-  history = histSnap.docs.map(function (d) {
-    return { id: d.id, ...d.data() };
-  });
+  const [terrSnap, histSnap, glSnap] = await Promise.all([
+    getDocs(terrCol), getDocs(histCol), getDocs(glCol)
+  ]);
+  territories = terrSnap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
+  history = histSnap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
+  globalLandmarks = glSnap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
 
   // Set up real-time listeners
   unsubTerritories = onSnapshot(terrCol, function (snap) {
-    territories = snap.docs.map(function (d) {
-      return { id: d.id, ...d.data() };
-    });
+    territories = snap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
     notify();
   });
 
   unsubHistory = onSnapshot(histCol, function (snap) {
-    history = snap.docs.map(function (d) {
-      return { id: d.id, ...d.data() };
-    });
+    history = snap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
+    notify();
+  });
+
+  unsubGlobalLandmarks = onSnapshot(glCol, function (snap) {
+    globalLandmarks = snap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
     notify();
   });
 
@@ -52,7 +53,9 @@ export async function createFirestoreStore(user, congregationId) {
     if (attrs.group_name !== undefined) obj.group_name = attrs.group_name;
     if (attrs.polygon !== undefined) obj.polygon = attrs.polygon;
     if (attrs.qr_url !== undefined) obj.qr_url = attrs.qr_url;
+    if (attrs.notes !== undefined) obj.notes = attrs.notes;
     if (attrs.landmarks !== undefined) obj.landmarks = attrs.landmarks;
+    if (attrs.blocks !== undefined) obj.blocks = attrs.blocks;
     return obj;
   }
 
@@ -65,7 +68,7 @@ export async function createFirestoreStore(user, congregationId) {
     },
 
     loadSample() {
-      // Not applicable in online mode — no-op
+      // No-op in online mode
     },
 
     getAll() {
@@ -73,7 +76,7 @@ export async function createFirestoreStore(user, congregationId) {
     },
 
     getById(id) {
-      return territories.find(function (t) { return t.id === id; }) || null;
+      return territories.find(function (t) { return t.id === id || String(t.id) === String(id); }) || null;
     },
 
     async createTerritory(attrs) {
@@ -83,17 +86,18 @@ export async function createFirestoreStore(user, congregationId) {
         group_name: attrs.group_name || '',
         polygon: attrs.polygon || [],
         qr_url: attrs.qr_url || '',
-        landmarks: [],
+        notes: attrs.notes || '',
+        landmarks: attrs.landmarks || [],
+        blocks: attrs.blocks || [],
         createdBy: user.uid,
         createdAt: serverTimestamp()
       };
       const ref = await addDoc(terrCol, data);
-      const territory = { id: ref.id, ...data };
-      return territory;
+      return { id: ref.id, ...data };
     },
 
     async updateTerritory(id, attrs) {
-      const ref = doc(db, 'congregations', congregationId, 'territories', id);
+      const ref = doc(db, 'congregations', congregationId, 'territories', String(id));
       const updates = normalizeTerritoryForWrite(attrs);
       updates.updatedAt = serverTimestamp();
       await updateDoc(ref, updates);
@@ -101,10 +105,9 @@ export async function createFirestoreStore(user, congregationId) {
     },
 
     async deleteTerritory(id) {
-      const ref = doc(db, 'congregations', congregationId, 'territories', id);
+      const ref = doc(db, 'congregations', congregationId, 'territories', String(id));
       await deleteDoc(ref);
-      // Also delete associated history
-      const histEntries = history.filter(function (h) { return h.territoryId === id; });
+      const histEntries = history.filter(function (h) { return h.territoryId === id || String(h.territoryId) === String(id); });
       for (const entry of histEntries) {
         await deleteDoc(doc(db, 'congregations', congregationId, 'history', entry.id));
       }
@@ -116,12 +119,13 @@ export async function createFirestoreStore(user, congregationId) {
       const landmark = {
         id: Date.now().toString(),
         name: attrs.name,
+        description: attrs.description || '',
         lat: attrs.lat,
         lng: attrs.lng,
         color: attrs.color || '#3B82F6'
       };
       const updatedLandmarks = [...(territory.landmarks || []), landmark];
-      const ref = doc(db, 'congregations', congregationId, 'territories', territoryId);
+      const ref = doc(db, 'congregations', congregationId, 'territories', String(territoryId));
       await updateDoc(ref, { landmarks: updatedLandmarks });
       return landmark;
     },
@@ -132,8 +136,59 @@ export async function createFirestoreStore(user, congregationId) {
       const updatedLandmarks = (territory.landmarks || []).filter(function (l) {
         return l.id !== landmarkId && String(l.id) !== String(landmarkId);
       });
-      const ref = doc(db, 'congregations', congregationId, 'territories', territoryId);
+      const ref = doc(db, 'congregations', congregationId, 'territories', String(territoryId));
       await updateDoc(ref, { landmarks: updatedLandmarks });
+    },
+
+    // --- Blocks (manzanas) ---
+
+    async addBlock(territoryId, attrs) {
+      const territory = this.getById(territoryId);
+      if (!territory) return null;
+      const block = {
+        id: Date.now().toString(),
+        number: attrs.number || '',
+        polygon: attrs.polygon || []
+      };
+      const updatedBlocks = [...(territory.blocks || []), block];
+      const ref = doc(db, 'congregations', congregationId, 'territories', String(territoryId));
+      await updateDoc(ref, { blocks: updatedBlocks });
+      return block;
+    },
+
+    async deleteBlock(territoryId, blockId) {
+      const territory = this.getById(territoryId);
+      if (!territory) return;
+      const updatedBlocks = (territory.blocks || []).filter(function (b) {
+        return b.id !== blockId && String(b.id) !== String(blockId);
+      });
+      const ref = doc(db, 'congregations', congregationId, 'territories', String(territoryId));
+      await updateDoc(ref, { blocks: updatedBlocks });
+    },
+
+    // --- Global Landmarks ---
+
+    getGlobalLandmarks() {
+      return globalLandmarks;
+    },
+
+    async addGlobalLandmark(attrs) {
+      const data = {
+        name: attrs.name,
+        description: attrs.description || '',
+        lat: attrs.lat,
+        lng: attrs.lng,
+        color: attrs.color || '#9CA3AF',
+        createdBy: user.uid,
+        createdAt: serverTimestamp()
+      };
+      const ref = await addDoc(glCol, data);
+      return { id: ref.id, ...data };
+    },
+
+    async deleteGlobalLandmark(id) {
+      const ref = doc(db, 'congregations', congregationId, 'globalLandmarks', String(id));
+      await deleteDoc(ref);
     },
 
     // --- History ---
@@ -144,8 +199,15 @@ export async function createFirestoreStore(user, congregationId) {
 
     getHistoryForTerritory(territoryId) {
       return history
-        .filter(function (h) { return h.territoryId === territoryId; })
+        .filter(function (h) { return h.territoryId === territoryId || String(h.territoryId) === String(territoryId); })
         .sort(function (a, b) { return (b.startDate || '').localeCompare(a.startDate || ''); });
+    },
+
+    getActiveAssignment(territoryId) {
+      return history.find(function (h) {
+        return (h.territoryId === territoryId || String(h.territoryId) === String(territoryId))
+          && (h.type === 'assignment' || !h.type) && h.status === 'active';
+      }) || null;
     },
 
     async addHistoryEntry(entry) {
@@ -155,6 +217,8 @@ export async function createFirestoreStore(user, congregationId) {
         endDate: entry.endDate || null,
         person: entry.person || '',
         notes: entry.notes || '',
+        type: entry.type || 'assignment',
+        status: entry.status || 'active',
         createdBy: user.uid,
         createdAt: serverTimestamp()
       };
@@ -163,30 +227,31 @@ export async function createFirestoreStore(user, congregationId) {
     },
 
     async updateHistoryEntry(id, attrs) {
-      const ref = doc(db, 'congregations', congregationId, 'history', id);
+      const ref = doc(db, 'congregations', congregationId, 'history', String(id));
       const updates = {};
       if (attrs.startDate !== undefined) updates.startDate = attrs.startDate;
       if (attrs.endDate !== undefined) updates.endDate = attrs.endDate;
       if (attrs.person !== undefined) updates.person = attrs.person;
       if (attrs.notes !== undefined) updates.notes = attrs.notes;
+      if (attrs.type !== undefined) updates.type = attrs.type;
+      if (attrs.status !== undefined) updates.status = attrs.status;
       await updateDoc(ref, updates);
       return history.find(function (h) { return h.id === id; });
     },
 
     async deleteHistoryEntry(id) {
-      const ref = doc(db, 'congregations', congregationId, 'history', id);
+      const ref = doc(db, 'congregations', congregationId, 'history', String(id));
       await deleteDoc(ref);
     },
 
-    // --- File operations (limited in online mode) ---
+    // --- File operations ---
 
     loadFromFile() {
       return Promise.reject(new Error('Use import in offline mode'));
     },
 
     saveToFile() {
-      // Export current data as JSON for backup
-      const data = { territories, history };
+      const data = { territories, history, globalLandmarks };
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -202,7 +267,7 @@ export async function createFirestoreStore(user, congregationId) {
     },
 
     reset() {
-      // No-op in online mode — too dangerous
+      // No-op in online mode
     },
 
     googleMapsUrl(territory) {
@@ -222,10 +287,10 @@ export async function createFirestoreStore(user, congregationId) {
       return defaultCenter;
     },
 
-    // Cleanup real-time listeners
     destroy() {
       if (unsubTerritories) unsubTerritories();
       if (unsubHistory) unsubHistory();
+      if (unsubGlobalLandmarks) unsubGlobalLandmarks();
       listeners = [];
     }
   };
