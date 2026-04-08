@@ -22,13 +22,13 @@ export async function createFirestoreStore(user, congregationId) {
   const [terrSnap, histSnap, glSnap] = await Promise.all([
     getDocs(terrCol), getDocs(histCol), getDocs(glCol)
   ]);
-  territories = terrSnap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
+  territories = terrSnap.docs.map(function (d) { return territoryFromFirestore({ id: d.id, ...d.data() }); });
   history = histSnap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
   globalLandmarks = glSnap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
 
   // Set up real-time listeners
   unsubTerritories = onSnapshot(terrCol, function (snap) {
-    territories = snap.docs.map(function (d) { return { id: d.id, ...d.data() }; });
+    territories = snap.docs.map(function (d) { return territoryFromFirestore({ id: d.id, ...d.data() }); });
     notify();
   });
 
@@ -46,12 +46,36 @@ export async function createFirestoreStore(user, congregationId) {
     listeners.forEach(function (fn) { fn(); });
   }
 
+  // Firestore doesn't support nested arrays. Convert polygon [[lng,lat],...] to [{lng,lat},...]
+  function polygonToFirestore(polygon) {
+    if (!polygon || !Array.isArray(polygon)) return [];
+    return polygon.map(function (coord) {
+      if (Array.isArray(coord)) return { lng: coord[0], lat: coord[1] };
+      return coord; // already an object
+    });
+  }
+
+  function polygonFromFirestore(polygon) {
+    if (!polygon || !Array.isArray(polygon)) return [];
+    return polygon.map(function (coord) {
+      if (Array.isArray(coord)) return coord; // already an array
+      return [coord.lng, coord.lat];
+    });
+  }
+
+  function territoryFromFirestore(docData) {
+    const t = { ...docData };
+    t.polygon = polygonFromFirestore(t.polygon);
+    // blocks may also have polygon arrays (legacy) — but now they're points, just ensure format
+    return t;
+  }
+
   function normalizeTerritoryForWrite(attrs) {
     const obj = {};
     if (attrs.number !== undefined) obj.number = attrs.number;
     if (attrs.name !== undefined) obj.name = attrs.name;
     if (attrs.group_name !== undefined) obj.group_name = attrs.group_name;
-    if (attrs.polygon !== undefined) obj.polygon = attrs.polygon;
+    if (attrs.polygon !== undefined) obj.polygon = polygonToFirestore(attrs.polygon);
     if (attrs.qr_url !== undefined) obj.qr_url = attrs.qr_url;
     if (attrs.notes !== undefined) obj.notes = attrs.notes;
     if (attrs.landmarks !== undefined) obj.landmarks = attrs.landmarks;
@@ -84,7 +108,7 @@ export async function createFirestoreStore(user, congregationId) {
         number: attrs.number || '',
         name: attrs.name || '',
         group_name: attrs.group_name || '',
-        polygon: attrs.polygon || [],
+        polygon: polygonToFirestore(attrs.polygon || []),
         qr_url: attrs.qr_url || '',
         notes: attrs.notes || '',
         landmarks: attrs.landmarks || [],
