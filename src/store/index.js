@@ -47,6 +47,8 @@ function notifyStoreReady() {
 }
 
 export async function initStore() {
+  // Reset ready state for re-initialization (e.g., after login)
+  storeReady = false;
   const mode = getMode();
 
   if (mode === 'online') {
@@ -58,20 +60,27 @@ export async function initStore() {
         onAuthChange(async function (user) {
           if (user) {
             try {
+              // Check for pending invite first
+              const { checkAndApplyInvite } = await import('../firebase/auth.js');
+              await checkAndApplyInvite();
+
               const profile = await getCurrentUserProfile();
               if (profile && profile.congregationId) {
                 currentUserProfile = profile;
                 if (currentStore && currentStore.destroy) currentStore.destroy();
                 currentStore = await createFirestoreStore(user, profile.congregationId);
+              } else {
+                // User is authenticated but has no profile yet (needs registration)
+                currentUserProfile = { uid: user.uid, needsRegistration: true, email: user.email, displayName: user.displayName };
               }
             } catch (err) {
               console.error('Failed to init Firestore store:', err);
-              currentStore = createLocalStore();
+              currentUserProfile = { uid: user.uid, needsRegistration: true, email: user.email, displayName: user.displayName };
             }
           } else {
             currentUserProfile = null;
             if (currentStore && currentStore.destroy) currentStore.destroy();
-            currentStore = null; // Will be lazy-initialized if needed
+            currentStore = null;
           }
           if (!storeReady) {
             notifyStoreReady();

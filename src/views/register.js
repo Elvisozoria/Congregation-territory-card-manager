@@ -1,5 +1,7 @@
 import { t } from '../i18n/i18n.js';
 import { escapeHtml } from '../utils/helpers.js';
+import { initStore } from '../store/index.js';
+import { refresh } from '../router.js';
 
 export let isDirty = false;
 
@@ -44,12 +46,17 @@ export function render(container) {
     try {
       const { registerCongregation } = await import('../firebase/auth.js');
       await registerCongregation(congregationName);
-      window.location.reload();
+
+      // Re-init store with the new profile
+      await initStore();
+      window.location.hash = '#/';
+      refresh();
     } catch (err) {
+      console.error('Register error:', err);
       errorDiv.textContent = t('auth.registerError');
       errorDiv.style.display = 'block';
       submitBtn.disabled = false;
-      submitBtn.innerHTML = escapeHtml(t('auth.registerWithGoogle'));
+      submitBtn.textContent = t('auth.registerWithGoogle');
     }
   });
 

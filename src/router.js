@@ -65,12 +65,20 @@ function navigate() {
     return;
   }
 
-  // Guard: online mode, not authenticated, and not on auth pages
+  // Guard: online mode auth checks
   if (mode === 'online') {
     const profile = getUserProfile();
     const isAuthPage = hash.match(/^#\/(login|register|welcome)/);
+
     if (!profile && !isAuthPage) {
+      // Not authenticated at all
       window.location.hash = '#/login';
+      return;
+    }
+
+    if (profile && profile.needsRegistration && !isAuthPage) {
+      // Authenticated but no congregation yet
+      window.location.hash = '#/register';
       return;
     }
   }
