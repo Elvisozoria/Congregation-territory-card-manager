@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import QRCode from 'qrcodejs2';
+import QRCode from 'qrcode';
 import { escapeHtml } from '../utils/helpers.js';
 
 const WORLD_BOUNDS = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
@@ -79,12 +79,15 @@ export function renderCardMap(cardElement, territory) {
   // Generate QR code
   const qrContainer = cardElement.querySelector('[data-qr-url]');
   if (qrContainer && qrContainer.dataset.qrUrl) {
-    new QRCode(qrContainer, {
-      text: qrContainer.dataset.qrUrl,
+    QRCode.toCanvas(qrContainer.dataset.qrUrl, {
       width: 60,
-      height: 60,
-      colorDark: '#000000',
-      colorLight: '#ffffff'
+      margin: 0,
+      color: { dark: '#000000', light: '#ffffff' }
+    }).then(function (canvas) {
+      canvas.style.display = 'block';
+      qrContainer.appendChild(canvas);
+    }).catch(function (err) {
+      console.error('QR generation failed:', err);
     });
   }
 

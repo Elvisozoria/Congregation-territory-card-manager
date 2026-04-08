@@ -17,6 +17,6 @@
     "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
-    "qrcodejs2": "^0.0.2"
+    "qrcode": "^1.5.4"
   }
 }
