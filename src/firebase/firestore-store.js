@@ -148,7 +148,8 @@ export async function createFirestoreStore(user, congregationId) {
       const block = {
         id: Date.now().toString(),
         number: attrs.number || '',
-        polygon: attrs.polygon || []
+        lat: attrs.lat,
+        lng: attrs.lng
       };
       const updatedBlocks = [...(territory.blocks || []), block];
       const ref = doc(db, 'congregations', congregationId, 'territories', String(territoryId));

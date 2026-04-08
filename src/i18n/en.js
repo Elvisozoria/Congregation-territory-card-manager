@@ -80,7 +80,7 @@ export default {
     blockNumber: 'Block number:',
     deleteBlock: 'Delete',
     confirmDeleteBlock: 'Delete this block?',
-    drawBlockHint: 'Draw the block polygon on the map. Click the first point to close.',
+    placeBlockHint: 'Click on the map to place the block label.',
     // Assignment
     assignTerritory: 'Assign Territory',
     assignedTo: 'Assigned to {person}',

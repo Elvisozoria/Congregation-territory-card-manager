@@ -1,12 +1,10 @@
 import L from 'leaflet';
-import 'leaflet-draw';
 import { t } from '../i18n/i18n.js';
 import { getStore } from '../store/index.js';
 import { renderSingleMap } from '../components/map.js';
 import { escapeHtml } from '../utils/helpers.js';
 
 const LANDMARK_COLORS = ['#EF4444', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
-const BLOCK_COLORS = ['#F59E0B', '#10B981', '#8B5CF6', '#3B82F6', '#EF4444', '#EC4899'];
 
 export let isDirty = false;
 
@@ -24,7 +22,6 @@ export function render(container, params) {
   let landmarkMarkers = [];
   let blockLayers = [];
   let pendingLatlng = null;
-  let drawControl = null;
 
   // Header
   const header = document.createElement('div');
@@ -147,26 +144,15 @@ export function render(container, params) {
     if (!currentMap) return;
     clearBlockLayers();
     const blocks = territory.blocks || [];
-    blocks.forEach(function (block, index) {
-      if (!block.polygon || block.polygon.length < 3) return;
-      const coords = block.polygon.map(function (c) { return [c[1], c[0]]; });
-      const color = BLOCK_COLORS[index % BLOCK_COLORS.length];
-      const poly = L.polygon(coords, {
-        color: color,
-        weight: 2,
-        fillColor: color,
-        fillOpacity: 0.15,
-        dashArray: '5 5'
-      }).addTo(currentMap);
-
-      const center = poly.getBounds().getCenter();
+    blocks.forEach(function (block) {
+      if (!block.lat || !block.lng) return;
       const label = L.divIcon({
         className: '',
         html: '<span class="block-label">' + escapeHtml(block.number) + '</span>',
         iconSize: null
       });
-      const labelMarker = L.marker(center, { icon: label, interactive: false }).addTo(currentMap);
-      blockLayers.push(poly, labelMarker);
+      const labelMarker = L.marker([block.lat, block.lng], { icon: label, interactive: false }).addTo(currentMap);
+      blockLayers.push(labelMarker);
     });
   }
 
@@ -375,7 +361,7 @@ export function render(container, params) {
     addBtn.className = 'btn btn-secondary btn-sm';
     addBtn.textContent = t('show.addBlock');
     addBtn.addEventListener('click', function () {
-      startDrawingBlock();
+      startPlacingBlock();
     });
     headerRow.appendChild(addBtn);
     blocksSection.appendChild(headerRow);
@@ -428,50 +414,51 @@ export function render(container, params) {
     }
   }
 
-  function startDrawingBlock() {
-    if (!currentMap) return;
+  let blockPlacementMode = false;
+  let blockHintEl = null;
 
-    // Add draw control temporarily
-    const drawnItems = new L.FeatureGroup().addTo(currentMap);
-
-    drawControl = new L.Control.Draw({
-      draw: {
-        polygon: {
-          shapeOptions: { color: '#F59E0B', weight: 2, fillOpacity: 0.2, dashArray: '5 5' },
-          allowIntersection: false,
-          showArea: false
-        },
-        marker: false, circle: false, rectangle: false, polyline: false, circlemarker: false
-      },
-      edit: false
-    }).addTo(currentMap);
+  function startPlacingBlock() {
+    if (!currentMap || blockPlacementMode) return;
+    blockPlacementMode = true;
 
     // Show hint
-    const hint = document.createElement('div');
-    hint.className = 'flash flash-notice';
-    hint.style.marginBottom = '1rem';
-    hint.textContent = t('show.drawBlockHint');
-    blocksSection.insertBefore(hint, blocksSection.firstChild.nextSibling);
+    blockHintEl = document.createElement('div');
+    blockHintEl.className = 'flash flash-notice';
+    blockHintEl.style.marginBottom = '1rem';
+    blockHintEl.textContent = t('show.placeBlockHint');
 
-    currentMap.on(L.Draw.Event.CREATED, function onCreated(e) {
-      const latlngs = e.layer.getLatLngs()[0];
-      const polygon = latlngs.map(function (ll) { return [ll.lng, ll.lat]; });
+    const cancelLink = document.createElement('button');
+    cancelLink.className = 'btn btn-secondary btn-sm';
+    cancelLink.style.marginLeft = '0.5rem';
+    cancelLink.textContent = t('show.addLandmarkCancel');
+    cancelLink.addEventListener('click', stopPlacingBlock);
+    blockHintEl.appendChild(cancelLink);
 
-      const number = prompt(t('show.blockNumber'));
-      if (number && number.trim()) {
-        store.addBlock(territory.id, { number: number.trim(), polygon: polygon });
-        territory = store.getById(params.id);
-        drawBlocksOnMap();
-        rerenderBlocks();
-      }
+    blocksSection.insertBefore(blockHintEl, blocksSection.firstChild.nextSibling);
 
-      // Cleanup
-      currentMap.removeControl(drawControl);
-      currentMap.removeLayer(drawnItems);
-      currentMap.off(L.Draw.Event.CREATED, onCreated);
-      drawControl = null;
-      if (hint.parentNode) hint.remove();
-    });
+    currentMap.getContainer().style.cursor = 'crosshair';
+    currentMap.on('click', onBlockPlacement);
+  }
+
+  function onBlockPlacement(e) {
+    const number = prompt(t('show.blockNumber'));
+    if (number && number.trim()) {
+      store.addBlock(territory.id, { number: number.trim(), lat: e.latlng.lat, lng: e.latlng.lng });
+      territory = store.getById(params.id);
+      drawBlocksOnMap();
+      rerenderBlocks();
+    }
+    stopPlacingBlock();
+  }
+
+  function stopPlacingBlock() {
+    blockPlacementMode = false;
+    if (currentMap) {
+      currentMap.off('click', onBlockPlacement);
+      currentMap.getContainer().style.cursor = '';
+    }
+    if (blockHintEl && blockHintEl.parentNode) blockHintEl.remove();
+    blockHintEl = null;
   }
 
   // --- Assignment banner (F4) ---
@@ -745,9 +732,7 @@ export function render(container, params) {
   }
 
   return function () {
-    if (drawControl && currentMap) {
-      currentMap.removeControl(drawControl);
-    }
+    stopPlacingBlock();
     if (mapCleanup) mapCleanup();
   };
 }

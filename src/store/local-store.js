@@ -177,7 +177,8 @@ export function createLocalStore() {
       const block = {
         id: nextId(territory.blocks),
         number: attrs.number || '',
-        polygon: attrs.polygon || []
+        lat: attrs.lat,
+        lng: attrs.lng
       };
       territory.blocks.push(block);
       notify();

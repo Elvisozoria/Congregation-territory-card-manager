@@ -80,7 +80,7 @@ export default {
     blockNumber: 'Número de manzana:',
     deleteBlock: 'Eliminar',
     confirmDeleteBlock: '¿Eliminar esta manzana?',
-    drawBlockHint: 'Dibuja el polígono de la manzana en el mapa. Haz clic en el primer punto para cerrar.',
+    placeBlockHint: 'Haz clic en el mapa para colocar la etiqueta de la manzana.',
     // Assignment
     assignTerritory: 'Asignar Territorio',
     assignedTo: 'Asignado a {person}',
