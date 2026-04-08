@@ -42,6 +42,16 @@ service cloud.firestore {
         && getUserData().role == 'admin';
     }
 
+    // Invites (for Google auth invite flow)
+    match /invites/{inviteId} {
+      // Any authenticated user can read invites (to check their own email)
+      allow read: if request.auth != null;
+      // Only admins can create invites
+      allow create: if request.auth != null && getUserData().role == 'admin';
+      // Users can delete invites (consumed on sign-in)
+      allow delete: if request.auth != null;
+    }
+
     // Congregations
     match /congregations/{congId} {
       allow read: if isMemberOf(congId);

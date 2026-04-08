@@ -2,15 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// TODO: Replace with your Firebase project config
-// Get this from Firebase Console → Project Settings → Your apps → Config
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT.firebasestorage.app',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID'
+  apiKey: 'AIzaSyA8K-WtUTfPUInsVBj8ANWA5JLgPPzutP4',
+  authDomain: 'territory-card-manager.firebaseapp.com',
+  projectId: 'territory-card-manager',
+  storageBucket: 'territory-card-manager.firebasestorage.app',
+  messagingSenderId: '646489945463',
+  appId: '1:646489945463:web:f2536c6e0b529edefa1d72'
 };
 
 const app = initializeApp(firebaseConfig);

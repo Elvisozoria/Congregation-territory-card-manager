@@ -1,18 +1,16 @@
-import { initializeApp, deleteApp } from 'firebase/app';
 import {
-  getAuth,
-  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
   signOut as firebaseSignOut,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  updatePassword,
-  updateProfile
+  onAuthStateChanged
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, firebaseConfig } from './config.js';
+import { doc, getDoc, setDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import { auth, db } from './config.js';
 
-export function signIn(email, password) {
-  return signInWithEmailAndPassword(auth, email, password);
+const googleProvider = new GoogleAuthProvider();
+
+export function signInWithGoogle() {
+  return signInWithPopup(auth, googleProvider);
 }
 
 export function signOut() {
@@ -35,69 +33,94 @@ export async function getCurrentUserProfile() {
   return { uid: user.uid, ...snap.data() };
 }
 
-export async function registerCongregation(email, password, displayName, congregationName) {
-  // Create auth user
-  const cred = await createUserWithEmailAndPassword(auth, email, password);
-  await updateProfile(cred.user, { displayName });
+// Sign in with Google and register a new congregation in one step
+export async function registerCongregation(congregationName) {
+  const cred = await signInWithPopup(auth, googleProvider);
+  const user = cred.user;
 
-  // Create congregation document
-  const { doc: docRef, collection, addDoc } = await import('firebase/firestore');
+  // Check if user already has a profile (returning user)
+  const existingProfile = await getDoc(doc(db, 'users', user.uid));
+  if (existingProfile.exists()) {
+    return { uid: user.uid, congregationId: existingProfile.data().congregationId };
+  }
+
+  // Create congregation
   const congRef = await addDoc(collection(db, 'congregations'), {
     name: congregationName,
-    createdBy: cred.user.uid,
+    createdBy: user.uid,
     createdAt: serverTimestamp()
   });
 
   // Create user profile
-  await setDoc(doc(db, 'users', cred.user.uid), {
-    email,
-    displayName,
+  await setDoc(doc(db, 'users', user.uid), {
+    email: user.email,
+    displayName: user.displayName || user.email,
     congregationId: congRef.id,
     role: 'admin',
     mustChangePassword: false,
     createdAt: serverTimestamp()
   });
 
-  return { uid: cred.user.uid, congregationId: congRef.id };
+  return { uid: user.uid, congregationId: congRef.id };
 }
 
-export async function createUserAsAdmin(email, tempPassword, displayName, congregationId, role) {
-  // Use a secondary app instance to avoid signing out the admin
-  const secondaryApp = initializeApp(firebaseConfig, 'secondary-' + Date.now());
-  const secondaryAuth = getAuth(secondaryApp);
+// Sign in with Google and auto-create profile if first time
+export async function signInAndEnsureProfile() {
+  const cred = await signInWithPopup(auth, googleProvider);
+  const user = cred.user;
 
-  try {
-    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, tempPassword);
-
-    // Write user profile using the main app's Firestore (admin is still signed in)
-    await setDoc(doc(db, 'users', cred.user.uid), {
-      email,
-      displayName,
-      congregationId,
-      role: role || 'member',
-      mustChangePassword: true,
-      createdAt: serverTimestamp()
-    });
-
-    // Sign out of secondary and clean up
-    await firebaseSignOut(secondaryAuth);
-    await deleteApp(secondaryApp);
-
-    return { uid: cred.user.uid, tempPassword };
-  } catch (err) {
-    // Clean up on error
-    try {
-      await firebaseSignOut(secondaryAuth);
-      await deleteApp(secondaryApp);
-    } catch (e) { /* ignore cleanup errors */ }
-    throw err;
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  if (!snap.exists()) {
+    // First-time Google user without a congregation — they need to register
+    return { uid: user.uid, needsRegistration: true };
   }
+
+  return { uid: user.uid, needsRegistration: false, profile: snap.data() };
 }
 
-export async function changePassword(newPassword) {
+// Admin invites a member: creates a placeholder profile.
+// The invited user signs in with Google, and if their email matches, they join.
+export async function inviteMember(email, displayName, congregationId, role) {
+  // Store an invite doc that will be matched when the user signs in with Google
+  const inviteRef = await addDoc(collection(db, 'invites'), {
+    email: email.toLowerCase(),
+    displayName,
+    congregationId,
+    role: role || 'member',
+    createdAt: serverTimestamp()
+  });
+
+  return { inviteId: inviteRef.id, email };
+}
+
+// Check if current Google user has a pending invite and apply it
+export async function checkAndApplyInvite() {
   const user = auth.currentUser;
-  if (!user) throw new Error('Not authenticated');
-  await updatePassword(user, newPassword);
-  // Clear the mustChangePassword flag
-  await setDoc(doc(db, 'users', user.uid), { mustChangePassword: false }, { merge: true });
+  if (!user || !user.email) return null;
+
+  const { query, where, getDocs } = await import('firebase/firestore');
+  const invitesRef = collection(db, 'invites');
+  const q = query(invitesRef, where('email', '==', user.email.toLowerCase()));
+  const snap = await getDocs(q);
+
+  if (snap.empty) return null;
+
+  const invite = snap.docs[0];
+  const inviteData = invite.data();
+
+  // Create user profile from invite
+  await setDoc(doc(db, 'users', user.uid), {
+    email: user.email,
+    displayName: inviteData.displayName || user.displayName || user.email,
+    congregationId: inviteData.congregationId,
+    role: inviteData.role || 'member',
+    mustChangePassword: false,
+    createdAt: serverTimestamp()
+  });
+
+  // Delete the invite
+  const { deleteDoc } = await import('firebase/firestore');
+  await deleteDoc(invite.ref);
+
+  return inviteData;
 }

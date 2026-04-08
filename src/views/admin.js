@@ -37,25 +37,22 @@ export function render(container) {
 
   loadMembers(membersSection, profile.congregationId);
 
-  // Create user form
+  // Invite user form (Google Auth — invite by email)
   const createSection = document.createElement('div');
   createSection.className = 'admin-section';
   createSection.innerHTML =
-    '<h3>' + escapeHtml(t('admin.createUser')) + '</h3>' +
+    '<h3>' + escapeHtml(t('admin.inviteUser')) + '</h3>' +
+    '<p style="font-size:0.8125rem;color:var(--text-secondary);margin-bottom:0.75rem;">' + escapeHtml(t('admin.inviteDesc')) + '</p>' +
     '<div class="flash flash-alert admin-error" style="display:none"></div>' +
     '<div class="flash flash-notice admin-success" style="display:none"></div>' +
     '<form class="admin-form">' +
       '<div class="form-group">' +
         '<label for="new-user-email">' + escapeHtml(t('auth.email')) + '</label>' +
-        '<input type="email" id="new-user-email" required />' +
+        '<input type="email" id="new-user-email" placeholder="usuario@gmail.com" required />' +
       '</div>' +
       '<div class="form-group">' +
         '<label for="new-user-name">' + escapeHtml(t('auth.displayName')) + '</label>' +
         '<input type="text" id="new-user-name" required />' +
-      '</div>' +
-      '<div class="form-group">' +
-        '<label for="new-user-password">' + escapeHtml(t('admin.tempPassword')) + '</label>' +
-        '<input type="text" id="new-user-password" value="' + generateTempPassword() + '" />' +
       '</div>' +
       '<div class="form-group">' +
         '<label for="new-user-role">' + escapeHtml(t('admin.role')) + '</label>' +
@@ -64,7 +61,7 @@ export function render(container) {
           '<option value="admin">' + escapeHtml(t('admin.roleAdmin')) + '</option>' +
         '</select>' +
       '</div>' +
-      '<button type="submit" class="btn btn-primary" style="width:100%">' + escapeHtml(t('admin.createUserButton')) + '</button>' +
+      '<button type="submit" class="btn btn-primary" style="width:100%">' + escapeHtml(t('admin.inviteButton')) + '</button>' +
     '</form>';
 
   const errorDiv = createSection.querySelector('.admin-error');
@@ -77,7 +74,6 @@ export function render(container) {
     successDiv.style.display = 'none';
     const email = createSection.querySelector('#new-user-email').value.trim();
     const displayName = createSection.querySelector('#new-user-name').value.trim();
-    const tempPassword = createSection.querySelector('#new-user-password').value;
     const role = createSection.querySelector('#new-user-role').value;
     const submitBtn = form.querySelector('button[type="submit"]');
 
@@ -85,33 +81,26 @@ export function render(container) {
     submitBtn.textContent = '...';
 
     try {
-      const { createUserAsAdmin } = await import('../firebase/auth.js');
-      await createUserAsAdmin(email, tempPassword, displayName, profile.congregationId, role);
+      const { inviteMember } = await import('../firebase/auth.js');
+      await inviteMember(email, displayName, profile.congregationId, role);
 
       successDiv.innerHTML =
-        '<p><strong>' + escapeHtml(t('admin.userCreated')) + '</strong></p>' +
+        '<p><strong>' + escapeHtml(t('admin.inviteSent')) + '</strong></p>' +
         '<div class="credentials-box">' +
           '<p>' + escapeHtml(t('auth.email')) + ': <strong>' + escapeHtml(email) + '</strong></p>' +
-          '<p>' + escapeHtml(t('admin.tempPassword')) + ': <strong>' + escapeHtml(tempPassword) + '</strong></p>' +
         '</div>' +
-        '<p style="font-size:0.8125rem;margin-top:0.5rem;">' + escapeHtml(t('admin.shareCredentials')) + '</p>';
+        '<p style="font-size:0.8125rem;margin-top:0.5rem;">' + escapeHtml(t('admin.inviteInstructions')) + '</p>';
       successDiv.style.display = 'block';
 
-      // Reset form
       form.reset();
-      createSection.querySelector('#new-user-password').value = generateTempPassword();
-
-      // Reload members
       loadMembers(membersSection, profile.congregationId);
     } catch (err) {
-      let msg = t('admin.createUserError');
-      if (err.code === 'auth/email-already-in-use') msg = t('auth.emailInUse');
-      errorDiv.textContent = msg;
+      errorDiv.textContent = t('admin.createUserError');
       errorDiv.style.display = 'block';
     }
 
     submitBtn.disabled = false;
-    submitBtn.textContent = t('admin.createUserButton');
+    submitBtn.textContent = t('admin.inviteButton');
   });
 
   wrapper.appendChild(createSection);
@@ -153,13 +142,4 @@ async function loadMembers(section, congregationId) {
     console.error('Failed to load members:', err);
     section.querySelector('.members-loading').textContent = t('admin.loadError');
   }
-}
-
-function generateTempPassword() {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
 }
