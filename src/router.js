@@ -46,8 +46,7 @@ const routes = [
 
 // Parse ID — numeric for local store, string for Firestore
 function parseId(raw) {
-  const num = parseInt(raw, 10);
-  return isNaN(num) ? raw : num;
+  return /^\d+$/.test(raw) ? parseInt(raw, 10) : raw;
 }
 
 let currentCleanup = null;
