@@ -18,7 +18,9 @@ export let isDirty = false;
 
 export function render(container) {
   const store = getStore();
-  const territories = store.getAll();
+  const territories = store.getAll().slice().sort(function (a, b) {
+    return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
+  });
   let cleanup = null;
 
   // Empty state: welcome screen

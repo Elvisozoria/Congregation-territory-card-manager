@@ -3,6 +3,7 @@ import {
   onSnapshot, serverTimestamp
 } from 'firebase/firestore';
 import { db } from './config.js';
+import { parse as parseKml } from '../utils/kml-import.js';
 
 export async function createFirestoreStore(user, congregationId) {
   let listeners = [];
@@ -154,6 +155,17 @@ export async function createFirestoreStore(user, congregationId) {
       return landmark;
     },
 
+    async updateLandmark(territoryId, landmarkId, attrs) {
+      const territory = this.getById(territoryId);
+      if (!territory) return;
+      const updatedLandmarks = (territory.landmarks || []).map(function (l) {
+        if (l.id !== landmarkId && String(l.id) !== String(landmarkId)) return l;
+        return { ...l, ...attrs };
+      });
+      const ref = doc(db, 'congregations', congregationId, 'territories', String(territoryId));
+      await updateDoc(ref, { landmarks: updatedLandmarks });
+    },
+
     async deleteLandmark(territoryId, landmarkId) {
       const territory = this.getById(territoryId);
       if (!territory) return;
@@ -179,6 +191,17 @@ export async function createFirestoreStore(user, congregationId) {
       const ref = doc(db, 'congregations', congregationId, 'territories', String(territoryId));
       await updateDoc(ref, { blocks: updatedBlocks });
       return block;
+    },
+
+    async updateBlock(territoryId, blockId, attrs) {
+      const territory = this.getById(territoryId);
+      if (!territory) return;
+      const updatedBlocks = (territory.blocks || []).map(function (b) {
+        if (b.id !== blockId && String(b.id) !== String(blockId)) return b;
+        return { ...b, ...attrs };
+      });
+      const ref = doc(db, 'congregations', congregationId, 'territories', String(territoryId));
+      await updateDoc(ref, { blocks: updatedBlocks });
     },
 
     async deleteBlock(territoryId, blockId) {
@@ -209,6 +232,14 @@ export async function createFirestoreStore(user, congregationId) {
       };
       const ref = await addDoc(glCol, data);
       return { id: ref.id, ...data };
+    },
+
+    async updateGlobalLandmark(id, attrs) {
+      const ref = doc(db, 'congregations', congregationId, 'globalLandmarks', String(id));
+      const updates = {};
+      if (attrs.name !== undefined) updates.name = attrs.name;
+      if (attrs.description !== undefined) updates.description = attrs.description;
+      await updateDoc(ref, updates);
     },
 
     async deleteGlobalLandmark(id) {
@@ -287,8 +318,29 @@ export async function createFirestoreStore(user, congregationId) {
       setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
     },
 
-    importKML() {
-      return Promise.reject(new Error('KML import not supported in online mode yet'));
+    async importKML(file) {
+      const imported = await parseKml(file);
+      for (const t of imported) {
+        const existing = territories.find(function (e) { return e.number === t.number; });
+        if (existing) {
+          await this.updateTerritory(existing.id, {
+            name: t.name,
+            group_name: t.group_name,
+            polygon: t.polygon
+          });
+        } else {
+          await this.createTerritory({
+            number: t.number,
+            name: t.name,
+            group_name: t.group_name,
+            polygon: t.polygon,
+            qr_url: '',
+            notes: '',
+            landmarks: [],
+            blocks: []
+          });
+        }
+      }
     },
 
     reset() {
