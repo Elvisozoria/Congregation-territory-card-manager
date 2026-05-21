@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import { t } from '../i18n/i18n.js';
 import { getStore } from '../store/index.js';
 import { renderCardMap } from '../components/card-map.js';
@@ -61,7 +61,7 @@ export function render(container, params) {
 
   const label = document.createElement('div');
   label.className = 'card-label';
-  label.style.cssText = 'position:absolute;top:8px;left:8px;z-index:1000;background:rgba(255,255,255,0.9);padding:4px 8px;border-radius:4px;font-weight:700;font-size:0.875rem;';
+  label.style.cssText = 'position:absolute;top:8px;left:8px;z-index:1000;background:rgba(255,255,255,0.9);padding:4px 8px;border-radius:4px;font-weight:700;font-size:0.875rem;color:#1F2937;';
   label.textContent = territory.number + ' - ' + territory.name;
   card.appendChild(label);
 
@@ -81,14 +81,24 @@ export function render(container, params) {
   wrapper.appendChild(card);
   container.appendChild(wrapper);
 
-  cleanup = renderCardMap(card, territory);
+  const globalLandmarks = store.getGlobalLandmarks ? store.getGlobalLandmarks() : [];
+  cleanup = renderCardMap(card, territory, globalLandmarks);
 
   function downloadCard() {
-    html2canvas(document.getElementById('territory-card'), { scale: 2, useCORS: true }).then(function (canvas) {
+    const cardEl = document.getElementById('territory-card');
+    toPng(cardEl, {
+      cacheBust: true,
+      pixelRatio: 2,
+      includeQueryParams: true,
+      skipAutoScale: true,
+      filter: function () { return true; }
+    }).then(function (dataUrl) {
       const link = document.createElement('a');
       link.download = fileName + '.png';
-      link.href = canvas.toDataURL();
+      link.href = dataUrl;
       link.click();
+    }).catch(function (err) {
+      console.error('Card capture failed:', err);
     });
   }
 

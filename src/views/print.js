@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import { t } from '../i18n/i18n.js';
 import { getStore } from '../store/index.js';
 import { renderCardMap } from '../components/card-map.js';
@@ -37,7 +37,8 @@ export function render(container) {
   downloadBtn.textContent = t('print.downloadAll');
   downloadBtn.addEventListener('click', function (e) {
     e.preventDefault();
-    downloadAllCards();
+    downloadBtn.textContent = t('print.downloadAll') + '...';
+    setTimeout(function () { downloadAllCards(); }, 500);
   });
 
   const backBtn = document.createElement('a');
@@ -67,7 +68,7 @@ export function render(container) {
 
     const label = document.createElement('div');
     label.className = 'card-label';
-    label.style.cssText = 'position:absolute;top:8px;left:8px;z-index:1000;background:rgba(255,255,255,0.9);padding:4px 8px;border-radius:4px;font-weight:700;font-size:0.875rem;';
+    label.style.cssText = 'position:absolute;top:8px;left:8px;z-index:1000;background:rgba(255,255,255,0.9);padding:4px 8px;border-radius:4px;font-weight:700;font-size:0.875rem;color:#1F2937;';
     label.textContent = territory.number + ' - ' + territory.name;
     card.appendChild(label);
 
@@ -85,7 +86,8 @@ export function render(container) {
     card.appendChild(mapDiv);
 
     grid.appendChild(card);
-    const cardCleanup = renderCardMap(card, territory);
+    const globalLandmarks = store.getGlobalLandmarks ? store.getGlobalLandmarks() : [];
+    const cardCleanup = renderCardMap(card, territory, globalLandmarks);
     cleanups.push(cardCleanup);
   });
 
@@ -98,11 +100,11 @@ export function render(container) {
     function downloadNext() {
       if (i >= cards.length) return;
       const card = cards[i];
-      html2canvas(card, { scale: 2, useCORS: true }).then(function (canvas) {
+      toPng(card, { cacheBust: true, pixelRatio: 2, quality: 1 }).then(function (dataUrl) {
         const link = document.createElement('a');
         const label = card.querySelector('.card-label').textContent.trim().toLowerCase().replace(/\s+/g, '-');
         link.download = label + '.png';
-        link.href = canvas.toDataURL();
+        link.href = dataUrl;
         link.click();
       }).catch(function (err) {
         console.error('Failed to render card ' + i + ':', err);
