@@ -4,7 +4,7 @@ import { escapeHtml } from '../utils/helpers.js';
 
 const WORLD_BOUNDS = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
 
-export function renderCardMap(cardElement, territory) {
+export function renderCardMap(cardElement, territory, globalLandmarks) {
   const mapDiv = cardElement.querySelector('.card-map') || cardElement;
 
   const map = L.map(mapDiv, {
@@ -32,29 +32,46 @@ export function renderCardMap(cardElement, territory) {
     L.polygon([WORLD_BOUNDS, coords], {
       color: 'none',
       fillColor: 'white',
-      fillOpacity: 0.75,
+      fillOpacity: 0.20,
       stroke: false
     }).addTo(map);
 
-    map.fitBounds(L.latLngBounds(coords), { padding: [30, 30] });
+    var bounds = L.latLngBounds(coords);
+    map.fitBounds(bounds, { padding: [30, 30] });
+
+    setTimeout(function () {
+      map.invalidateSize();
+      map.fitBounds(bounds, { padding: [30, 30] });
+    }, 200);
   }
 
   const landmarks = territory.landmarks || [];
   landmarks.forEach(function (landmark) {
-    const marker = L.circleMarker([landmark.lat, landmark.lng], {
-      radius: 6,
-      fillColor: landmark.color || '#3B82F6',
-      color: '#1F2937',
-      weight: 1.5,
-      fillOpacity: 1
-    }).addTo(map);
-
-    marker.bindTooltip(landmark.name, {
-      permanent: true,
-      direction: 'right',
-      offset: [8, 0],
-      className: 'landmark-tooltip'
+    var color = landmark.color || '#3B82F6';
+    var icon = L.divIcon({
+      className: '',
+      html: '<span style="display:inline-flex;align-items:center;gap:4px;">' +
+        '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + color + ';border:1.5px solid #1F2937;"></span>' +
+        '<span style="background:rgba(0,0,0,0.7);color:white;padding:1px 4px;font-size:9px;border-radius:2px;white-space:nowrap;">' + escapeHtml(landmark.name) + '</span>' +
+        '</span>',
+      iconSize: null,
+      iconAnchor: [5, 5]
     });
+    L.marker([landmark.lat, landmark.lng], { icon: icon, interactive: false }).addTo(map);
+  });
+
+  // Global landmarks
+  (globalLandmarks || []).forEach(function (landmark) {
+    var icon = L.divIcon({
+      className: '',
+      html: '<span style="display:inline-flex;align-items:center;gap:4px;">' +
+        '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#9CA3AF;border:1.5px solid #6B7280;"></span>' +
+        '<span style="background:rgba(0,0,0,0.7);color:white;padding:1px 4px;font-size:9px;border-radius:2px;white-space:nowrap;">' + escapeHtml(landmark.name) + '</span>' +
+        '</span>',
+      iconSize: null,
+      iconAnchor: [5, 5]
+    });
+    L.marker([landmark.lat, landmark.lng], { icon: icon, interactive: false }).addTo(map);
   });
 
   // Draw blocks (manzanas) as point labels
