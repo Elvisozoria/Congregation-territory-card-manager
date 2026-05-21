@@ -1,0 +1,22 @@
+{
+  "name": "congregation-territory-card-manager",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.0.5"
+  },
+  "dependencies": {
+    "firebase": "^12.11.0",
+    "html-to-image": "^1.11.13",
+    "jszip": "^3.10.1",
+    "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
+    "qrcode": "^1.5.4"
+  }
+}
