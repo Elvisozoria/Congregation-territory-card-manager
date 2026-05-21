@@ -5,6 +5,7 @@ import { renderSingleMap } from '../components/map.js';
 import { escapeHtml } from '../utils/helpers.js';
 
 const LANDMARK_COLORS = ['#EF4444', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
+const BLOCK_COLORS = ['#F97316', '#06B6D4', '#84CC16', '#E879F9', '#FBBF24'];
 
 export let isDirty = false;
 
@@ -22,6 +23,8 @@ export function render(container, params) {
   let landmarkMarkers = [];
   let blockLayers = [];
   let pendingLatlng = null;
+  let landmarksExpanded = false;
+  let blocksExpanded = false;
 
   // Header
   const header = document.createElement('div');
@@ -51,21 +54,20 @@ export function render(container, params) {
   mapDiv.className = 'map-container';
   container.appendChild(mapDiv);
 
+  let landmarkPlacementMode = false;
+  let landmarkHintEl = null;
+
   mapCleanup = renderSingleMap(mapDiv, territory, function (latlng) {
-    // Show inline landmark form instead of prompt
-    pendingLatlng = latlng;
-    showLandmarkForm();
+    if (landmarkPlacementMode) {
+      pendingLatlng = latlng;
+      stopPlacingLandmark();
+      showLandmarkForm();
+    }
   }, function (map) {
     currentMap = map;
     drawBlocksOnMap();
     drawGlobalLandmarksOnMap();
   });
-
-  // Helper text
-  const helper = document.createElement('p');
-  helper.className = 'helper-text';
-  helper.textContent = t('show.clickToAdd');
-  container.appendChild(helper);
 
   // Landmark form container (inline, hidden initially)
   const landmarkFormContainer = document.createElement('div');
@@ -162,32 +164,37 @@ export function render(container, params) {
   }
 
   // --- Inline landmark form (F2 + F3) ---
+  // existingLm: { id, name, description, lat, lng, color } or null for new
+  // existingIsGlobal: boolean — current scope of an existing landmark
 
-  function showLandmarkForm() {
+  function showLandmarkForm(existingLm, existingIsGlobal) {
     landmarkFormContainer.style.display = 'block';
     landmarkFormContainer.innerHTML = '';
+
+    const isEdit = !!existingLm;
+    const initialScope = isEdit ? (existingIsGlobal ? 'global' : 'local') : 'local';
 
     const form = document.createElement('div');
     form.className = 'landmark-form';
     form.innerHTML =
-      '<h4>' + escapeHtml(t('show.addLandmarkTitle')) + '</h4>' +
+      '<h4>' + escapeHtml(isEdit ? t('show.editLandmarkTitle') : t('show.addLandmarkTitle')) + '</h4>' +
       '<div class="form-group">' +
         '<label>' + escapeHtml(t('show.addLandmarkName')) + '</label>' +
-        '<input type="text" class="history-input" data-field="lm-name" />' +
+        '<input type="text" class="history-input" data-field="lm-name" value="' + (isEdit ? escapeHtml(existingLm.name) : '') + '" />' +
       '</div>' +
       '<div class="form-group">' +
         '<label>' + escapeHtml(t('show.addLandmarkDesc')) + '</label>' +
-        '<input type="text" class="history-input" data-field="lm-desc" />' +
+        '<input type="text" class="history-input" data-field="lm-desc" value="' + (isEdit ? escapeHtml(existingLm.description || '') : '') + '" />' +
       '</div>' +
       '<div class="form-group">' +
         '<label>' + escapeHtml(t('show.scopeLocal')) + '</label>' +
         '<div class="scope-toggle">' +
-          '<button class="scope-btn active" data-scope="local">' + escapeHtml(t('show.scopeLocal')) + '</button>' +
-          '<button class="scope-btn" data-scope="global">' + escapeHtml(t('show.scopeGlobal')) + '</button>' +
+          '<button class="scope-btn' + (initialScope === 'local' ? ' active' : '') + '" data-scope="local">' + escapeHtml(t('show.scopeLocal')) + '</button>' +
+          '<button class="scope-btn' + (initialScope === 'global' ? ' active' : '') + '" data-scope="global">' + escapeHtml(t('show.scopeGlobal')) + '</button>' +
         '</div>' +
       '</div>';
 
-    let selectedScope = 'local';
+    let selectedScope = initialScope;
     const scopeBtns = form.querySelectorAll('.scope-btn');
     scopeBtns.forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -206,31 +213,45 @@ export function render(container, params) {
     saveBtn.addEventListener('click', function () {
       const name = form.querySelector('[data-field="lm-name"]').value.trim();
       const description = form.querySelector('[data-field="lm-desc"]').value.trim();
-      if (!name || !pendingLatlng) return;
+      if (!name) return;
 
-      const color = LANDMARK_COLORS[territory.landmarks.length % LANDMARK_COLORS.length];
+      if (isEdit) {
+        const scopeChanged = (existingIsGlobal && selectedScope === 'local') || (!existingIsGlobal && selectedScope === 'global');
+        const latlng = { lat: existingLm.lat, lng: existingLm.lng };
 
-      if (selectedScope === 'global') {
-        store.addGlobalLandmark({
-          name, description,
-          lat: pendingLatlng.lat,
-          lng: pendingLatlng.lng,
-          color: '#9CA3AF'
-        });
-        addMarkerToMap({ name, description, lat: pendingLatlng.lat, lng: pendingLatlng.lng }, true);
+        if (scopeChanged) {
+          // Delete from old scope, create in new scope
+          if (existingIsGlobal) {
+            store.deleteGlobalLandmark(existingLm.id);
+            const color = LANDMARK_COLORS[(territory.landmarks || []).length % LANDMARK_COLORS.length];
+            store.addLandmark(territory.id, { name, description, lat: latlng.lat, lng: latlng.lng, color: color });
+          } else {
+            store.deleteLandmark(territory.id, existingLm.id);
+            store.addGlobalLandmark({ name, description, lat: latlng.lat, lng: latlng.lng, color: '#9CA3AF' });
+          }
+        } else {
+          // Same scope — just update
+          if (existingIsGlobal) {
+            store.updateGlobalLandmark(existingLm.id, { name, description });
+          } else {
+            store.updateLandmark(territory.id, existingLm.id, { name, description });
+          }
+        }
       } else {
-        store.addLandmark(territory.id, {
-          name, description,
-          lat: pendingLatlng.lat,
-          lng: pendingLatlng.lng,
-          color: color
-        });
-        territory = store.getById(params.id);
-        addMarkerToMap(territory.landmarks[territory.landmarks.length - 1], false);
+        // New landmark
+        if (!pendingLatlng) return;
+        const color = LANDMARK_COLORS[(territory.landmarks || []).length % LANDMARK_COLORS.length];
+
+        if (selectedScope === 'global') {
+          store.addGlobalLandmark({ name, description, lat: pendingLatlng.lat, lng: pendingLatlng.lng, color: '#9CA3AF' });
+        } else {
+          store.addLandmark(territory.id, { name, description, lat: pendingLatlng.lat, lng: pendingLatlng.lng, color: color });
+        }
+        pendingLatlng = null;
       }
 
       landmarkFormContainer.style.display = 'none';
-      pendingLatlng = null;
+      refreshMapMarkers();
       rerenderLandmarks();
     });
 
@@ -255,15 +276,35 @@ export function render(container, params) {
     territory = store.getById(params.id);
     landmarksSection.innerHTML = '';
 
-    const h3 = document.createElement('h3');
-    h3.textContent = t('show.landmarks');
-    landmarksSection.appendChild(h3);
+    const headerRow = document.createElement('div');
+    headerRow.className = 'history-header';
 
     const localLandmarks = territory.landmarks || [];
     const globalLandmarks = store.getGlobalLandmarks ? store.getGlobalLandmarks() : [];
-    const allEmpty = localLandmarks.length === 0 && globalLandmarks.length === 0;
+    const count = localLandmarks.length + globalLandmarks.length;
 
-    if (allEmpty) {
+    const h3 = document.createElement('h3');
+    h3.style.cursor = 'pointer';
+    h3.style.userSelect = 'none';
+    h3.textContent = (landmarksExpanded ? '▾ ' : '▸ ') + t('show.landmarks') + (count > 0 ? ' (' + count + ')' : '');
+    h3.addEventListener('click', function () {
+      landmarksExpanded = !landmarksExpanded;
+      rerenderLandmarks();
+    });
+    headerRow.appendChild(h3);
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn btn-secondary btn-sm';
+    addBtn.textContent = t('show.addLandmark');
+    addBtn.addEventListener('click', function () {
+      startPlacingLandmark();
+    });
+    headerRow.appendChild(addBtn);
+    landmarksSection.appendChild(headerRow);
+
+    if (!landmarksExpanded) return;
+
+    if (count === 0) {
       const empty = document.createElement('p');
       empty.className = 'empty-state';
       empty.textContent = t('show.noLandmarks');
@@ -274,17 +315,53 @@ export function render(container, params) {
     const ul = document.createElement('ul');
     ul.className = 'landmarks-list';
 
-    // Local landmarks
     localLandmarks.forEach(function (lm) {
       ul.appendChild(buildLandmarkItem(lm, false));
     });
 
-    // Global landmarks
     globalLandmarks.forEach(function (lm) {
       ul.appendChild(buildLandmarkItem(lm, true));
     });
 
     landmarksSection.appendChild(ul);
+  }
+
+  function startPlacingLandmark() {
+    if (!currentMap || landmarkPlacementMode) return;
+    stopPlacingBlock();
+    landmarkPlacementMode = true;
+
+    landmarkHintEl = document.createElement('div');
+    landmarkHintEl.className = 'flash flash-notice';
+    landmarkHintEl.style.marginBottom = '1rem';
+    landmarkHintEl.textContent = t('show.placeLandmarkHint');
+
+    const cancelLink = document.createElement('button');
+    cancelLink.className = 'btn btn-secondary btn-sm';
+    cancelLink.style.marginLeft = '0.5rem';
+    cancelLink.textContent = t('show.addLandmarkCancel');
+    cancelLink.addEventListener('click', stopPlacingLandmark);
+    landmarkHintEl.appendChild(cancelLink);
+
+    landmarksSection.insertBefore(landmarkHintEl, landmarksSection.firstChild.nextSibling);
+
+    currentMap.getContainer().style.cursor = 'crosshair';
+  }
+
+  function stopPlacingLandmark() {
+    landmarkPlacementMode = false;
+    if (currentMap) {
+      currentMap.getContainer().style.cursor = '';
+    }
+    if (landmarkHintEl && landmarkHintEl.parentNode) landmarkHintEl.remove();
+    landmarkHintEl = null;
+  }
+
+  function refreshMapMarkers() {
+    clearMapMarkers();
+    territory = store.getById(params.id);
+    (territory.landmarks || []).forEach(function (l) { addMarkerToMap(l, false); });
+    drawGlobalLandmarksOnMap();
   }
 
   function buildLandmarkItem(lm, isGlobal) {
@@ -319,6 +396,15 @@ export function render(container, params) {
 
     const actionsSpan = document.createElement('span');
     actionsSpan.className = 'landmark-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-secondary btn-sm';
+    editBtn.textContent = t('show.editLandmark');
+    editBtn.addEventListener('click', function () {
+      showLandmarkForm(lm, isGlobal);
+    });
+    actionsSpan.appendChild(editBtn);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger btn-sm';
     deleteBtn.textContent = t('show.deleteLandmark');
@@ -329,10 +415,7 @@ export function render(container, params) {
         } else {
           store.deleteLandmark(territory.id, lm.id);
         }
-        clearMapMarkers();
-        territory = store.getById(params.id);
-        territory.landmarks.forEach(function (l) { addMarkerToMap(l, false); });
-        drawGlobalLandmarksOnMap();
+        refreshMapMarkers();
         rerenderLandmarks();
       }
     });
@@ -353,8 +436,16 @@ export function render(container, params) {
     const headerRow = document.createElement('div');
     headerRow.className = 'history-header';
 
+    const blocks = territory.blocks || [];
+
     const h3 = document.createElement('h3');
-    h3.textContent = t('show.blocks');
+    h3.style.cursor = 'pointer';
+    h3.style.userSelect = 'none';
+    h3.textContent = (blocksExpanded ? '▾ ' : '▸ ') + t('show.blocks') + (blocks.length > 0 ? ' (' + blocks.length + ')' : '');
+    h3.addEventListener('click', function () {
+      blocksExpanded = !blocksExpanded;
+      rerenderBlocks();
+    });
     headerRow.appendChild(h3);
 
     const addBtn = document.createElement('button');
@@ -366,7 +457,7 @@ export function render(container, params) {
     headerRow.appendChild(addBtn);
     blocksSection.appendChild(headerRow);
 
-    const blocks = territory.blocks || [];
+    if (!blocksExpanded) return;
 
     if (blocks.length === 0) {
       const empty = document.createElement('p');
@@ -374,26 +465,42 @@ export function render(container, params) {
       empty.textContent = t('show.noBlocks');
       blocksSection.appendChild(empty);
     } else {
-      const list = document.createElement('div');
-      list.className = 'history-list';
+      const ul = document.createElement('ul');
+      ul.className = 'landmarks-list';
 
       blocks.forEach(function (block, index) {
-        const item = document.createElement('div');
-        item.className = 'history-item';
+        const li = document.createElement('li');
+        li.className = 'landmark-item';
 
-        const info = document.createElement('div');
-        info.className = 'history-info';
+        const dot = document.createElement('span');
+        dot.className = 'landmark-dot';
+        dot.style.background = BLOCK_COLORS[index % BLOCK_COLORS.length];
 
-        const numberRow = document.createElement('div');
-        numberRow.className = 'history-person';
-        const colorDot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + BLOCK_COLORS[index % BLOCK_COLORS.length] + ';margin-right:0.5rem;"></span>';
-        numberRow.innerHTML = colorDot + escapeHtml(t('show.blocks')) + ' ' + escapeHtml(block.number);
-        info.appendChild(numberRow);
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'landmark-info';
 
-        item.appendChild(info);
+        const nameRow = document.createElement('span');
+        nameRow.className = 'landmark-name';
+        nameRow.textContent = t('show.blocks') + ' ' + block.number;
+        infoDiv.appendChild(nameRow);
 
-        const actions = document.createElement('div');
-        actions.className = 'history-actions';
+        const actionsSpan = document.createElement('span');
+        actionsSpan.className = 'landmark-actions';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-secondary btn-sm';
+        editBtn.textContent = t('show.editBlock');
+        editBtn.addEventListener('click', function () {
+          const newNumber = prompt(t('show.blockName'), block.number);
+          if (newNumber !== null && newNumber.trim()) {
+            store.updateBlock(territory.id, block.id, { number: newNumber.trim() });
+            territory = store.getById(params.id);
+            drawBlocksOnMap();
+            rerenderBlocks();
+          }
+        });
+        actionsSpan.appendChild(editBtn);
+
         const delBtn = document.createElement('button');
         delBtn.className = 'btn btn-danger btn-sm';
         delBtn.textContent = t('show.deleteBlock');
@@ -405,12 +512,15 @@ export function render(container, params) {
             rerenderBlocks();
           }
         });
-        actions.appendChild(delBtn);
-        item.appendChild(actions);
-        list.appendChild(item);
+        actionsSpan.appendChild(delBtn);
+
+        li.appendChild(dot);
+        li.appendChild(infoDiv);
+        li.appendChild(actionsSpan);
+        ul.appendChild(li);
       });
 
-      blocksSection.appendChild(list);
+      blocksSection.appendChild(ul);
     }
   }
 
@@ -419,6 +529,7 @@ export function render(container, params) {
 
   function startPlacingBlock() {
     if (!currentMap || blockPlacementMode) return;
+    stopPlacingLandmark();
     blockPlacementMode = true;
 
     // Show hint
@@ -733,6 +844,7 @@ export function render(container, params) {
 
   return function () {
     stopPlacingBlock();
+    stopPlacingLandmark();
     if (mapCleanup) mapCleanup();
   };
 }

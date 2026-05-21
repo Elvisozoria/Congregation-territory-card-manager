@@ -81,6 +81,13 @@ export default {
     deleteBlock: 'Eliminar',
     confirmDeleteBlock: '¿Eliminar esta manzana?',
     placeBlockHint: 'Haz clic en el mapa para colocar la etiqueta de la manzana.',
+    editBlock: 'Editar',
+    blockName: 'Nombre de la manzana:',
+    addLandmark: 'Agregar Referencia',
+    placeLandmarkHint: 'Haz clic en el mapa para colocar la referencia.',
+    editLandmark: 'Editar',
+    editLandmarkTitle: 'Editar Referencia',
+    confirmDeleteLandmark: '¿Eliminar esta referencia?',
     // Assignment
     assignTerritory: 'Asignar Territorio',
     assignedTo: 'Asignado a {person}',

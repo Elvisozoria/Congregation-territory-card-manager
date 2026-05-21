@@ -81,6 +81,13 @@ export default {
     deleteBlock: 'Delete',
     confirmDeleteBlock: 'Delete this block?',
     placeBlockHint: 'Click on the map to place the block label.',
+    editBlock: 'Edit',
+    blockName: 'Block name:',
+    addLandmark: 'Add Landmark',
+    placeLandmarkHint: 'Click on the map to place the landmark.',
+    editLandmark: 'Edit',
+    editLandmarkTitle: 'Edit Landmark',
+    confirmDeleteLandmark: 'Delete this landmark?',
     // Assignment
     assignTerritory: 'Assign Territory',
     assignedTo: 'Assigned to {person}',

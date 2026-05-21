@@ -161,6 +161,18 @@ export function createLocalStore() {
       return landmark;
     },
 
+    updateLandmark(territoryId, landmarkId, attrs) {
+      const territory = this.getById(territoryId);
+      if (!territory) return;
+      const lm = territory.landmarks.find(function (l) { return l.id === landmarkId; });
+      if (!lm) return;
+      if (attrs.name !== undefined) lm.name = attrs.name;
+      if (attrs.description !== undefined) lm.description = attrs.description;
+      if (attrs.lat !== undefined) lm.lat = attrs.lat;
+      if (attrs.lng !== undefined) lm.lng = attrs.lng;
+      notify();
+    },
+
     deleteLandmark(territoryId, landmarkId) {
       const territory = this.getById(territoryId);
       if (!territory) return;
@@ -183,6 +195,17 @@ export function createLocalStore() {
       territory.blocks.push(block);
       notify();
       return block;
+    },
+
+    updateBlock(territoryId, blockId, attrs) {
+      const territory = this.getById(territoryId);
+      if (!territory || !territory.blocks) return;
+      const block = territory.blocks.find(function (b) { return b.id === blockId; });
+      if (!block) return;
+      if (attrs.number !== undefined) block.number = attrs.number;
+      if (attrs.lat !== undefined) block.lat = attrs.lat;
+      if (attrs.lng !== undefined) block.lng = attrs.lng;
+      notify();
     },
 
     deleteBlock(territoryId, blockId) {
@@ -210,6 +233,14 @@ export function createLocalStore() {
       data.globalLandmarks.push(landmark);
       notify();
       return landmark;
+    },
+
+    updateGlobalLandmark(id, attrs) {
+      const lm = data.globalLandmarks.find(function (l) { return l.id === id; });
+      if (!lm) return;
+      if (attrs.name !== undefined) lm.name = attrs.name;
+      if (attrs.description !== undefined) lm.description = attrs.description;
+      notify();
     },
 
     deleteGlobalLandmark(id) {
