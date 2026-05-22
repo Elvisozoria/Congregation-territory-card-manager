@@ -2,7 +2,7 @@ name: Deploy to Firebase Hosting
 
 on:
   push:
-    branches: [poc-march-14th-2026]
+    branches: [main]
 
 jobs:
   build-and-deploy:
