@@ -1,6 +1,7 @@
 import { t } from '../i18n/i18n.js';
 import { escapeHtml } from '../utils/helpers.js';
-import { setMode } from '../store/index.js';
+import { setMode, initStore } from '../store/index.js';
+import { refresh } from '../router.js';
 
 export let isDirty = false;
 
@@ -18,7 +19,6 @@ export function render(container) {
 
   const errorDiv = card.querySelector('.auth-error');
 
-  // Google sign-in button
   const googleBtn = document.createElement('button');
   googleBtn.className = 'btn btn-primary google-btn';
   googleBtn.style.cssText = 'width:100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.75rem;';
@@ -31,8 +31,20 @@ export function render(container) {
     googleBtn.textContent = '...';
 
     try {
-      const { signInWithGoogle } = await import('../firebase/auth.js');
+      const { signInWithGoogle, getCurrentUserProfile, checkAndApplyInvite } = await import('../firebase/auth.js');
       await signInWithGoogle();
+
+      await checkAndApplyInvite();
+      const profile = await getCurrentUserProfile();
+
+      if (profile && profile.congregationId) {
+        await initStore();
+        window.location.hash = '#/';
+        refresh();
+      } else {
+        window.location.hash = '#/register';
+        refresh();
+      }
     } catch (err) {
       console.error('Login error:', err);
       errorDiv.textContent = t('auth.loginError');
@@ -45,7 +57,6 @@ export function render(container) {
 
   card.appendChild(googleBtn);
 
-  // Links
   const links = document.createElement('div');
   links.className = 'auth-links';
 
