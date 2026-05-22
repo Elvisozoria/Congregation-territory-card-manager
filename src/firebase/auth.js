@@ -1,21 +1,49 @@
 import {
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithCredential,
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { auth, db } from './config.js';
 
-const googleProvider = new GoogleAuthProvider();
+const GOOGLE_CLIENT_ID = '424249966218-7skifm2i7bv67okbt3lf7tr767bdhjpj.apps.googleusercontent.com';
 
-export function signInWithGoogle() {
-  return signInWithRedirect(auth, googleProvider);
+function waitForGIS() {
+  return new Promise(function (resolve) {
+    function check() {
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+        resolve();
+      } else {
+        setTimeout(check, 100);
+      }
+    }
+    check();
+  });
 }
 
-export function getGoogleRedirectResult() {
-  return getRedirectResult(auth);
+export async function signInWithGoogle() {
+  await waitForGIS();
+
+  return new Promise(function (resolve, reject) {
+    var client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'email profile openid',
+      callback: function (response) {
+        if (response.error) {
+          reject(new Error(response.error));
+          return;
+        }
+        var credential = GoogleAuthProvider.credential(null, response.access_token);
+        signInWithCredential(auth, credential).then(resolve).catch(reject);
+      },
+      error_callback: function (err) {
+        reject(err);
+      }
+    });
+
+    client.requestAccessToken();
+  });
 }
 
 export function signOut() {
@@ -43,20 +71,17 @@ export async function registerCongregation(congregationName) {
   const user = auth.currentUser;
   if (!user) throw new Error('User not authenticated');
 
-  // Check if user already has a profile (returning user)
   const existingProfile = await getDoc(doc(db, 'users', user.uid));
   if (existingProfile.exists()) {
     return { uid: user.uid, congregationId: existingProfile.data().congregationId };
   }
 
-  // Create congregation
   const congRef = await addDoc(collection(db, 'congregations'), {
     name: congregationName,
     createdBy: user.uid,
     createdAt: serverTimestamp()
   });
 
-  // Create user profile
   await setDoc(doc(db, 'users', user.uid), {
     email: user.email,
     displayName: user.displayName || user.email,
@@ -69,10 +94,7 @@ export async function registerCongregation(congregationName) {
   return { uid: user.uid, congregationId: congRef.id };
 }
 
-// Admin invites a member: creates a placeholder profile.
-// The invited user signs in with Google, and if their email matches, they join.
 export async function inviteMember(email, displayName, congregationId, role) {
-  // Store an invite doc that will be matched when the user signs in with Google
   const inviteRef = await addDoc(collection(db, 'invites'), {
     email: email.toLowerCase(),
     displayName,
@@ -84,7 +106,6 @@ export async function inviteMember(email, displayName, congregationId, role) {
   return { inviteId: inviteRef.id, email };
 }
 
-// Check if current Google user has a pending invite and apply it
 export async function checkAndApplyInvite() {
   const user = auth.currentUser;
   if (!user || !user.email) return null;
@@ -99,7 +120,6 @@ export async function checkAndApplyInvite() {
   const invite = snap.docs[0];
   const inviteData = invite.data();
 
-  // Create user profile from invite
   await setDoc(doc(db, 'users', user.uid), {
     email: user.email,
     displayName: inviteData.displayName || user.displayName || user.email,
@@ -109,7 +129,6 @@ export async function checkAndApplyInvite() {
     createdAt: serverTimestamp()
   });
 
-  // Delete the invite
   const { deleteDoc } = await import('firebase/firestore');
   await deleteDoc(invite.ref);
 
