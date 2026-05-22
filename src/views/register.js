@@ -1,9 +1,62 @@
 import { t } from '../i18n/i18n.js';
 import { escapeHtml } from '../utils/helpers.js';
-import { initStore, hasLocalData, migrateLocalToCloud } from '../store/index.js';
+import { initStore, hasLocalData, migrateLocalToCloud, getUserProfile } from '../store/index.js';
 import { refresh } from '../router.js';
 
 export let isDirty = false;
+
+const PENDING_CONGREGATION_KEY = 'pending-congregation-name';
+
+async function completePendingRegistration(container) {
+  const congregationName = localStorage.getItem(PENDING_CONGREGATION_KEY);
+  const profile = getUserProfile();
+
+  if (!congregationName || !profile || !profile.needsRegistration) return false;
+
+  const wrapper = container.querySelector('.auth-wrapper') || container;
+  const card = wrapper.querySelector('.auth-card');
+  const errorDiv = card && card.querySelector('.auth-error');
+  const submitBtn = card && card.querySelector('button[type="submit"]');
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = '...';
+  }
+
+  try {
+    const { registerCongregation } = await import('../firebase/auth.js');
+    await registerCongregation(congregationName);
+    localStorage.removeItem(PENDING_CONGREGATION_KEY);
+
+    await initStore();
+
+    if (hasLocalData()) {
+      if (submitBtn) submitBtn.textContent = t('settings.migrateTitle') + '...';
+      try {
+        const result = await migrateLocalToCloud();
+        console.log('Migration complete:', result);
+      } catch (migErr) {
+        console.error('Migration error:', migErr);
+      }
+    }
+
+    window.location.hash = '#/';
+    refresh();
+    return true;
+  } catch (err) {
+    console.error('Registration completion error:', err);
+    localStorage.removeItem(PENDING_CONGREGATION_KEY);
+    if (errorDiv) {
+      errorDiv.textContent = t('auth.registerError');
+      errorDiv.style.display = 'block';
+    }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = t('auth.registerWithGoogle');
+    }
+    return true;
+  }
+}
 
 export function render(container) {
   const wrapper = document.createElement('div');
@@ -44,32 +97,12 @@ export function render(container) {
     submitBtn.textContent = '...';
 
     try {
-      const { registerCongregation } = await import('../firebase/auth.js');
-      await registerCongregation(congregationName);
-
-      // Re-init store with the new profile
-      await initStore();
-
-      // Migrate local data to cloud if it exists
-      if (hasLocalData()) {
-        submitBtn.textContent = t('settings.migrateTitle') + '...';
-        try {
-          const result = await migrateLocalToCloud();
-          console.log('Migration complete:', result);
-        } catch (migErr) {
-          console.error('Migration error:', migErr);
-          errorDiv.textContent = t('auth.registerError') + ' (migration)';
-          errorDiv.style.display = 'block';
-          submitBtn.disabled = false;
-          submitBtn.textContent = t('auth.registerWithGoogle');
-          return;
-        }
-      }
-
-      window.location.hash = '#/';
-      refresh();
+      localStorage.setItem(PENDING_CONGREGATION_KEY, congregationName);
+      const { signInWithGoogle } = await import('../firebase/auth.js');
+      await signInWithGoogle();
     } catch (err) {
       console.error('Register error:', err);
+      localStorage.removeItem(PENDING_CONGREGATION_KEY);
       errorDiv.textContent = t('auth.registerError');
       errorDiv.style.display = 'block';
       submitBtn.disabled = false;
@@ -79,6 +112,8 @@ export function render(container) {
 
   wrapper.appendChild(card);
   container.appendChild(wrapper);
+
+  completePendingRegistration(container);
 
   return null;
 }

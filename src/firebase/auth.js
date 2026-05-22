@@ -1,6 +1,7 @@
 import {
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from 'firebase/auth';
@@ -10,7 +11,11 @@ import { auth, db } from './config.js';
 const googleProvider = new GoogleAuthProvider();
 
 export function signInWithGoogle() {
-  return signInWithPopup(auth, googleProvider);
+  return signInWithRedirect(auth, googleProvider);
+}
+
+export function getGoogleRedirectResult() {
+  return getRedirectResult(auth);
 }
 
 export function signOut() {
@@ -33,10 +38,10 @@ export async function getCurrentUserProfile() {
   return { uid: user.uid, ...snap.data() };
 }
 
-// Sign in with Google and register a new congregation in one step
+// Complete registration for an already-authenticated user
 export async function registerCongregation(congregationName) {
-  const cred = await signInWithPopup(auth, googleProvider);
-  const user = cred.user;
+  const user = auth.currentUser;
+  if (!user) throw new Error('User not authenticated');
 
   // Check if user already has a profile (returning user)
   const existingProfile = await getDoc(doc(db, 'users', user.uid));
@@ -62,20 +67,6 @@ export async function registerCongregation(congregationName) {
   });
 
   return { uid: user.uid, congregationId: congRef.id };
-}
-
-// Sign in with Google and auto-create profile if first time
-export async function signInAndEnsureProfile() {
-  const cred = await signInWithPopup(auth, googleProvider);
-  const user = cred.user;
-
-  const snap = await getDoc(doc(db, 'users', user.uid));
-  if (!snap.exists()) {
-    // First-time Google user without a congregation — they need to register
-    return { uid: user.uid, needsRegistration: true };
-  }
-
-  return { uid: user.uid, needsRegistration: false, profile: snap.data() };
 }
 
 // Admin invites a member: creates a placeholder profile.

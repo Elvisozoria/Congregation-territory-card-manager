@@ -1,7 +1,6 @@
 import { t } from '../i18n/i18n.js';
 import { escapeHtml } from '../utils/helpers.js';
-import { setMode, initStore } from '../store/index.js';
-import { refresh } from '../router.js';
+import { setMode } from '../store/index.js';
 
 export let isDirty = false;
 
@@ -32,25 +31,8 @@ export function render(container) {
     googleBtn.textContent = '...';
 
     try {
-      const { signInWithGoogle, getCurrentUserProfile, checkAndApplyInvite } = await import('../firebase/auth.js');
+      const { signInWithGoogle } = await import('../firebase/auth.js');
       await signInWithGoogle();
-
-      // Check for invite
-      await checkAndApplyInvite();
-
-      // Check if profile exists now
-      const profile = await getCurrentUserProfile();
-
-      if (profile && profile.congregationId) {
-        // Has profile — re-init store and navigate to app
-        await initStore();
-        window.location.hash = '#/';
-        refresh();
-      } else {
-        // No profile — needs to register a congregation
-        window.location.hash = '#/register';
-        refresh();
-      }
     } catch (err) {
       console.error('Login error:', err);
       errorDiv.textContent = t('auth.loginError');
