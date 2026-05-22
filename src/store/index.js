@@ -99,12 +99,27 @@ export async function initStore() {
   }
 }
 
+export function hasLocalData() {
+  try {
+    const saved = localStorage.getItem('territory-cards-data');
+    if (!saved) return false;
+    const parsed = JSON.parse(saved);
+    return parsed.territories && parsed.territories.length > 0;
+  } catch (e) {
+    return false;
+  }
+}
+
 export async function migrateLocalToCloud() {
   const localStore = createLocalStore();
   const territories = localStore.getAll();
   const historyEntries = localStore.getAllHistory();
   const localGlobals = localStore.getGlobalLandmarks();
   const cloudStore = getStore();
+
+  if (!cloudStore || !cloudStore.createTerritory) {
+    throw new Error('Cloud store not initialized');
+  }
 
   const idMap = {};
 

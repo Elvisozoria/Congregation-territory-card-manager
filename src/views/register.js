@@ -1,6 +1,6 @@
 import { t } from '../i18n/i18n.js';
 import { escapeHtml } from '../utils/helpers.js';
-import { initStore } from '../store/index.js';
+import { initStore, hasLocalData, migrateLocalToCloud } from '../store/index.js';
 import { refresh } from '../router.js';
 
 export let isDirty = false;
@@ -49,6 +49,23 @@ export function render(container) {
 
       // Re-init store with the new profile
       await initStore();
+
+      // Migrate local data to cloud if it exists
+      if (hasLocalData()) {
+        submitBtn.textContent = t('settings.migrateTitle') + '...';
+        try {
+          const result = await migrateLocalToCloud();
+          console.log('Migration complete:', result);
+        } catch (migErr) {
+          console.error('Migration error:', migErr);
+          errorDiv.textContent = t('auth.registerError') + ' (migration)';
+          errorDiv.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = t('auth.registerWithGoogle');
+          return;
+        }
+      }
+
       window.location.hash = '#/';
       refresh();
     } catch (err) {
