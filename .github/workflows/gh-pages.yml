@@ -1,3 +1,4 @@
+# Deploys the Vite build output to GitHub Pages
 name: Deploy to GitHub Pages
 
 on:
