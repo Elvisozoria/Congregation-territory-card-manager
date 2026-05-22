@@ -1,49 +1,16 @@
 import {
   GoogleAuthProvider,
-  signInWithCredential,
+  signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { auth, db } from './config.js';
 
-const GOOGLE_CLIENT_ID = '424249966218-7skifm2i7bv67okbt3lf7tr767bdhjpj.apps.googleusercontent.com';
+const googleProvider = new GoogleAuthProvider();
 
-function waitForGIS() {
-  return new Promise(function (resolve) {
-    function check() {
-      if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-        resolve();
-      } else {
-        setTimeout(check, 100);
-      }
-    }
-    check();
-  });
-}
-
-export async function signInWithGoogle() {
-  await waitForGIS();
-
-  return new Promise(function (resolve, reject) {
-    var client = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: 'email profile openid',
-      callback: function (response) {
-        if (response.error) {
-          reject(new Error(response.error));
-          return;
-        }
-        var credential = GoogleAuthProvider.credential(null, response.access_token);
-        signInWithCredential(auth, credential).then(resolve).catch(reject);
-      },
-      error_callback: function (err) {
-        reject(err);
-      }
-    });
-
-    client.requestAccessToken();
-  });
+export function signInWithGoogle() {
+  return signInWithPopup(auth, googleProvider);
 }
 
 export function signOut() {
@@ -66,7 +33,6 @@ export async function getCurrentUserProfile() {
   return { uid: user.uid, ...snap.data() };
 }
 
-// Complete registration for an already-authenticated user
 export async function registerCongregation(congregationName) {
   const user = auth.currentUser;
   if (!user) throw new Error('User not authenticated');
