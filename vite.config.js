@@ -1,6 +1,7 @@
 export default {
   root: '.',
   publicDir: 'public',
+  base: process.env.GITHUB_PAGES ? '/Congregation-territory-card-manager/' : '/',
   build: {
     outDir: 'dist'
   },
