@@ -119,7 +119,9 @@ export function createLocalStore() {
         qr_url: attrs.qr_url || '',
         notes: attrs.notes || '',
         landmarks: [],
-        blocks: []
+        blocks: [],
+        cardZoom: null,
+        cardCenter: null
       };
       data.territories.push(territory);
       notify();
@@ -135,6 +137,8 @@ export function createLocalStore() {
       if (attrs.polygon !== undefined) territory.polygon = attrs.polygon;
       if (attrs.qr_url !== undefined) territory.qr_url = attrs.qr_url;
       if (attrs.notes !== undefined) territory.notes = attrs.notes;
+      if (attrs.cardZoom !== undefined) territory.cardZoom = attrs.cardZoom;
+      if (attrs.cardCenter !== undefined) territory.cardCenter = attrs.cardCenter;
       notify();
       return territory;
     },
@@ -273,6 +277,7 @@ export function createLocalStore() {
         startDate: entry.startDate || '',
         endDate: entry.endDate || null,
         person: entry.person || '',
+        assignedToUid: entry.assignedToUid || null,
         notes: entry.notes || '',
         type: entry.type || 'assignment',
         status: entry.status || 'active',
@@ -289,6 +294,7 @@ export function createLocalStore() {
       if (attrs.startDate !== undefined) entry.startDate = attrs.startDate;
       if (attrs.endDate !== undefined) entry.endDate = attrs.endDate;
       if (attrs.person !== undefined) entry.person = attrs.person;
+      if (attrs.assignedToUid !== undefined) entry.assignedToUid = attrs.assignedToUid;
       if (attrs.notes !== undefined) entry.notes = attrs.notes;
       if (attrs.type !== undefined) entry.type = attrs.type;
       if (attrs.status !== undefined) entry.status = attrs.status;

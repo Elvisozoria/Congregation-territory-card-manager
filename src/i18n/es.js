@@ -52,6 +52,19 @@ export default {
     history: 'Historial de Trabajo',
     noHistory: 'Sin registros de trabajo aún.',
     addHistory: 'Agregar Registro',
+    historyFilterAll: 'Todos',
+    historyFilterActive: 'Activos',
+    historyFilterCompleted: 'Completados',
+    historyFilterReturned: 'Devueltos',
+    historyDuration: 'Duración',
+    historyDurationDays: '{n} días',
+    historyDurationDay: '1 día',
+    historyDurationMonths: '{n} meses',
+    historyDurationMonth: '1 mes',
+    historyDurationYears: '{n} años',
+    historyDurationYear: '1 año',
+    historyShowMore: 'Ver más',
+    historyShowLess: 'Ver menos',
     historyPerson: 'Persona',
     historyStartDate: 'Fecha de inicio',
     historyEndDate: 'Fecha de fin',
@@ -96,6 +109,10 @@ export default {
     markReturned: 'Devolver',
     available: 'Disponible',
     assignPerson: 'Nombre de la persona:',
+    assignSelectPerson: 'Selecciona a quién asignar',
+    assignNoMembers: 'No hay miembros disponibles para asignar.',
+    assignSubmit: 'Asignar',
+    assignCancel: 'Cancelar',
     // History types & status
     typeAssignment: 'Asignación',
     typePreaching: 'Predicación',
@@ -132,7 +149,24 @@ export default {
   card: {
     downloadPng: 'Descargar PNG',
     print: 'Imprimir',
-    back: 'Volver'
+    back: 'Volver',
+    saveView: 'Guardar vista',
+    resetView: 'Restablecer vista',
+    enableEditView: 'Editar zoom y centro',
+    viewSaved: 'Vista guardada.'
+  },
+
+  // Public view
+  public: {
+    openInMaps: 'Abrir en Google Maps',
+    poweredBy: 'Tarjetas de Territorio'
+  },
+
+  // Share
+  share: {
+    button: 'Compartir',
+    copied: 'Enlace copiado al portapapeles',
+    copyFailed: 'No se pudo copiar el enlace. Cópialo manualmente:'
   },
 
   // Print view
@@ -184,7 +218,10 @@ export default {
     newPassword: 'Nueva contraseña',
     confirmPassword: 'Confirmar contraseña',
     passwordMismatch: 'Las contraseñas no coinciden.',
-    noPermission: 'No tienes permiso para ver esta página.'
+    noPermission: 'No tienes permiso para ver esta página.',
+    noTerritoryAccess: 'Este territorio no está asignado a ti.',
+    yourAssignments: 'Tus territorios asignados',
+    noAssignments: 'No tienes territorios asignados todavía.'
   },
 
   // Admin panel
@@ -204,7 +241,15 @@ export default {
     inviteInstructions: 'Dile al usuario que inicie sesión con este correo de Google en la app.',
     role: 'Rol',
     roleMember: 'Miembro',
-    roleAdmin: 'Administrador'
+    roleAdmin: 'Administrador',
+    roleConductor: 'Conductor',
+    rolePublisher: 'Publicador',
+    changeRole: 'Cambiar rol',
+    changeRoleError: 'Error al cambiar el rol.',
+    migrateMembers: 'Migrar miembros antiguos a Conductor',
+    migrateMembersDone: '{count} miembro(s) migrado(s) a Conductor.',
+    migrateMembersNone: 'No hay miembros antiguos para migrar.',
+    youCannotChangeOwnRole: 'No puedes cambiar tu propio rol.'
   },
 
   // Settings

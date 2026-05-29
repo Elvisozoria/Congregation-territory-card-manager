@@ -1,15 +1,25 @@
 import { toPng } from 'html-to-image';
 import { t } from '../i18n/i18n.js';
-import { getStore } from '../store/index.js';
+import { getStore, getUserProfile } from '../store/index.js';
 import { renderCardMap } from '../components/card-map.js';
 import { escapeHtml } from '../utils/helpers.js';
+import { buildPublicTerritoryUrl } from '../utils/public-id.js';
+import { canViewPrintAll } from '../auth/permissions.js';
 
 export let isDirty = false;
 
 export function render(container) {
   const store = getStore();
+  const profile = getUserProfile();
+
+  if (!canViewPrintAll(profile)) {
+    container.innerHTML = '<p style="padding:2rem;">' + escapeHtml(t('auth.noPermission')) + '</p><a href="#/" class="btn btn-secondary" style="margin-left:2rem;">' + escapeHtml(t('print.back')) + '</a>';
+    return null;
+  }
+
   const territories = store.getAll();
-  const cleanups = [];
+  const controllers = [];
+  const congPubId = store.getCongregationPublicId ? store.getCongregationPublicId() : null;
 
   document.body.classList.add('print-layout');
 
@@ -59,7 +69,8 @@ export function render(container) {
   grid.className = 'cards-grid';
 
   territories.forEach(function (territory) {
-    const qrUrl = territory.qr_url || '';
+    const publicUrl = (congPubId && territory.publicId) ? buildPublicTerritoryUrl(congPubId, territory.publicId) : '';
+    const qrUrl = publicUrl || territory.qr_url || '';
 
     const card = document.createElement('div');
     card.className = 'territory-card';
@@ -87,8 +98,8 @@ export function render(container) {
 
     grid.appendChild(card);
     const globalLandmarks = store.getGlobalLandmarks ? store.getGlobalLandmarks() : [];
-    const cardCleanup = renderCardMap(card, territory, globalLandmarks);
-    cleanups.push(cardCleanup);
+    const controller = renderCardMap(card, territory, globalLandmarks, { editable: false, qrUrl: qrUrl });
+    controllers.push(controller);
   });
 
   container.appendChild(grid);
@@ -119,6 +130,6 @@ export function render(container) {
 
   return function () {
     document.body.classList.remove('print-layout');
-    cleanups.forEach(function (fn) { fn(); });
+    controllers.forEach(function (c) { if (c && c.cleanup) c.cleanup(); });
   };
 }

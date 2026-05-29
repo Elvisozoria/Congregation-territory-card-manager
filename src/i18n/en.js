@@ -52,6 +52,19 @@ export default {
     history: 'Work History',
     noHistory: 'No work records yet.',
     addHistory: 'Add Record',
+    historyFilterAll: 'All',
+    historyFilterActive: 'Active',
+    historyFilterCompleted: 'Completed',
+    historyFilterReturned: 'Returned',
+    historyDuration: 'Duration',
+    historyDurationDays: '{n} days',
+    historyDurationDay: '1 day',
+    historyDurationMonths: '{n} months',
+    historyDurationMonth: '1 month',
+    historyDurationYears: '{n} years',
+    historyDurationYear: '1 year',
+    historyShowMore: 'Show more',
+    historyShowLess: 'Show less',
     historyPerson: 'Person',
     historyStartDate: 'Start date',
     historyEndDate: 'End date',
@@ -96,6 +109,10 @@ export default {
     markReturned: 'Return',
     available: 'Available',
     assignPerson: 'Person name:',
+    assignSelectPerson: 'Select who to assign',
+    assignNoMembers: 'No members available to assign.',
+    assignSubmit: 'Assign',
+    assignCancel: 'Cancel',
     // History types & status
     typeAssignment: 'Assignment',
     typePreaching: 'Preaching',
@@ -132,7 +149,24 @@ export default {
   card: {
     downloadPng: 'Download PNG',
     print: 'Print',
-    back: 'Back'
+    back: 'Back',
+    saveView: 'Save view',
+    resetView: 'Reset view',
+    enableEditView: 'Edit zoom and center',
+    viewSaved: 'View saved.'
+  },
+
+  // Public view
+  public: {
+    openInMaps: 'Open in Google Maps',
+    poweredBy: 'Territory Cards'
+  },
+
+  // Share
+  share: {
+    button: 'Share',
+    copied: 'Link copied to clipboard',
+    copyFailed: 'Could not copy the link. Copy it manually:'
   },
 
   // Print view
@@ -184,7 +218,10 @@ export default {
     newPassword: 'New password',
     confirmPassword: 'Confirm password',
     passwordMismatch: 'Passwords do not match.',
-    noPermission: 'You do not have permission to view this page.'
+    noPermission: 'You do not have permission to view this page.',
+    noTerritoryAccess: 'This territory is not assigned to you.',
+    yourAssignments: 'Your assigned territories',
+    noAssignments: 'You have no territories assigned yet.'
   },
 
   // Admin panel
@@ -204,7 +241,15 @@ export default {
     inviteInstructions: 'Tell the user to sign in with this Google email in the app.',
     role: 'Role',
     roleMember: 'Member',
-    roleAdmin: 'Admin'
+    roleAdmin: 'Admin',
+    roleConductor: 'Conductor',
+    rolePublisher: 'Publisher',
+    changeRole: 'Change role',
+    changeRoleError: 'Failed to change role.',
+    migrateMembers: 'Migrate legacy members to Conductor',
+    migrateMembersDone: '{count} member(s) migrated to Conductor.',
+    migrateMembersNone: 'No legacy members to migrate.',
+    youCannotChangeOwnRole: "You can't change your own role."
   },
 
   // Settings

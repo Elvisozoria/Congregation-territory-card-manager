@@ -1,7 +1,8 @@
 import { t } from '../i18n/i18n.js';
-import { getStore } from '../store/index.js';
+import { getStore, getUserProfile } from '../store/index.js';
 import { initPolygonDraw } from '../components/polygon-draw.js';
 import { escapeHtml, escapeAttr } from '../utils/helpers.js';
+import { canCreateTerritory, canEditTerritory } from '../auth/permissions.js';
 
 export let isDirty = false;
 
@@ -28,11 +29,19 @@ function clearDraft(id) {
 
 export function render(container, params) {
   const store = getStore();
+  const profile = getUserProfile();
   const isEdit = params.id !== null;
   const territory = isEdit ? store.getById(params.id) : null;
 
   if (isEdit && !territory) {
     container.innerHTML = '<p>' + escapeHtml(t('alert.notFound')) + '</p><a href="#/" class="btn btn-secondary">' + escapeHtml(t('show.btnBack')) + '</a>';
+    return null;
+  }
+
+  // Permission gate: solo admin puede crear/editar territorios
+  const allowed = isEdit ? canEditTerritory(profile) : canCreateTerritory(profile);
+  if (!allowed) {
+    container.innerHTML = '<p style="padding:2rem;">' + escapeHtml(t('auth.noPermission')) + '</p><a href="#/" class="btn btn-secondary" style="margin-left:2rem;">' + escapeHtml(t('show.btnBack')) + '</a>';
     return null;
   }
 

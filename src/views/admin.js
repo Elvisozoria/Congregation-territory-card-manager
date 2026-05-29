@@ -4,6 +4,16 @@ import { getUserProfile } from '../store/index.js';
 
 export let isDirty = false;
 
+const ROLE_OPTIONS = ['admin', 'conductor', 'publisher'];
+
+function roleLabel(role) {
+  if (role === 'admin') return t('admin.roleAdmin');
+  if (role === 'conductor') return t('admin.roleConductor');
+  if (role === 'publisher') return t('admin.rolePublisher');
+  if (role === 'member') return t('admin.roleMember');
+  return role || '—';
+}
+
 export function render(container) {
   const profile = getUserProfile();
   if (!profile || profile.role !== 'admin') {
@@ -35,7 +45,7 @@ export function render(container) {
     '<div class="members-loading">' + escapeHtml(t('admin.loading')) + '</div>';
   wrapper.appendChild(membersSection);
 
-  loadMembers(membersSection, profile.congregationId);
+  loadMembers(membersSection, profile);
 
   // Invite user form (Google Auth — invite by email)
   const createSection = document.createElement('div');
@@ -57,7 +67,8 @@ export function render(container) {
       '<div class="form-group">' +
         '<label for="new-user-role">' + escapeHtml(t('admin.role')) + '</label>' +
         '<select id="new-user-role">' +
-          '<option value="member">' + escapeHtml(t('admin.roleMember')) + '</option>' +
+          '<option value="publisher">' + escapeHtml(t('admin.rolePublisher')) + '</option>' +
+          '<option value="conductor">' + escapeHtml(t('admin.roleConductor')) + '</option>' +
           '<option value="admin">' + escapeHtml(t('admin.roleAdmin')) + '</option>' +
         '</select>' +
       '</div>' +
@@ -93,7 +104,7 @@ export function render(container) {
       successDiv.style.display = 'block';
 
       form.reset();
-      loadMembers(membersSection, profile.congregationId);
+      loadMembers(membersSection, profile);
     } catch (err) {
       errorDiv.textContent = t('admin.createUserError');
       errorDiv.style.display = 'block';
@@ -104,42 +115,146 @@ export function render(container) {
   });
 
   wrapper.appendChild(createSection);
+
+  // Migration section (lazy — solo se muestra si hay 'member' legacy)
+  const migrateSection = document.createElement('div');
+  migrateSection.className = 'admin-section';
+  migrateSection.style.display = 'none';
+  migrateSection.innerHTML =
+    '<h3>' + escapeHtml(t('admin.migrateMembers')) + '</h3>' +
+    '<div class="flash flash-notice migrate-result" style="display:none"></div>' +
+    '<button class="btn btn-secondary migrate-btn">' + escapeHtml(t('admin.migrateMembers')) + '</button>';
+  wrapper.appendChild(migrateSection);
+
   container.appendChild(wrapper);
+
+  // Detectar legacy members para mostrar el botón
+  detectLegacyMembers(migrateSection, profile, membersSection);
 
   return null;
 }
 
-async function loadMembers(section, congregationId) {
+async function loadMembers(section, currentProfile) {
   try {
-    const { collection, query, where, getDocs } = await import('firebase/firestore');
+    const { collection, query, where, getDocs, doc, updateDoc } = await import('firebase/firestore');
     const { db } = await import('../firebase/config.js');
 
-    const q = query(collection(db, 'users'), where('congregationId', '==', congregationId));
+    const q = query(collection(db, 'users'), where('congregationId', '==', currentProfile.congregationId));
     const snap = await getDocs(q);
 
-    const membersHtml = section.querySelector('.members-loading');
+    const loadingEl = section.querySelector('.members-loading');
     if (snap.empty) {
-      membersHtml.textContent = t('admin.noMembers');
+      loadingEl.textContent = t('admin.noMembers');
       return;
     }
 
     const table = document.createElement('table');
     table.className = 'territory-table';
-    table.innerHTML = '<thead><tr><th>' + t('auth.displayName') + '</th><th>' + t('auth.email') + '</th><th>' + t('admin.role') + '</th></tr></thead><tbody></tbody>';
+    table.innerHTML = '<thead><tr><th>' + escapeHtml(t('auth.displayName')) + '</th><th>' + escapeHtml(t('auth.email')) + '</th><th>' + escapeHtml(t('admin.role')) + '</th><th></th></tr></thead><tbody></tbody>';
 
     const tbody = table.querySelector('tbody');
     snap.docs.forEach(function (d) {
       const u = d.data();
       const tr = document.createElement('tr');
-      tr.innerHTML = '<td>' + escapeHtml(u.displayName || '') + '</td>' +
-        '<td>' + escapeHtml(u.email || '') + '</td>' +
-        '<td><span class="role-badge role-' + (u.role || 'member') + '">' + escapeHtml(u.role || 'member') + '</span></td>';
+
+      const tdName = document.createElement('td');
+      tdName.textContent = u.displayName || '';
+
+      const tdEmail = document.createElement('td');
+      tdEmail.textContent = u.email || '';
+
+      const tdRole = document.createElement('td');
+      const roleBadge = document.createElement('span');
+      roleBadge.className = 'role-badge role-' + (u.role || 'conductor');
+      roleBadge.textContent = roleLabel(u.role);
+      tdRole.appendChild(roleBadge);
+
+      const tdActions = document.createElement('td');
+      tdActions.className = 'actions';
+
+      if (d.id !== currentProfile.uid) {
+        const select = document.createElement('select');
+        select.className = 'role-select';
+        ROLE_OPTIONS.forEach(function (r) {
+          const opt = document.createElement('option');
+          opt.value = r;
+          opt.textContent = roleLabel(r);
+          if (r === (u.role === 'member' ? 'conductor' : u.role)) opt.selected = true;
+          select.appendChild(opt);
+        });
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'btn btn-secondary btn-sm';
+        saveBtn.textContent = t('admin.changeRole');
+        saveBtn.addEventListener('click', async function () {
+          const newRole = select.value;
+          if (newRole === u.role) return;
+          saveBtn.disabled = true;
+          try {
+            await updateDoc(doc(db, 'users', d.id), { role: newRole });
+            roleBadge.className = 'role-badge role-' + newRole;
+            roleBadge.textContent = roleLabel(newRole);
+          } catch (err) {
+            alert(t('admin.changeRoleError'));
+          }
+          saveBtn.disabled = false;
+        });
+        tdActions.appendChild(select);
+        tdActions.appendChild(saveBtn);
+      } else {
+        const youLabel = document.createElement('span');
+        youLabel.style.cssText = 'font-size:0.75rem;color:var(--text-secondary);';
+        youLabel.textContent = '(' + t('admin.youCannotChangeOwnRole').split('.')[0] + ')';
+        tdActions.appendChild(youLabel);
+      }
+
+      tr.appendChild(tdName);
+      tr.appendChild(tdEmail);
+      tr.appendChild(tdRole);
+      tr.appendChild(tdActions);
       tbody.appendChild(tr);
     });
 
-    membersHtml.replaceWith(table);
+    loadingEl.replaceWith(table);
   } catch (err) {
     console.error('Failed to load members:', err);
     section.querySelector('.members-loading').textContent = t('admin.loadError');
+  }
+}
+
+async function detectLegacyMembers(migrateSection, profile, membersSection) {
+  try {
+    const { collection, query, where, getDocs } = await import('firebase/firestore');
+    const { db } = await import('../firebase/config.js');
+    const q = query(collection(db, 'users'),
+      where('congregationId', '==', profile.congregationId),
+      where('role', '==', 'member')
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return;
+
+    migrateSection.style.display = '';
+    const resultDiv = migrateSection.querySelector('.migrate-result');
+    const btn = migrateSection.querySelector('.migrate-btn');
+
+    btn.addEventListener('click', async function () {
+      btn.disabled = true;
+      try {
+        const { migrateMembersToConductors } = await import('../firebase/migrations.js');
+        const result = await migrateMembersToConductors(profile.congregationId);
+        resultDiv.textContent = result.updated > 0
+          ? t('admin.migrateMembersDone', { count: result.updated })
+          : t('admin.migrateMembersNone');
+        resultDiv.style.display = 'block';
+        migrateSection.style.display = 'none';
+        loadMembers(membersSection, profile);
+      } catch (err) {
+        console.error('Migration error:', err);
+        alert(t('admin.changeRoleError'));
+      }
+      btn.disabled = false;
+    });
+  } catch (err) {
+    console.error('Failed to detect legacy members:', err);
   }
 }

@@ -1,9 +1,10 @@
 import {
-  collection, doc, addDoc, getDocs, updateDoc, deleteDoc,
+  collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, setDoc,
   onSnapshot, serverTimestamp
 } from 'firebase/firestore';
 import { db } from './config.js';
 import { parse as parseKml } from '../utils/kml-import.js';
+import { generatePublicId } from '../utils/public-id.js';
 
 export async function createFirestoreStore(user, congregationId) {
   let listeners = [];
@@ -14,10 +15,46 @@ export async function createFirestoreStore(user, congregationId) {
   let history = [];
   let globalLandmarks = [];
   let defaultCenter = [0, 0];
+  let congregationPublicId = null;
 
   const terrCol = collection(db, 'congregations', congregationId, 'territories');
   const histCol = collection(db, 'congregations', congregationId, 'history');
   const glCol = collection(db, 'congregations', congregationId, 'globalLandmarks');
+
+  // Asegurar que la congregación tenga publicId
+  async function ensureCongregationPublicId() {
+    const congRef = doc(db, 'congregations', congregationId);
+    const snap = await getDoc(congRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.publicId) {
+        congregationPublicId = data.publicId;
+      } else {
+        congregationPublicId = generatePublicId();
+        try {
+          await updateDoc(congRef, { publicId: congregationPublicId });
+        } catch (e) {
+          console.warn('Could not backfill congregation publicId:', e);
+        }
+      }
+    }
+  }
+
+  await ensureCongregationPublicId();
+
+  async function createPublicLink(terPublicId, terId) {
+    if (!congregationPublicId) return;
+    try {
+      await setDoc(doc(db, 'publicLinks', terPublicId), {
+        congId: congregationId,
+        terId: terId,
+        congPublicId: congregationPublicId,
+        createdAt: serverTimestamp()
+      });
+    } catch (e) {
+      console.warn('Could not create publicLink:', e);
+    }
+  }
 
   // Load initial data
   const [terrSnap, histSnap, glSnap] = await Promise.all([
@@ -81,6 +118,8 @@ export async function createFirestoreStore(user, congregationId) {
     if (attrs.notes !== undefined) obj.notes = attrs.notes;
     if (attrs.landmarks !== undefined) obj.landmarks = attrs.landmarks;
     if (attrs.blocks !== undefined) obj.blocks = attrs.blocks;
+    if (attrs.cardZoom !== undefined) obj.cardZoom = attrs.cardZoom;
+    if (attrs.cardCenter !== undefined) obj.cardCenter = attrs.cardCenter;
     return obj;
   }
 
@@ -105,6 +144,7 @@ export async function createFirestoreStore(user, congregationId) {
     },
 
     async createTerritory(attrs) {
+      const publicId = generatePublicId();
       const data = {
         number: attrs.number || '',
         name: attrs.name || '',
@@ -114,11 +154,30 @@ export async function createFirestoreStore(user, congregationId) {
         notes: attrs.notes || '',
         landmarks: attrs.landmarks || [],
         blocks: attrs.blocks || [],
+        publicId: publicId,
+        cardZoom: attrs.cardZoom || null,
+        cardCenter: attrs.cardCenter || null,
         createdBy: user.uid,
         createdAt: serverTimestamp()
       };
       const ref = await addDoc(terrCol, data);
+      await createPublicLink(publicId, ref.id);
       return { id: ref.id, ...data };
+    },
+
+    getCongregationPublicId() {
+      return congregationPublicId;
+    },
+
+    async ensureTerritoryPublicId(terId) {
+      const territory = this.getById(terId);
+      if (!territory) return null;
+      if (territory.publicId) return territory.publicId;
+      const publicId = generatePublicId();
+      const ref = doc(db, 'congregations', congregationId, 'territories', String(terId));
+      await updateDoc(ref, { publicId: publicId });
+      await createPublicLink(publicId, String(terId));
+      return publicId;
     },
 
     async updateTerritory(id, attrs) {
@@ -130,8 +189,12 @@ export async function createFirestoreStore(user, congregationId) {
     },
 
     async deleteTerritory(id) {
+      const territory = this.getById(id);
       const ref = doc(db, 'congregations', congregationId, 'territories', String(id));
       await deleteDoc(ref);
+      if (territory && territory.publicId) {
+        try { await deleteDoc(doc(db, 'publicLinks', territory.publicId)); } catch (e) { /* ignore */ }
+      }
       const histEntries = history.filter(function (h) { return h.territoryId === id || String(h.territoryId) === String(id); });
       for (const entry of histEntries) {
         await deleteDoc(doc(db, 'congregations', congregationId, 'history', entry.id));
@@ -272,6 +335,7 @@ export async function createFirestoreStore(user, congregationId) {
         startDate: entry.startDate || '',
         endDate: entry.endDate || null,
         person: entry.person || '',
+        assignedToUid: entry.assignedToUid || null,
         notes: entry.notes || '',
         type: entry.type || 'assignment',
         status: entry.status || 'active',
@@ -288,6 +352,7 @@ export async function createFirestoreStore(user, congregationId) {
       if (attrs.startDate !== undefined) updates.startDate = attrs.startDate;
       if (attrs.endDate !== undefined) updates.endDate = attrs.endDate;
       if (attrs.person !== undefined) updates.person = attrs.person;
+      if (attrs.assignedToUid !== undefined) updates.assignedToUid = attrs.assignedToUid;
       if (attrs.notes !== undefined) updates.notes = attrs.notes;
       if (attrs.type !== undefined) updates.type = attrs.type;
       if (attrs.status !== undefined) updates.status = attrs.status;

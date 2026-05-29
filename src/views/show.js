@@ -1,8 +1,56 @@
 import L from 'leaflet';
 import { t } from '../i18n/i18n.js';
-import { getStore } from '../store/index.js';
+import { getStore, getUserProfile } from '../store/index.js';
 import { renderSingleMap } from '../components/map.js';
 import { escapeHtml } from '../utils/helpers.js';
+import { buildPublicTerritoryUrl } from '../utils/public-id.js';
+import {
+  canEditTerritory,
+  canDeleteTerritory,
+  canEditLandmarks,
+  canEditBlocks,
+  canAssignTerritory,
+  canCompleteAssignment,
+  canEditHistoryEntry,
+  canDeleteHistoryEntry,
+  canViewTerritory,
+  canViewFullHistory
+} from '../auth/permissions.js';
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function shareTerritoryUrl(store, territoryId) {
+  let territory = store.getById(territoryId);
+  if (!territory) return;
+  let pubId = territory.publicId;
+  if (!pubId && store.ensureTerritoryPublicId) {
+    try {
+      pubId = await store.ensureTerritoryPublicId(territoryId);
+      territory = store.getById(territoryId);
+    } catch (e) {
+      console.error('ensureTerritoryPublicId failed', e);
+    }
+  }
+  const congPubId = store.getCongregationPublicId ? store.getCongregationPublicId() : null;
+  if (!pubId || !congPubId) {
+    alert(t('share.copyFailed'));
+    return;
+  }
+  const url = buildPublicTerritoryUrl(congPubId, pubId);
+  const ok = await copyToClipboard(url);
+  if (ok) {
+    alert(t('share.copied') + '\n\n' + url);
+  } else {
+    prompt(t('share.copyFailed'), url);
+  }
+}
 
 const LANDMARK_COLORS = ['#EF4444', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 const BLOCK_COLORS = ['#F97316', '#06B6D4', '#84CC16', '#E879F9', '#FBBF24'];
@@ -11,11 +59,26 @@ export let isDirty = false;
 
 export function render(container, params) {
   const store = getStore();
+  const profile = getUserProfile();
   let territory = store.getById(params.id);
   if (!territory) {
     container.innerHTML = '<p>' + escapeHtml(t('alert.notFound')) + '</p><a href="#/" class="btn btn-secondary">' + escapeHtml(t('show.btnBack')) + '</a>';
     return null;
   }
+
+  // Permission gate
+  const activeAssignment = store.getActiveAssignment ? store.getActiveAssignment(params.id) : null;
+  if (!canViewTerritory(profile, territory, activeAssignment)) {
+    container.innerHTML = '<p style="padding:2rem;">' + escapeHtml(t('auth.noTerritoryAccess')) + '</p><a href="#/" class="btn btn-secondary" style="margin-left:2rem;">' + escapeHtml(t('show.btnBack')) + '</a>';
+    return null;
+  }
+
+  const allowEditTerr = canEditTerritory(profile);
+  const allowDeleteTerr = canDeleteTerritory(profile);
+  const allowEditLm = canEditLandmarks(profile);
+  const allowEditBl = canEditBlocks(profile);
+  const allowAssign = canAssignTerritory(profile);
+  const allowFullHistory = canViewFullHistory(profile);
 
   let mapCleanup = null;
   let currentMap = null;
@@ -29,12 +92,24 @@ export function render(container, params) {
   // Header
   const header = document.createElement('div');
   header.className = 'header-row';
+  let headerActions = '<a href="#/territories/' + territory.id + '/card" class="btn btn-primary">' + escapeHtml(t('show.btnCard')) + '</a> ';
+  // Botón compartir solo en modo online (público requiere Firestore)
+  if (profile && profile.congregationId) {
+    headerActions += '<button class="btn btn-secondary share-btn">' + escapeHtml(t('share.button')) + '</button> ';
+  }
+  if (allowEditTerr) {
+    headerActions += '<a href="#/territories/' + territory.id + '/edit" class="btn btn-secondary">' + escapeHtml(t('show.btnEdit')) + '</a> ';
+  }
+  headerActions += '<a href="#/" class="btn btn-secondary">' + escapeHtml(t('show.btnBack')) + '</a>';
   header.innerHTML = '<h1>' + escapeHtml(territory.number) + ' - ' + escapeHtml(territory.name) + '</h1>' +
-    '<div>' +
-      '<a href="#/territories/' + territory.id + '/card" class="btn btn-primary">' + escapeHtml(t('show.btnCard')) + '</a> ' +
-      '<a href="#/territories/' + territory.id + '/edit" class="btn btn-secondary">' + escapeHtml(t('show.btnEdit')) + '</a> ' +
-      '<a href="#/" class="btn btn-secondary">' + escapeHtml(t('show.btnBack')) + '</a>' +
-    '</div>';
+    '<div>' + headerActions + '</div>';
+
+  const shareBtnEl = header.querySelector('.share-btn');
+  if (shareBtnEl) {
+    shareBtnEl.addEventListener('click', function () {
+      shareTerritoryUrl(store, params.id);
+    });
+  }
   if (territory.group_name) {
     const groupBadge = document.createElement('span');
     groupBadge.style.cssText = 'font-size:0.8125rem;color:var(--text-secondary);font-weight:400;margin-left:0.75rem;';
@@ -99,20 +174,22 @@ export function render(container, params) {
   container.appendChild(historySection);
   rerenderHistory();
 
-  // Delete territory link
-  const deleteSection = document.createElement('div');
-  deleteSection.className = 'delete-section';
-  const deleteTerritoryBtn = document.createElement('button');
-  deleteTerritoryBtn.className = 'btn-text-danger';
-  deleteTerritoryBtn.textContent = t('show.deleteTerritory');
-  deleteTerritoryBtn.addEventListener('click', function () {
-    if (confirm(t('show.confirmDeleteTerritory', { name: territory.number + ' - ' + territory.name }))) {
-      store.deleteTerritory(territory.id);
-      window.location.hash = '#/';
-    }
-  });
-  deleteSection.appendChild(deleteTerritoryBtn);
-  container.appendChild(deleteSection);
+  // Delete territory link (solo admin)
+  if (allowDeleteTerr) {
+    const deleteSection = document.createElement('div');
+    deleteSection.className = 'delete-section';
+    const deleteTerritoryBtn = document.createElement('button');
+    deleteTerritoryBtn.className = 'btn-text-danger';
+    deleteTerritoryBtn.textContent = t('show.deleteTerritory');
+    deleteTerritoryBtn.addEventListener('click', function () {
+      if (confirm(t('show.confirmDeleteTerritory', { name: territory.number + ' - ' + territory.name }))) {
+        store.deleteTerritory(territory.id);
+        window.location.hash = '#/';
+      }
+    });
+    deleteSection.appendChild(deleteTerritoryBtn);
+    container.appendChild(deleteSection);
+  }
 
   // --- Map helpers ---
 
@@ -293,13 +370,15 @@ export function render(container, params) {
     });
     headerRow.appendChild(h3);
 
-    const addBtn = document.createElement('button');
-    addBtn.className = 'btn btn-secondary btn-sm';
-    addBtn.textContent = t('show.addLandmark');
-    addBtn.addEventListener('click', function () {
-      startPlacingLandmark();
-    });
-    headerRow.appendChild(addBtn);
+    if (allowEditLm) {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'btn btn-secondary btn-sm';
+      addBtn.textContent = t('show.addLandmark');
+      addBtn.addEventListener('click', function () {
+        startPlacingLandmark();
+      });
+      headerRow.appendChild(addBtn);
+    }
     landmarksSection.appendChild(headerRow);
 
     if (!landmarksExpanded) return;
@@ -394,36 +473,39 @@ export function render(container, params) {
       infoDiv.appendChild(descRow);
     }
 
-    const actionsSpan = document.createElement('span');
-    actionsSpan.className = 'landmark-actions';
-
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-secondary btn-sm';
-    editBtn.textContent = t('show.editLandmark');
-    editBtn.addEventListener('click', function () {
-      showLandmarkForm(lm, isGlobal);
-    });
-    actionsSpan.appendChild(editBtn);
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'btn btn-danger btn-sm';
-    deleteBtn.textContent = t('show.deleteLandmark');
-    deleteBtn.addEventListener('click', function () {
-      if (confirm(t('show.confirmDeleteLandmark'))) {
-        if (isGlobal) {
-          store.deleteGlobalLandmark(lm.id);
-        } else {
-          store.deleteLandmark(territory.id, lm.id);
-        }
-        refreshMapMarkers();
-        rerenderLandmarks();
-      }
-    });
-    actionsSpan.appendChild(deleteBtn);
-
     li.appendChild(dot);
     li.appendChild(infoDiv);
-    li.appendChild(actionsSpan);
+
+    if (allowEditLm) {
+      const actionsSpan = document.createElement('span');
+      actionsSpan.className = 'landmark-actions';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-secondary btn-sm';
+      editBtn.textContent = t('show.editLandmark');
+      editBtn.addEventListener('click', function () {
+        showLandmarkForm(lm, isGlobal);
+      });
+      actionsSpan.appendChild(editBtn);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn btn-danger btn-sm';
+      deleteBtn.textContent = t('show.deleteLandmark');
+      deleteBtn.addEventListener('click', function () {
+        if (confirm(t('show.confirmDeleteLandmark'))) {
+          if (isGlobal) {
+            store.deleteGlobalLandmark(lm.id);
+          } else {
+            store.deleteLandmark(territory.id, lm.id);
+          }
+          refreshMapMarkers();
+          rerenderLandmarks();
+        }
+      });
+      actionsSpan.appendChild(deleteBtn);
+      li.appendChild(actionsSpan);
+    }
+
     return li;
   }
 
@@ -448,13 +530,15 @@ export function render(container, params) {
     });
     headerRow.appendChild(h3);
 
-    const addBtn = document.createElement('button');
-    addBtn.className = 'btn btn-secondary btn-sm';
-    addBtn.textContent = t('show.addBlock');
-    addBtn.addEventListener('click', function () {
-      startPlacingBlock();
-    });
-    headerRow.appendChild(addBtn);
+    if (allowEditBl) {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'btn btn-secondary btn-sm';
+      addBtn.textContent = t('show.addBlock');
+      addBtn.addEventListener('click', function () {
+        startPlacingBlock();
+      });
+      headerRow.appendChild(addBtn);
+    }
     blocksSection.appendChild(headerRow);
 
     if (!blocksExpanded) return;
@@ -484,39 +568,43 @@ export function render(container, params) {
         nameRow.textContent = t('show.blocks') + ' ' + block.number;
         infoDiv.appendChild(nameRow);
 
-        const actionsSpan = document.createElement('span');
-        actionsSpan.className = 'landmark-actions';
-
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn btn-secondary btn-sm';
-        editBtn.textContent = t('show.editBlock');
-        editBtn.addEventListener('click', function () {
-          const newNumber = prompt(t('show.blockName'), block.number);
-          if (newNumber !== null && newNumber.trim()) {
-            store.updateBlock(territory.id, block.id, { number: newNumber.trim() });
-            territory = store.getById(params.id);
-            drawBlocksOnMap();
-            rerenderBlocks();
-          }
-        });
-        actionsSpan.appendChild(editBtn);
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn btn-danger btn-sm';
-        delBtn.textContent = t('show.deleteBlock');
-        delBtn.addEventListener('click', function () {
-          if (confirm(t('show.confirmDeleteBlock'))) {
-            store.deleteBlock(territory.id, block.id);
-            territory = store.getById(params.id);
-            drawBlocksOnMap();
-            rerenderBlocks();
-          }
-        });
-        actionsSpan.appendChild(delBtn);
-
         li.appendChild(dot);
         li.appendChild(infoDiv);
-        li.appendChild(actionsSpan);
+
+        if (allowEditBl) {
+          const actionsSpan = document.createElement('span');
+          actionsSpan.className = 'landmark-actions';
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn btn-secondary btn-sm';
+          editBtn.textContent = t('show.editBlock');
+          editBtn.addEventListener('click', function () {
+            const newNumber = prompt(t('show.blockName'), block.number);
+            if (newNumber !== null && newNumber.trim()) {
+              store.updateBlock(territory.id, block.id, { number: newNumber.trim() });
+              territory = store.getById(params.id);
+              drawBlocksOnMap();
+              rerenderBlocks();
+            }
+          });
+          actionsSpan.appendChild(editBtn);
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn btn-danger btn-sm';
+          delBtn.textContent = t('show.deleteBlock');
+          delBtn.addEventListener('click', function () {
+            if (confirm(t('show.confirmDeleteBlock'))) {
+              store.deleteBlock(territory.id, block.id);
+              territory = store.getById(params.id);
+              drawBlocksOnMap();
+              rerenderBlocks();
+            }
+          });
+          actionsSpan.appendChild(delBtn);
+
+          li.appendChild(actionsSpan);
+        }
+
         ul.appendChild(li);
       });
 
@@ -592,58 +680,163 @@ export function render(container, params) {
 
       const actionsDiv = assignmentBanner.querySelector('.assignment-actions');
 
-      const completeBtn = document.createElement('button');
-      completeBtn.className = 'btn btn-primary btn-sm';
-      completeBtn.textContent = t('show.markCompleted');
-      completeBtn.addEventListener('click', function () {
-        store.updateHistoryEntry(activeAssignment.id, {
-          status: 'completed',
-          endDate: new Date().toISOString().split('T')[0]
+      if (canCompleteAssignment(profile, activeAssignment)) {
+        const completeBtn = document.createElement('button');
+        completeBtn.className = 'btn btn-primary btn-sm';
+        completeBtn.textContent = t('show.markCompleted');
+        completeBtn.addEventListener('click', function () {
+          store.updateHistoryEntry(activeAssignment.id, {
+            status: 'completed',
+            endDate: new Date().toISOString().split('T')[0]
+          });
+          rerenderAssignmentBanner();
+          rerenderHistory();
         });
-        rerenderAssignmentBanner();
-        rerenderHistory();
-      });
 
-      const returnBtn = document.createElement('button');
-      returnBtn.className = 'btn btn-secondary btn-sm';
-      returnBtn.textContent = t('show.markReturned');
-      returnBtn.addEventListener('click', function () {
-        store.updateHistoryEntry(activeAssignment.id, {
-          status: 'returned',
-          endDate: new Date().toISOString().split('T')[0]
+        const returnBtn = document.createElement('button');
+        returnBtn.className = 'btn btn-secondary btn-sm';
+        returnBtn.textContent = t('show.markReturned');
+        returnBtn.addEventListener('click', function () {
+          store.updateHistoryEntry(activeAssignment.id, {
+            status: 'returned',
+            endDate: new Date().toISOString().split('T')[0]
+          });
+          rerenderAssignmentBanner();
+          rerenderHistory();
         });
-        rerenderAssignmentBanner();
-        rerenderHistory();
-      });
 
-      actionsDiv.appendChild(completeBtn);
-      actionsDiv.appendChild(returnBtn);
-    } else {
+        actionsDiv.appendChild(completeBtn);
+        actionsDiv.appendChild(returnBtn);
+      }
+    } else if (allowAssign) {
       assignmentBanner.className = 'assignment-banner';
       const assignBtn = document.createElement('button');
       assignBtn.className = 'btn btn-primary btn-sm';
       assignBtn.textContent = t('show.assignTerritory');
       assignBtn.addEventListener('click', function () {
-        const person = prompt(t('show.assignPerson'));
-        if (person && person.trim()) {
-          store.addHistoryEntry({
-            territoryId: params.id,
-            person: person.trim(),
-            startDate: new Date().toISOString().split('T')[0],
-            endDate: null,
-            notes: '',
-            type: 'assignment',
-            status: 'active'
-          });
-          rerenderAssignmentBanner();
-          rerenderHistory();
+        if (profile) {
+          openAssignDialog();
+        } else {
+          // Offline mode: prompt simple
+          const person = prompt(t('show.assignPerson'));
+          if (person && person.trim()) {
+            store.addHistoryEntry({
+              territoryId: params.id,
+              person: person.trim(),
+              startDate: new Date().toISOString().split('T')[0],
+              endDate: null,
+              notes: '',
+              type: 'assignment',
+              status: 'active'
+            });
+            rerenderAssignmentBanner();
+            rerenderHistory();
+          }
         }
       });
       assignmentBanner.appendChild(assignBtn);
+    } else {
+      assignmentBanner.className = 'assignment-banner';
+      assignmentBanner.style.display = 'none';
     }
   }
 
+  // Diálogo de asignación con dropdown de miembros (admin)
+  async function openAssignDialog() {
+    const existing = assignmentBanner.querySelector('.assign-form');
+    if (existing) { existing.remove(); return; }
+
+    const form = document.createElement('div');
+    form.className = 'assign-form';
+    form.style.cssText = 'margin-top:0.5rem;padding:0.75rem;background:#F9FAFB;border-radius:4px;';
+    form.innerHTML = '<p style="font-size:0.875rem;">' + escapeHtml(t('admin.loading')) + '</p>';
+    assignmentBanner.appendChild(form);
+
+    let members = [];
+    try {
+      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      const { db } = await import('../firebase/config.js');
+      const q = query(collection(db, 'users'), where('congregationId', '==', profile.congregationId));
+      const snap = await getDocs(q);
+      members = snap.docs.map(function (d) { return { uid: d.id, ...d.data() }; })
+        .filter(function (m) { return m.role === 'conductor' || m.role === 'publisher' || m.role === 'admin' || m.role === 'member'; });
+    } catch (err) {
+      console.error('Failed to load members for assignment:', err);
+    }
+
+    if (members.length === 0) {
+      form.innerHTML = '<p style="font-size:0.875rem;">' + escapeHtml(t('show.assignNoMembers')) + '</p>';
+      return;
+    }
+
+    form.innerHTML =
+      '<div class="form-group">' +
+        '<label>' + escapeHtml(t('show.assignSelectPerson')) + '</label>' +
+        '<select class="history-input" data-field="assignee"></select>' +
+      '</div>';
+
+    const select = form.querySelector('[data-field="assignee"]');
+    members.forEach(function (m) {
+      const opt = document.createElement('option');
+      opt.value = m.uid;
+      opt.textContent = (m.displayName || m.email) + ' (' + (m.role || '') + ')';
+      opt.dataset.name = m.displayName || m.email;
+      select.appendChild(opt);
+    });
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'history-form-actions';
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-primary btn-sm';
+    saveBtn.textContent = t('show.assignSubmit');
+    saveBtn.addEventListener('click', function () {
+      const opt = select.options[select.selectedIndex];
+      const uid = opt.value;
+      const name = opt.dataset.name;
+      store.addHistoryEntry({
+        territoryId: params.id,
+        person: name,
+        assignedToUid: uid,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: null,
+        notes: '',
+        type: 'assignment',
+        status: 'active'
+      });
+      form.remove();
+      rerenderAssignmentBanner();
+      rerenderHistory();
+    });
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-secondary btn-sm';
+    cancelBtn.textContent = t('show.assignCancel');
+    cancelBtn.addEventListener('click', function () { form.remove(); });
+    btnRow.appendChild(saveBtn);
+    btnRow.appendChild(cancelBtn);
+    form.appendChild(btnRow);
+  }
+
   // --- History ---
+
+  let historyFilter = 'all'; // all|active|completed|returned
+
+  function formatDuration(startISO, endISO) {
+    if (!startISO) return '';
+    const start = new Date(startISO);
+    const end = endISO ? new Date(endISO) : new Date();
+    const ms = end - start;
+    if (isNaN(ms) || ms < 0) return '';
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    if (days < 30) {
+      return days === 1 ? t('show.historyDurationDay') : t('show.historyDurationDays', { n: days });
+    }
+    const months = Math.floor(days / 30);
+    if (months < 12) {
+      return months === 1 ? t('show.historyDurationMonth') : t('show.historyDurationMonths', { n: months });
+    }
+    const years = Math.floor(months / 12);
+    return years === 1 ? t('show.historyDurationYear') : t('show.historyDurationYears', { n: years });
+  }
 
   function rerenderHistory() {
     historySection.innerHTML = '';
@@ -655,16 +848,60 @@ export function render(container, params) {
     h3.textContent = t('show.history');
     headerRow.appendChild(h3);
 
-    const addBtn = document.createElement('button');
-    addBtn.className = 'btn btn-secondary btn-sm';
-    addBtn.textContent = t('show.addHistory');
-    addBtn.addEventListener('click', function () {
-      showHistoryForm(null);
-    });
-    headerRow.appendChild(addBtn);
+    if (allowAssign) {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'btn btn-secondary btn-sm';
+      addBtn.textContent = t('show.addHistory');
+      addBtn.addEventListener('click', function () {
+        showHistoryForm(null);
+      });
+      headerRow.appendChild(addBtn);
+    }
     historySection.appendChild(headerRow);
 
-    const entries = store.getHistoryForTerritory(params.id);
+    let entries = store.getHistoryForTerritory(params.id);
+    // Publisher solo ve sus propias entradas
+    if (!allowFullHistory) {
+      entries = entries.filter(function (e) { return e.assignedToUid === profile.uid; });
+    }
+
+    // Filtros (solo si hay entradas)
+    if (entries.length > 0) {
+      const filterRow = document.createElement('div');
+      filterRow.className = 'history-filters';
+      filterRow.style.cssText = 'display:flex;gap:0.25rem;margin-bottom:0.75rem;flex-wrap:wrap;';
+
+      const filters = [
+        { key: 'all', label: t('show.historyFilterAll') },
+        { key: 'active', label: t('show.historyFilterActive') },
+        { key: 'completed', label: t('show.historyFilterCompleted') },
+        { key: 'returned', label: t('show.historyFilterReturned') }
+      ];
+
+      filters.forEach(function (f) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary btn-sm' + (historyFilter === f.key ? ' active' : '');
+        btn.textContent = f.label;
+        if (historyFilter === f.key) {
+          btn.style.background = 'var(--primary, #2563EB)';
+          btn.style.color = 'white';
+        }
+        btn.addEventListener('click', function () {
+          historyFilter = f.key;
+          rerenderHistory();
+        });
+        filterRow.appendChild(btn);
+      });
+
+      historySection.appendChild(filterRow);
+
+      if (historyFilter !== 'all') {
+        entries = entries.filter(function (e) {
+          const status = e.status || 'active';
+          return status === historyFilter;
+        });
+      }
+    }
 
     if (entries.length === 0) {
       const empty = document.createElement('p');
@@ -706,42 +943,77 @@ export function render(container, params) {
         dateRow.className = 'history-dates';
         const startStr = entry.startDate || '?';
         const endStr = entry.endDate || t('show.historyInProgress');
-        dateRow.textContent = startStr + ' → ' + endStr;
+        const duration = formatDuration(entry.startDate, entry.endDate);
+        dateRow.textContent = startStr + ' → ' + endStr + (duration ? '  ·  ' + duration : '');
         info.appendChild(dateRow);
 
         if (entry.notes) {
           const notesRow = document.createElement('div');
           notesRow.className = 'history-notes';
-          notesRow.textContent = entry.notes;
+          const isLong = entry.notes.length > 140 || entry.notes.split('\n').length > 2;
+          if (isLong) {
+            const span = document.createElement('span');
+            span.className = 'history-notes-text';
+            span.textContent = entry.notes.slice(0, 140) + '…';
+            const toggle = document.createElement('button');
+            toggle.className = 'history-notes-toggle';
+            toggle.style.cssText = 'background:none;border:none;color:var(--primary,#2563EB);cursor:pointer;font-size:0.75rem;padding:0 0.25rem;';
+            toggle.textContent = ' ' + t('show.historyShowMore');
+            let expanded = false;
+            toggle.addEventListener('click', function () {
+              expanded = !expanded;
+              if (expanded) {
+                span.textContent = entry.notes;
+                toggle.textContent = ' ' + t('show.historyShowLess');
+              } else {
+                span.textContent = entry.notes.slice(0, 140) + '…';
+                toggle.textContent = ' ' + t('show.historyShowMore');
+              }
+            });
+            notesRow.appendChild(span);
+            notesRow.appendChild(toggle);
+          } else {
+            notesRow.textContent = entry.notes;
+          }
           info.appendChild(notesRow);
         }
 
         item.appendChild(info);
 
-        const actions = document.createElement('div');
-        actions.className = 'history-actions';
+        const canEditEntry = canEditHistoryEntry(profile, entry);
+        const canDelEntry = canDeleteHistoryEntry(profile, entry);
 
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn btn-secondary btn-sm';
-        editBtn.textContent = t('show.historyEdit');
-        editBtn.addEventListener('click', function () {
-          showHistoryForm(entry);
-        });
+        if (canEditEntry || canDelEntry) {
+          const actions = document.createElement('div');
+          actions.className = 'history-actions';
 
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn btn-danger btn-sm';
-        delBtn.textContent = t('show.historyDelete');
-        delBtn.addEventListener('click', function () {
-          if (confirm(t('show.confirmDeleteHistory'))) {
-            store.deleteHistoryEntry(entry.id);
-            rerenderHistory();
-            rerenderAssignmentBanner();
+          if (canEditEntry) {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-secondary btn-sm';
+            editBtn.textContent = t('show.historyEdit');
+            editBtn.addEventListener('click', function () {
+              showHistoryForm(entry);
+            });
+            actions.appendChild(editBtn);
           }
-        });
 
-        actions.appendChild(editBtn);
-        actions.appendChild(delBtn);
-        item.appendChild(actions);
+          if (canDelEntry) {
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-danger btn-sm';
+            delBtn.textContent = t('show.historyDelete');
+            delBtn.addEventListener('click', function () {
+              if (confirm(t('show.confirmDeleteHistory'))) {
+                store.deleteHistoryEntry(entry.id);
+                rerenderHistory();
+                rerenderAssignmentBanner();
+              }
+            });
+            actions.appendChild(delBtn);
+          }
+
+          item.appendChild(actions);
+        }
+
         list.appendChild(item);
       });
 
