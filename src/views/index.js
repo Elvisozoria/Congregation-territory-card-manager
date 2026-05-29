@@ -1,8 +1,14 @@
 import { t } from '../i18n/i18n.js';
-import { getStore } from '../store/index.js';
+import { getStore, getUserProfile } from '../store/index.js';
 import { renderOverviewMap } from '../components/map.js';
 import { escapeHtml } from '../utils/helpers.js';
 import { refresh } from '../router.js';
+import {
+  canCreateTerritory,
+  canDeleteTerritory,
+  canEditTerritory,
+  ROLES
+} from '../auth/permissions.js';
 
 const VIEW_KEY = 'territory-cards-view';
 
@@ -18,12 +24,35 @@ export let isDirty = false;
 
 export function render(container) {
   const store = getStore();
-  const territories = store.getAll().slice().sort(function (a, b) {
+  const profile = getUserProfile();
+  const isPublisher = profile && profile.role === ROLES.PUBLISHER;
+
+  let territories = store.getAll().slice().sort(function (a, b) {
     return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
   });
+
+  // Publisher: filtrar solo sus territorios asignados activamente
+  if (isPublisher) {
+    territories = territories.filter(function (terr) {
+      const active = store.getActiveAssignment ? store.getActiveAssignment(terr.id) : null;
+      return active && active.assignedToUid === profile.uid;
+    });
+  }
+
   let cleanup = null;
 
-  // Empty state: welcome screen
+  // Empty state para publisher: solo "no tienes asignaciones"
+  if (isPublisher && territories.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'welcome-screen';
+    empty.innerHTML =
+      '<h2>' + escapeHtml(t('auth.yourAssignments')) + '</h2>' +
+      '<p>' + escapeHtml(t('auth.noAssignments')) + '</p>';
+    container.appendChild(empty);
+    return null;
+  }
+
+  // Empty state: welcome screen (solo no-publisher)
   if (territories.length === 0) {
     const welcome = document.createElement('div');
     welcome.className = 'welcome-screen';
@@ -90,7 +119,7 @@ export function render(container) {
   const headerLeft = document.createElement('div');
   headerLeft.style.cssText = 'display:flex;align-items:center;gap:0.75rem;';
   const h1 = document.createElement('h1');
-  h1.textContent = t('index.title');
+  h1.textContent = isPublisher ? t('auth.yourAssignments') : t('index.title');
   headerLeft.appendChild(h1);
 
   // View toggle (cards / table)
@@ -115,11 +144,13 @@ export function render(container) {
   headerLeft.appendChild(viewToggle);
   header.appendChild(headerLeft);
 
-  const newBtn = document.createElement('a');
-  newBtn.href = '#/territories/new';
-  newBtn.className = 'btn btn-primary';
-  newBtn.textContent = t('index.newTerritory');
-  header.appendChild(newBtn);
+  if (canCreateTerritory(profile)) {
+    const newBtn = document.createElement('a');
+    newBtn.href = '#/territories/new';
+    newBtn.className = 'btn btn-primary';
+    newBtn.textContent = t('index.newTerritory');
+    header.appendChild(newBtn);
+  }
   container.appendChild(header);
 
   // Map
@@ -184,27 +215,32 @@ export function render(container) {
       cardLink.textContent = t('index.btnCard');
       cardLink.addEventListener('click', function (e) { e.stopPropagation(); });
 
-      const editLink = document.createElement('a');
-      editLink.href = '#/territories/' + territory.id + '/edit';
-      editLink.className = 'btn btn-secondary btn-sm';
-      editLink.textContent = t('index.btnEdit');
-      editLink.addEventListener('click', function (e) { e.stopPropagation(); });
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'btn-outline-danger btn-sm';
-      deleteBtn.textContent = t('index.btnDelete');
-      deleteBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (confirm(t('confirm.deleteTerritory', { number: territory.number, name: territory.name }))) {
-          store.deleteTerritory(territory.id);
-          refresh();
-        }
-      });
-
       actions.appendChild(cardLink);
-      actions.appendChild(editLink);
-      actions.appendChild(deleteBtn);
+
+      if (canEditTerritory(profile)) {
+        const editLink = document.createElement('a');
+        editLink.href = '#/territories/' + territory.id + '/edit';
+        editLink.className = 'btn btn-secondary btn-sm';
+        editLink.textContent = t('index.btnEdit');
+        editLink.addEventListener('click', function (e) { e.stopPropagation(); });
+        actions.appendChild(editLink);
+      }
+
+      if (canDeleteTerritory(profile)) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-outline-danger btn-sm';
+        deleteBtn.textContent = t('index.btnDelete');
+        deleteBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (confirm(t('confirm.deleteTerritory', { number: territory.number, name: territory.name }))) {
+            store.deleteTerritory(territory.id);
+            refresh();
+          }
+        });
+        actions.appendChild(deleteBtn);
+      }
+
       card.appendChild(actions);
       grid.appendChild(card);
     });
@@ -252,25 +288,28 @@ export function render(container) {
       cardLink.href = '#/territories/' + territory.id + '/card';
       cardLink.className = 'btn btn-secondary btn-sm';
       cardLink.textContent = t('index.btnCard');
-
-      const editLink = document.createElement('a');
-      editLink.href = '#/territories/' + territory.id + '/edit';
-      editLink.className = 'btn btn-secondary btn-sm';
-      editLink.textContent = t('index.btnEdit');
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'btn-outline-danger btn-sm';
-      deleteBtn.textContent = t('index.btnDelete');
-      deleteBtn.addEventListener('click', function () {
-        if (confirm(t('confirm.deleteTerritory', { number: territory.number, name: territory.name }))) {
-          store.deleteTerritory(territory.id);
-          refresh();
-        }
-      });
-
       tdActions.appendChild(cardLink);
-      tdActions.appendChild(editLink);
-      tdActions.appendChild(deleteBtn);
+
+      if (canEditTerritory(profile)) {
+        const editLink = document.createElement('a');
+        editLink.href = '#/territories/' + territory.id + '/edit';
+        editLink.className = 'btn btn-secondary btn-sm';
+        editLink.textContent = t('index.btnEdit');
+        tdActions.appendChild(editLink);
+      }
+
+      if (canDeleteTerritory(profile)) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-outline-danger btn-sm';
+        deleteBtn.textContent = t('index.btnDelete');
+        deleteBtn.addEventListener('click', function () {
+          if (confirm(t('confirm.deleteTerritory', { number: territory.number, name: territory.name }))) {
+            store.deleteTerritory(territory.id);
+            refresh();
+          }
+        });
+        tdActions.appendChild(deleteBtn);
+      }
 
       tr.appendChild(tdNum);
       tr.appendChild(tdName);

@@ -12,6 +12,7 @@ import * as RegisterView from './views/register.js';
 import * as ChangePasswordView from './views/change-password.js';
 import * as AdminView from './views/admin.js';
 import * as SettingsView from './views/settings.js';
+import * as PublicTerritoryView from './views/public-territory.js';
 
 const views = {
   Index: IndexView,
@@ -24,23 +25,26 @@ const views = {
   Register: RegisterView,
   ChangePassword: ChangePasswordView,
   Admin: AdminView,
-  Settings: SettingsView
+  Settings: SettingsView,
+  PublicTerritory: PublicTerritoryView
 };
 
 const routes = [
+  // Public route (sin auth, accesible para visitantes)
+  { pattern: /^#\/p\/([^/]+)\/([^/]+)$/, view: 'PublicTerritory', params: function (m) { return { congPublicId: m[1], terPublicId: m[2] }; }, isPublic: true },
   // Auth / mode routes
   { pattern: /^#\/welcome$/, view: 'Welcome', params: function () { return {}; } },
   { pattern: /^#\/login$/, view: 'Login', params: function () { return {}; } },
   { pattern: /^#\/register$/, view: 'Register', params: function () { return {}; } },
   { pattern: /^#\/change-password$/, view: 'ChangePassword', params: function () { return {}; }, requiresOnline: true },
-  { pattern: /^#\/admin$/, view: 'Admin', params: function () { return {}; }, requiresAdmin: true },
+  { pattern: /^#\/admin$/, view: 'Admin', params: function () { return {}; }, allowedRoles: ['admin'] },
   { pattern: /^#\/settings$/, view: 'Settings', params: function () { return {}; } },
   // Territory routes
-  { pattern: /^#\/territories\/new$/, view: 'Form', params: function () { return { id: null }; } },
-  { pattern: /^#\/territories\/([^/]+)\/edit$/, view: 'Form', params: function (m) { return { id: parseId(m[1]) }; } },
+  { pattern: /^#\/territories\/new$/, view: 'Form', params: function () { return { id: null }; }, allowedRoles: ['admin'] },
+  { pattern: /^#\/territories\/([^/]+)\/edit$/, view: 'Form', params: function (m) { return { id: parseId(m[1]) }; }, allowedRoles: ['admin'] },
   { pattern: /^#\/territories\/([^/]+)\/card$/, view: 'Card', params: function (m) { return { id: parseId(m[1]) }; } },
   { pattern: /^#\/territories\/([^/]+)$/, view: 'Show', params: function (m) { return { id: parseId(m[1]) }; } },
-  { pattern: /^#\/print$/, view: 'Print', params: function () { return {}; } },
+  { pattern: /^#\/print$/, view: 'Print', params: function () { return {}; }, allowedRoles: ['admin', 'conductor'] },
   { pattern: /^#?\/?$/, view: 'Index', params: function () { return {}; } }
 ];
 
@@ -57,15 +61,16 @@ let previousHash = '#/';
 function navigate() {
   const hash = window.location.hash || '#/';
   const mode = getMode();
+  const isPublicRoute = !!hash.match(/^#\/p\//);
 
-  // Guard: no mode selected → redirect to welcome (unless already there)
-  if (!mode && !hash.match(/^#\/welcome/)) {
+  // Guard: no mode selected → redirect to welcome (unless already there o ruta pública)
+  if (!mode && !hash.match(/^#\/welcome/) && !isPublicRoute) {
     window.location.hash = '#/welcome';
     return;
   }
 
-  // Guard: online mode auth checks
-  if (mode === 'online') {
+  // Guard: online mode auth checks (no aplica a rutas públicas)
+  if (mode === 'online' && !isPublicRoute) {
     const profile = getUserProfile();
     const isAuthPage = hash.match(/^#\/(login|register|welcome)/);
 
@@ -107,10 +112,10 @@ function navigate() {
     if (match) {
       const route = routes[i];
 
-      // Admin guard
-      if (route.requiresAdmin) {
+      // Role guard (solo aplica en modo online con perfil)
+      if (route.allowedRoles && mode === 'online') {
         const profile = getUserProfile();
-        if (!profile || profile.role !== 'admin') {
+        if (profile && profile.role && route.allowedRoles.indexOf(profile.role) === -1) {
           window.location.hash = '#/';
           return;
         }

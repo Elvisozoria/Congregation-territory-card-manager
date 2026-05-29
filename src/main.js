@@ -12,6 +12,19 @@ let _buildMoreMenu = null;
 document.addEventListener('DOMContentLoaded', function () {
   const THEME_KEY = 'territory-cards-theme';
   const mode = getMode();
+  const isPublicRoute = !!(window.location.hash || '').match(/^#\/p\//);
+
+  // Ocultar elementos del navbar irrelevantes en vista pública
+  if (isPublicRoute) {
+    const navPrintEl = document.getElementById('nav-print');
+    const moreMenuEl = document.getElementById('more-menu-wrapper');
+    const fileInputEl = document.getElementById('file-input');
+    const kmlInputEl = document.getElementById('kml-input');
+    if (navPrintEl) navPrintEl.style.display = 'none';
+    if (moreMenuEl) moreMenuEl.style.display = 'none';
+    if (fileInputEl) fileInputEl.style.display = 'none';
+    if (kmlInputEl) kmlInputEl.style.display = 'none';
+  }
 
   // --- Theme toggle ---
   const themeToggle = document.getElementById('theme-toggle');
@@ -78,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const kmlInput = document.getElementById('kml-input');
 
   // For online mode: add user menu items
-  if (mode === 'online') {
+  if (mode === 'online' && !isPublicRoute) {
     // Hide offline-only elements (file inputs, more menu)
     if (moreMenuWrapper) moreMenuWrapper.style.display = 'none';
     if (fileInput) fileInput.style.display = 'none';
@@ -106,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // --- More menu (offline mode only) ---
-  if (mode !== 'online') {
+  if (mode !== 'online' && !isPublicRoute) {
     const moreMenu = document.getElementById('more-menu');
     const moreToggle = document.getElementById('more-toggle');
 

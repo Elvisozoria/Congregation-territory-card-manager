@@ -6,6 +6,8 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { auth, db } from './config.js';
+import { normalizeRole } from './migrations.js';
+import { generatePublicId } from '../utils/public-id.js';
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -30,7 +32,8 @@ export async function getCurrentUserProfile() {
   if (!user) return null;
   const snap = await getDoc(doc(db, 'users', user.uid));
   if (!snap.exists()) return null;
-  return { uid: user.uid, ...snap.data() };
+  const data = snap.data();
+  return { uid: user.uid, ...data, role: normalizeRole(data.role) };
 }
 
 export async function registerCongregation(congregationName) {
@@ -44,6 +47,7 @@ export async function registerCongregation(congregationName) {
 
   const congRef = await addDoc(collection(db, 'congregations'), {
     name: congregationName,
+    publicId: generatePublicId(),
     createdBy: user.uid,
     createdAt: serverTimestamp()
   });
@@ -90,7 +94,7 @@ export async function checkAndApplyInvite() {
     email: user.email,
     displayName: inviteData.displayName || user.displayName || user.email,
     congregationId: inviteData.congregationId,
-    role: inviteData.role || 'member',
+    role: normalizeRole(inviteData.role),
     mustChangePassword: false,
     createdAt: serverTimestamp()
   });

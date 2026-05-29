@@ -4,21 +4,27 @@ import { escapeHtml } from '../utils/helpers.js';
 
 const WORLD_BOUNDS = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
 
-export function renderCardMap(cardElement, territory, globalLandmarks) {
+// options: { editable, qrUrl, onViewChange }
+// Devuelve: { cleanup, getView, setView, resetView, getMap }
+export function renderCardMap(cardElement, territory, globalLandmarks, options) {
+  const opts = options || {};
   const mapDiv = cardElement.querySelector('.card-map') || cardElement;
+  const editable = !!opts.editable;
 
   const map = L.map(mapDiv, {
-    zoomControl: false,
+    zoomControl: editable,
     attributionControl: false,
-    dragging: false,
-    scrollWheelZoom: false,
-    doubleClickZoom: false,
-    touchZoom: false,
-    keyboard: false,
-    boxZoom: false
+    dragging: editable,
+    scrollWheelZoom: editable,
+    doubleClickZoom: editable,
+    touchZoom: editable,
+    keyboard: editable,
+    boxZoom: editable
   });
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+
+  let defaultBounds = null;
 
   if (territory.polygon && territory.polygon.length >= 3) {
     const coords = territory.polygon.map(function (c) { return [c[1], c[0]]; });
@@ -36,14 +42,30 @@ export function renderCardMap(cardElement, territory, globalLandmarks) {
       stroke: false
     }).addTo(map);
 
-    var bounds = L.latLngBounds(coords);
-    map.fitBounds(bounds, { padding: [30, 30] });
-
-    setTimeout(function () {
-      map.invalidateSize();
-      map.fitBounds(bounds, { padding: [30, 30] });
-    }, 200);
+    defaultBounds = L.latLngBounds(coords);
   }
+
+  // Vista guardada vs default
+  function applyDefaultView() {
+    if (defaultBounds) {
+      map.fitBounds(defaultBounds, { padding: [30, 30] });
+    } else {
+      map.setView([0, 0], 2);
+    }
+  }
+
+  if (territory.cardCenter && typeof territory.cardZoom === 'number') {
+    map.setView([territory.cardCenter.lat, territory.cardCenter.lng], territory.cardZoom);
+  } else {
+    applyDefaultView();
+  }
+
+  setTimeout(function () {
+    map.invalidateSize();
+    if (!(territory.cardCenter && typeof territory.cardZoom === 'number')) {
+      applyDefaultView();
+    }
+  }, 200);
 
   const landmarks = territory.landmarks || [];
   landmarks.forEach(function (landmark) {
@@ -60,7 +82,6 @@ export function renderCardMap(cardElement, territory, globalLandmarks) {
     L.marker([landmark.lat, landmark.lng], { icon: icon, interactive: false }).addTo(map);
   });
 
-  // Global landmarks
   (globalLandmarks || []).forEach(function (landmark) {
     var icon = L.divIcon({
       className: '',
@@ -74,7 +95,6 @@ export function renderCardMap(cardElement, territory, globalLandmarks) {
     L.marker([landmark.lat, landmark.lng], { icon: icon, interactive: false }).addTo(map);
   });
 
-  // Draw blocks (manzanas) as point labels
   const blocks = territory.blocks || [];
   blocks.forEach(function (block) {
     if (!block.lat || !block.lng) return;
@@ -86,20 +106,41 @@ export function renderCardMap(cardElement, territory, globalLandmarks) {
     L.marker([block.lat, block.lng], { icon: bLabel, interactive: false }).addTo(map);
   });
 
-  // Generate QR code
+  // QR: usa opts.qrUrl (link público) si está; si no, usa territory.qr_url legacy.
   const qrContainer = cardElement.querySelector('[data-qr-url]');
-  if (qrContainer && qrContainer.dataset.qrUrl) {
-    QRCode.toCanvas(qrContainer.dataset.qrUrl, {
+  const qrUrl = opts.qrUrl || (qrContainer && qrContainer.dataset.qrUrl) || territory.qr_url || '';
+  if (qrContainer && qrUrl) {
+    QRCode.toCanvas(qrUrl, {
       width: 60,
       margin: 0,
       color: { dark: '#000000', light: '#ffffff' }
     }).then(function (canvas) {
       canvas.style.display = 'block';
+      qrContainer.innerHTML = '';
       qrContainer.appendChild(canvas);
     }).catch(function (err) {
       console.error('QR generation failed:', err);
     });
   }
 
-  return function () { map.remove(); };
+  if (editable && typeof opts.onViewChange === 'function') {
+    map.on('moveend', function () {
+      opts.onViewChange({
+        zoom: map.getZoom(),
+        center: { lat: map.getCenter().lat, lng: map.getCenter().lng }
+      });
+    });
+  }
+
+  return {
+    cleanup: function () { map.remove(); },
+    getView: function () {
+      return { zoom: map.getZoom(), center: { lat: map.getCenter().lat, lng: map.getCenter().lng } };
+    },
+    setView: function (zoom, center) {
+      map.setView([center.lat, center.lng], zoom);
+    },
+    resetView: applyDefaultView,
+    getMap: function () { return map; }
+  };
 }

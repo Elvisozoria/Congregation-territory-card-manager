@@ -14,6 +14,19 @@ service cloud.firestore {
       return isMemberOf(congId) && getUserData().role == 'admin';
     }
 
+    function isConductorOf(congId) {
+      return isMemberOf(congId) && getUserData().role == 'conductor';
+    }
+
+    function isPublisherOf(congId) {
+      return isMemberOf(congId) && getUserData().role == 'publisher';
+    }
+
+    // Admin o conductor (rol con lectura general)
+    function isStaffOf(congId) {
+      return isAdminOf(congId) || isConductorOf(congId);
+    }
+
     // Users collection
     match /users/{userId} {
       // Users can read their own profile
@@ -40,6 +53,11 @@ service cloud.firestore {
       allow update: if request.auth != null
         && resource.data.congregationId == getUserData().congregationId
         && getUserData().role == 'admin';
+
+      // Conductor / publisher pueden leer otros perfiles de su congregación
+      // (necesario para mostrar nombres en historial / dropdown)
+      allow read: if request.auth != null
+        && resource.data.congregationId == getUserData().congregationId;
     }
 
     // Invites (for Google auth invite flow)
@@ -52,35 +70,54 @@ service cloud.firestore {
       allow delete: if request.auth != null;
     }
 
+    // Lookup table for public territory links (anyone can read by publicId)
+    match /publicLinks/{linkId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
     // Congregations
     match /congregations/{congId} {
-      allow read: if isMemberOf(congId);
+      // Miembros leen todo; visitantes anónimos leen si la congregación tiene publicId
+      allow read: if isMemberOf(congId) || resource.data.publicId != null;
       allow create: if request.auth != null;
       allow update, delete: if isAdminOf(congId);
 
       // Territories
       match /territories/{terId} {
-        allow read: if isMemberOf(congId);
-        allow create: if isMemberOf(congId);
-        allow update: if isAdminOf(congId)
-          || (isMemberOf(congId) && resource.data.assignedTo == request.auth.uid);
+        // Miembros leen siempre; visitantes anónimos leen si el territorio tiene publicId
+        allow read: if isMemberOf(congId) || resource.data.publicId != null;
+        // Solo admin crea/edita/borra (incluye polígono, notas, landmarks, blocks, cardZoom)
+        allow create: if isAdminOf(congId);
+        allow update: if isAdminOf(congId);
         allow delete: if isAdminOf(congId);
       }
 
       // History
       match /history/{histId} {
-        allow read: if isMemberOf(congId);
-        allow create: if isMemberOf(congId);
-        // Members can only update/delete their own entries; admins can do any
-        allow update, delete: if isAdminOf(congId)
-          || (isMemberOf(congId) && resource.data.createdBy == request.auth.uid);
+        allow read: if isStaffOf(congId)
+          || (isPublisherOf(congId) && resource.data.assignedToUid == request.auth.uid);
+
+        // Crear asignaciones: solo admin
+        allow create: if isAdminOf(congId);
+
+        // Actualizar: admin cualquier cosa; conductor/publisher solo su propia entrada
+        // y solo pueden cambiar status/endDate/notes (no person, no tipo, no asignación)
+        allow update: if isAdminOf(congId)
+          || (isMemberOf(congId)
+              && resource.data.assignedToUid == request.auth.uid
+              && request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['status', 'endDate', 'notes']));
+
+        // Borrar: solo admin
+        allow delete: if isAdminOf(congId);
       }
 
-      // Global Landmarks
+      // Global Landmarks — solo admin escribe
       match /globalLandmarks/{lmId} {
         allow read: if isMemberOf(congId);
-        allow create: if isMemberOf(congId);
-        allow delete: if isMemberOf(congId);
+        allow create, update, delete: if isAdminOf(congId);
       }
     }
   }
