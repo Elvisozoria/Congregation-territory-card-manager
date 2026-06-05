@@ -131,7 +131,8 @@ export default {
     fieldNumber: 'Número',
     fieldName: 'Nombre',
     fieldGroup: 'Grupo',
-    fieldQr: 'Enlace QR (opcional)',
+    fieldQr: 'Mostrar código QR',
+    fieldQrHint: 'Muestra un código QR en la tarjeta que enlaza a la vista pública del territorio.',
     fieldNotes: 'Notas / Referencias de acceso',
     fieldNotesPlaceholder: 'Instrucciones para llegar, referencias generales...',
     drawInstruction: 'Haz clic en el <strong>ícono del pentágono</strong> en el mapa, luego haz clic en puntos para dibujar el límite del territorio. Haz clic en el primer punto de nuevo para cerrar la forma.',
@@ -140,7 +141,6 @@ export default {
     confirmDelete: '¿Eliminar el territorio "{name}"? Esta acción no se puede deshacer.',
     errorNumber: 'El número es requerido',
     errorName: 'El nombre es requerido',
-    errorQrFormat: 'El enlace QR debe comenzar con http:// o https://',
     errorDuplicate: 'El número de territorio "{number}" ya existe',
     draftFound: 'Se encontró un borrador guardado automáticamente. ¿Deseas restaurarlo?'
   },

@@ -131,7 +131,8 @@ export default {
     fieldNumber: 'Number',
     fieldName: 'Name',
     fieldGroup: 'Group',
-    fieldQr: 'QR Link (optional)',
+    fieldQr: 'Show QR code',
+    fieldQrHint: 'Displays a QR code on the card linking to the public view of this territory.',
     fieldNotes: 'Notes / Access instructions',
     fieldNotesPlaceholder: 'Directions, general references...',
     drawInstruction: 'Click the <strong>pentagon icon</strong> on the map, then click points to draw your territory boundary. Click the first point again to close the shape.',
@@ -140,7 +141,6 @@ export default {
     confirmDelete: 'Delete territory "{name}"? This cannot be undone.',
     errorNumber: 'Number is required',
     errorName: 'Name is required',
-    errorQrFormat: 'QR Link must start with http:// or https://',
     errorDuplicate: 'Territory number "{number}" already exists',
     draftFound: 'An auto-saved draft was found. Would you like to restore it?'
   },

@@ -70,7 +70,8 @@ export function render(container) {
 
   territories.forEach(function (territory) {
     const publicUrl = (congPubId && territory.publicId) ? buildPublicTerritoryUrl(congPubId, territory.publicId) : '';
-    const qrUrl = publicUrl || territory.qr_url || '';
+    const shouldShowQr = territory.showQr || territory.qr_url;
+    const qrUrl = shouldShowQr ? (publicUrl || territory.qr_url || '') : '';
 
     const card = document.createElement('div');
     card.className = 'territory-card';

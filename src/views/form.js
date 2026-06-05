@@ -82,7 +82,7 @@ export function render(container, params) {
   const valNum = src ? src.number || '' : '';
   const valName = src ? src.name || '' : '';
   const valGroup = src ? src.group_name || '' : '';
-  const valQr = src ? src.qr_url || '' : '';
+  const valShowQr = src ? !!src.showQr : false;
   const valNotes = src ? src.notes || '' : '';
 
   form.innerHTML =
@@ -98,9 +98,15 @@ export function render(container, params) {
       '<label for="field-group">' + escapeHtml(t('form.fieldGroup')) + '</label>' +
       '<input type="text" id="field-group" placeholder="Oeste" value="' + escapeAttr(valGroup) + '" />' +
     '</div>' +
-    '<div class="form-group">' +
-      '<label for="field-qr">' + escapeHtml(t('form.fieldQr')) + '</label>' +
-      '<input type="url" id="field-qr" placeholder="https://..." value="' + escapeAttr(valQr) + '" />' +
+    '<div class="form-group toggle-group">' +
+      '<label class="toggle-label">' +
+        '<span>' + escapeHtml(t('form.fieldQr')) + '</span>' +
+        '<label class="switch">' +
+          '<input type="checkbox" id="field-qr"' + (valShowQr ? ' checked' : '') + ' />' +
+          '<span class="slider"></span>' +
+        '</label>' +
+      '</label>' +
+      '<p class="field-hint">' + escapeHtml(t('form.fieldQrHint')) + '</p>' +
     '</div>' +
     '<div class="form-group">' +
       '<label for="field-notes">' + escapeHtml(t('form.fieldNotes')) + '</label>' +
@@ -122,7 +128,7 @@ export function render(container, params) {
         number: document.getElementById('field-number').value,
         name: document.getElementById('field-name').value,
         group_name: document.getElementById('field-group').value,
-        qr_url: document.getElementById('field-qr').value,
+        showQr: document.getElementById('field-qr').checked,
         notes: document.getElementById('field-notes').value
       });
     }, 2000);
@@ -183,7 +189,7 @@ export function render(container, params) {
     const number = document.getElementById('field-number').value.trim();
     const name = document.getElementById('field-name').value.trim();
     const group_name = document.getElementById('field-group').value.trim();
-    const qr_url = document.getElementById('field-qr').value.trim();
+    const showQr = document.getElementById('field-qr').checked;
     const notes = document.getElementById('field-notes').value.trim();
     let polygon = [];
 
@@ -196,10 +202,6 @@ export function render(container, params) {
     const errors = [];
     if (!number) errors.push(t('form.errorNumber'));
     if (!name) errors.push(t('form.errorName'));
-
-    if (qr_url && !/^https?:\/\//i.test(qr_url)) {
-      errors.push(t('form.errorQrFormat'));
-    }
 
     const duplicate = store.getAll().find(function (existing) {
       return existing.number === number && (!isEdit || existing.id !== territory.id);
@@ -217,7 +219,7 @@ export function render(container, params) {
       return;
     }
 
-    const attrs = { number, name, group_name, qr_url, notes, polygon };
+    const attrs = { number, name, group_name, showQr, notes, polygon };
 
     isDirty = false;
     clearDraft(params.id);
