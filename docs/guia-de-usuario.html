@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía de Usuario — Tarjetas de Territorio</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFBFC;--bg-card:#fff;--bg-nav:#1F2937;
+  --text:#1E293B;--text-sec:#64748B;--text-muted:#94A3B8;
+  --accent:#2563EB;--accent-hover:#1D4ED8;--accent-light:#EFF6FF;
+  --border:#E2E8F0;--radius:10px;--shadow:0 1px 4px rgba(0,0,0,.06);
+  --green:#059669;--green-bg:#ECFDF5;--green-text:#065F46;
+  --amber:#D97706;--amber-bg:#FFFBEB;--amber-text:#92400E;
+  --purple:#7C3AED;--purple-bg:#F5F3FF;--purple-text:#5B21B6;
+  --red:#DC2626;--red-bg:#FEF2F2;--red-text:#991B1B;
+}
+[data-theme="dark"]{
+  --bg:#0F172A;--bg-card:#1E293B;--bg-nav:#0F172A;
+  --text:#E2E8F0;--text-sec:#94A3B8;--text-muted:#64748B;
+  --accent:#60A5FA;--accent-hover:#3B82F6;--accent-light:rgba(96,165,250,.1);
+  --border:#334155;--shadow:0 1px 4px rgba(0,0,0,.3);
+  --green:#34D399;--green-bg:rgba(52,211,153,.1);--green-text:#6EE7B7;
+  --amber:#FBBF24;--amber-bg:rgba(251,191,36,.1);--amber-text:#FDE68A;
+  --purple:#A78BFA;--purple-bg:rgba(167,139,250,.1);--purple-text:#C4B5FD;
+  --red:#F87171;--red-bg:rgba(248,113,113,.1);--red-text:#FCA5A5;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;border-radius:var(--radius);border:1px solid var(--border)}
+
+/* Nav */
+.topnav{position:sticky;top:0;z-index:100;background:var(--bg-nav);border-bottom:1px solid rgba(255,255,255,.08);padding:.75rem 1.5rem;display:flex;align-items:center;gap:1rem;backdrop-filter:blur(12px)}
+.topnav h1{color:#F9FAFB;font-size:1rem;font-weight:600;white-space:nowrap}
+.topnav .subtitle{color:#94A3B8;font-size:.8125rem;margin-left:.5rem;font-weight:400}
+.theme-toggle{margin-left:auto;background:none;border:none;color:#94A3B8;cursor:pointer;font-size:1.25rem;padding:.25rem .5rem;border-radius:6px;transition:background .15s}
+.theme-toggle:hover{background:rgba(255,255,255,.08)}
+
+/* Layout */
+.layout{display:flex;max-width:1280px;margin:0 auto;min-height:calc(100vh - 56px)}
+
+/* Sidebar */
+.sidebar{width:260px;flex-shrink:0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:1.25rem 0;border-right:1px solid var(--border);background:var(--bg)}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.sidebar .nav-group{margin-bottom:1rem}
+.sidebar .nav-group-title{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);padding:.25rem 1.25rem}
+.sidebar .nav-link{display:block;padding:.375rem 1.25rem;font-size:.875rem;color:var(--text-sec);border-left:3px solid transparent;transition:all .15s}
+.sidebar .nav-link:hover{color:var(--text);background:var(--accent-light);text-decoration:none}
+.sidebar .nav-link.active{color:var(--accent);border-left-color:var(--accent);font-weight:500;background:var(--accent-light)}
+
+/* Content */
+.content{flex:1;min-width:0;padding:2.5rem 3rem 4rem}
+.content section{margin-bottom:3rem;scroll-margin-top:72px}
+.content h2{font-size:1.5rem;font-weight:700;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:2px solid var(--border)}
+.content h3{font-size:1.125rem;font-weight:600;margin:1.5rem 0 .5rem;color:var(--text)}
+.content h4{font-size:.9375rem;font-weight:600;margin:1.25rem 0 .375rem;color:var(--text-sec)}
+.content p,.content li{font-size:.9375rem;color:var(--text-sec);margin-bottom:.5rem}
+.content ul,.content ol{padding-left:1.5rem;margin-bottom:1rem}
+.content ol>li{margin-bottom:.75rem}
+.content strong{color:var(--text);font-weight:600}
+
+/* Cards */
+.info-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin:1rem 0;box-shadow:var(--shadow)}
+.info-card.tip{border-left:4px solid var(--green);background:var(--green-bg)}
+.info-card.tip .card-label{color:var(--green-text)}
+.info-card.warning{border-left:4px solid var(--amber);background:var(--amber-bg)}
+.info-card.warning .card-label{color:var(--amber-text)}
+.info-card.role-admin{border-left:4px solid var(--red)}
+.info-card.role-conductor{border-left:4px solid var(--purple)}
+.info-card.role-publisher{border-left:4px solid var(--accent)}
+.card-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.375rem}
+
+/* Role badges */
+.role-badge{display:inline-block;font-size:.75rem;font-weight:600;padding:.125rem .5rem;border-radius:9999px;margin:0 .125rem}
+.role-badge.admin{background:var(--red-bg);color:var(--red-text)}
+.role-badge.conductor{background:var(--purple-bg);color:var(--purple-text)}
+.role-badge.publisher{background:var(--accent-light);color:var(--accent)}
+.role-badge.offline{background:var(--amber-bg);color:var(--amber-text)}
+
+/* Steps */
+.step{display:flex;gap:1rem;margin:1.25rem 0;align-items:flex-start}
+.step-num{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:.8125rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:.125rem}
+.step-body{flex:1}
+.step-body p{margin:0}
+
+/* Screenshot placeholder */
+.screenshot-placeholder{background:var(--bg);border:2px dashed var(--border);border-radius:var(--radius);padding:2rem;text-align:center;color:var(--text-muted);font-size:.875rem;margin:1rem 0;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem}
+.screenshot-placeholder .icon{font-size:2rem;opacity:.4}
+.screenshot-placeholder .ts{font-size:.75rem;font-family:monospace;opacity:.6}
+.screenshot-placeholder img{max-width:100%;border:none}
+
+/* Permission table */
+.perm-table{width:100%;border-collapse:collapse;font-size:.8125rem;margin:1rem 0}
+.perm-table th,.perm-table td{padding:.5rem .75rem;text-align:left;border-bottom:1px solid var(--border)}
+.perm-table th{background:var(--bg);color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:.6875rem;position:sticky;top:56px}
+.perm-table td{color:var(--text-sec)}
+.perm-table tr:hover td{background:var(--accent-light)}
+.check{color:var(--green);font-weight:700}
+.cross{color:var(--text-muted)}
+.partial{color:var(--amber);font-weight:600}
+
+/* Kbd */
+kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;box-shadow:0 1px 0 var(--border)}
+
+/* Responsive */
+@media(max-width:900px){
+  .sidebar{display:none}
+  .content{padding:1.5rem 1rem 3rem}
+}
+
+/* Print */
+@media print{
+  .topnav,.sidebar,.theme-toggle{display:none!important}
+  .content{padding:0}
+  .screenshot-placeholder{border-style:solid;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <h1>Tarjetas de Territorio<span class="subtitle">Guía de Usuario</span></h1>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" aria-label="Cambiar tema">&#9681;</button>
+</nav>
+
+<div class="layout">
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="nav-group">
+    <div class="nav-group-title">Inicio</div>
+    <a class="nav-link" href="#intro">Introducción</a>
+    <a class="nav-link" href="#modos">Modos de uso</a>
+    <a class="nav-link" href="#roles">Roles y permisos</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Primeros pasos</div>
+    <a class="nav-link" href="#setup-offline">Configurar modo offline</a>
+    <a class="nav-link" href="#setup-online">Configurar modo online</a>
+    <a class="nav-link" href="#interfaz">Conocer la interfaz</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Territorios</div>
+    <a class="nav-link" href="#crear-territorio">Crear territorio</a>
+    <a class="nav-link" href="#ver-territorio">Ver detalle</a>
+    <a class="nav-link" href="#editar-territorio">Editar territorio</a>
+    <a class="nav-link" href="#landmarks">Puntos de referencia</a>
+    <a class="nav-link" href="#manzanas">Manzanas</a>
+    <a class="nav-link" href="#eliminar-territorio">Eliminar territorio</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Asignaciones</div>
+    <a class="nav-link" href="#asignar">Asignar territorio</a>
+    <a class="nav-link" href="#completar">Completar / Devolver</a>
+    <a class="nav-link" href="#historial">Historial de trabajo</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Tarjetas e impresión</div>
+    <a class="nav-link" href="#tarjeta">Ver tarjeta</a>
+    <a class="nav-link" href="#descargar-png">Descargar PNG</a>
+    <a class="nav-link" href="#imprimir">Imprimir todas</a>
+    <a class="nav-link" href="#zoom-tarjeta">Ajustar zoom</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Compartir</div>
+    <a class="nav-link" href="#compartir">Links públicos</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Administración</div>
+    <a class="nav-link" href="#panel-admin">Panel de admin</a>
+    <a class="nav-link" href="#invitar">Invitar usuarios</a>
+    <a class="nav-link" href="#cambiar-rol">Cambiar roles</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Datos</div>
+    <a class="nav-link" href="#guardar-json">Guardar JSON</a>
+    <a class="nav-link" href="#cargar-json">Cargar JSON</a>
+    <a class="nav-link" href="#importar-kml">Importar KML</a>
+    <a class="nav-link" href="#migrar">Migrar a la nube</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Extras</div>
+    <a class="nav-link" href="#tema">Tema claro/oscuro</a>
+    <a class="nav-link" href="#idioma">Idioma</a>
+    <a class="nav-link" href="#faq">Preguntas frecuentes</a>
+  </div>
+</aside>
+
+<!-- Main content -->
+<main class="content">
+
+<!-- ===================== INTRODUCCIÓN ===================== -->
+<section id="intro">
+  <h2>Introducción</h2>
+  <p><strong>Tarjetas de Territorio</strong> es una aplicación web para administrar, asignar e imprimir tarjetas de territorios de predicación. Funciona en dos modos: <strong>sin conexión</strong> (datos en tu navegador) o <strong>en línea</strong> (datos en la nube, compartidos con toda la congregación).</p>
+
+  <div class="info-card tip">
+    <div class="card-label">Características principales</div>
+    <ul>
+      <li>Dibujar límites de territorio sobre un mapa interactivo</li>
+      <li>Agregar puntos de referencia y manzanas</li>
+      <li>Asignar territorios a publicadores con seguimiento de fechas</li>
+      <li>Generar tarjetas imprimibles con mapa, QR y referencias</li>
+      <li>Compartir territorios con links públicos</li>
+      <li>Importar y exportar datos (JSON, KML/KMZ de Google Earth)</li>
+      <li>Interfaz bilingüe: español e inglés</li>
+      <li>Tema claro y oscuro</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== MODOS ===================== -->
+<section id="modos">
+  <h2>Modos de uso</h2>
+  <p>Al abrir la app por primera vez verás la pantalla de bienvenida con dos opciones:</p>
+
+  <div class="info-card">
+    <h4>Modo sin conexión (Offline)</h4>
+    <p>Los datos se guardan en el almacenamiento local de tu navegador. No necesitas cuenta ni internet (después de cargar la app). Ideal para uso personal o para probar la app antes de crear una cuenta.</p>
+    <p><strong>Limitaciones:</strong> no puedes compartir datos con otros usuarios, no hay links públicos, y si borras los datos del navegador se pierde todo (pero puedes exportar a JSON como respaldo).</p>
+  </div>
+
+  <div class="info-card">
+    <h4>Modo en línea (Online)</h4>
+    <p>Los datos se almacenan en Firebase (nube de Google). Todos los miembros de la congregación acceden a los mismos datos en tiempo real. Requiere una cuenta de Google.</p>
+    <p><strong>Ventajas:</strong> sincronización en tiempo real, roles y permisos, links públicos para compartir territorios, invitación de miembros.</p>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="pantalla-bienvenida">
+    <img src="screenshots/01-welcome.png" alt="Pantalla de bienvenida — selección de modo">
+  </div>
+</section>
+
+<!-- ===================== ROLES ===================== -->
+<section id="roles">
+  <h2>Roles y permisos</h2>
+  <p>En modo <strong>online</strong>, cada usuario tiene un rol que determina qué puede hacer. En modo <strong>offline</strong>, no hay restricciones — tienes acceso a todo.</p>
+
+  <div class="info-card role-admin">
+    <div class="card-label" style="color:var(--red-text)">Administrador</div>
+    <p>Control total: crea, edita y elimina territorios; administra usuarios; asigna territorios; ve todo el historial; imprime tarjetas; gestiona la congregación.</p>
+  </div>
+
+  <div class="info-card role-conductor">
+    <div class="card-label" style="color:var(--purple-text)">Conductor</div>
+    <p>Puede ver todos los territorios y su historial completo. Puede marcar como completadas las asignaciones propias e imprimir tarjetas. No puede crear, editar ni eliminar territorios, ni administrar usuarios.</p>
+  </div>
+
+  <div class="info-card role-publisher">
+    <div class="card-label" style="color:var(--accent)">Publicador</div>
+    <p>Solo ve los territorios que le fueron asignados activamente. Puede marcar su propia asignación como completada o devuelta. No ve territorios de otros ni el historial completo.</p>
+  </div>
+
+  <h3>Tabla de permisos detallada</h3>
+  <table class="perm-table">
+    <thead>
+      <tr>
+        <th>Acción</th>
+        <th><span class="role-badge admin">Admin</span></th>
+        <th><span class="role-badge conductor">Conductor</span></th>
+        <th><span class="role-badge publisher">Publicador</span></th>
+        <th><span class="role-badge offline">Offline</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Ver todos los territorios</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Ver territorio asignado</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Crear territorio</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Editar territorio</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Eliminar territorio</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Agregar puntos de referencia</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Agregar manzanas</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Asignar territorio</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Completar asignación propia</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Ver historial completo</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Editar entrada de historial</td><td class="check">&#10003;</td><td class="partial">Propia</td><td class="partial">Propia</td><td class="check">&#10003;</td></tr>
+      <tr><td>Eliminar entrada de historial</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Ver tarjeta individual</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Imprimir todas las tarjetas</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Ajustar zoom de tarjeta</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Compartir link público</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="cross">&#10007;</td></tr>
+      <tr><td>Panel de administración</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">N/A</td></tr>
+      <tr><td>Invitar usuarios</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">N/A</td></tr>
+      <tr><td>Cambiar roles</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">N/A</td></tr>
+      <tr><td>Guardar / cargar JSON</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+      <tr><td>Importar KML/KMZ</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===================== SETUP OFFLINE ===================== -->
+<section id="setup-offline">
+  <h2>Configurar modo offline</h2>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Abre la aplicación en tu navegador.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>En la pantalla de bienvenida, haz clic en <strong>"Usar sin conexión"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>La app cargará directamente a la vista de territorios. Todos los datos se guardan en tu navegador.</p></div>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="setup-offline">
+    <div class="icon">&#128247;</div>
+    <span>Clic en "Usar sin conexión"</span>
+    <span class="ts">timestamp: --:--</span>
+  </div>
+
+  <div class="info-card warning">
+    <div class="card-label">Importante</div>
+    <p>En modo offline, si limpias los datos del navegador (caché, cookies, localStorage), perderás tus territorios. Usa <strong>Guardar JSON</strong> periódicamente como respaldo.</p>
+  </div>
+</section>
+
+<!-- ===================== SETUP ONLINE ===================== -->
+<section id="setup-online">
+  <h2>Configurar modo online</h2>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En la pantalla de bienvenida, haz clic en <strong>"Crear cuenta"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Inicia sesión con tu <strong>cuenta de Google</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Escribe el <strong>nombre de tu congregación</strong> y haz clic en registrar. Serás el administrador automáticamente.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p>La app te llevará a la pantalla principal. Ya puedes crear territorios e invitar miembros.</p></div>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="setup-online-login">
+    <div class="icon">&#128247;</div>
+    <span>Inicio de sesión con Google</span>
+    <span class="ts">timestamp: --:--</span>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="setup-online-register">
+    <div class="icon">&#128247;</div>
+    <span>Registro de congregación</span>
+    <span class="ts">timestamp: --:--</span>
+  </div>
+</section>
+
+<!-- ===================== INTERFAZ ===================== -->
+<section id="interfaz">
+  <h2>Conocer la interfaz</h2>
+  <p>La interfaz principal tiene estos elementos:</p>
+
+  <h4>Barra de navegación (arriba)</h4>
+  <ul>
+    <li><strong>Tarjetas de Territorio</strong> — logo/nombre de la app, haz clic para volver al inicio</li>
+    <li><strong>Imprimir</strong> — acceso directo a la vista de impresión masiva</li>
+    <li><strong>Menú (&#8942;)</strong> — opciones adicionales: Cargar JSON, Guardar JSON, Importar KML, Reiniciar</li>
+    <li><strong>Tema</strong> — alterna entre modo claro y oscuro</li>
+    <li><strong>Idioma</strong> — cambia entre Español e Inglés</li>
+  </ul>
+
+  <h4>Vista de territorios (página principal)</h4>
+  <ul>
+    <li><strong>Vista de tarjetas</strong> — muestra cada territorio como una tarjeta con mapa miniatura</li>
+    <li><strong>Vista de tabla</strong> — lista compacta con columnas: número, nombre, grupo, puntos</li>
+    <li><strong>Botón "Nuevo Territorio"</strong> — solo visible para administradores</li>
+    <li>Puedes alternar entre vista de tarjetas y tabla con los íconos en la esquina superior derecha</li>
+  </ul>
+
+  <div class="screenshot-placeholder" data-ref="interfaz-principal-dark">
+    <img src="screenshots/01-welcome.png" alt="Vista principal — modo oscuro con vista de tabla">
+    <span class="ts">Modo oscuro, vista de tabla</span>
+  </div>
+  <div class="screenshot-placeholder" data-ref="interfaz-principal-light">
+    <img src="screenshots/07-light-mode.png" alt="Vista principal — modo claro con vista de tarjetas">
+    <span class="ts">Modo claro, vista de tarjetas</span>
+  </div>
+</section>
+
+<!-- ===================== CREAR TERRITORIO ===================== -->
+<section id="crear-territorio">
+  <h2>Crear territorio</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Desde la pantalla principal, haz clic en <strong>"Nuevo Territorio"</strong> (o en el <strong>+</strong> si estás en la pantalla de bienvenida).</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Rellena los campos del formulario:
+      <br>— <strong>Número:</strong> identificador del territorio (ej: "1", "12A")
+      <br>— <strong>Nombre:</strong> nombre descriptivo (ej: "Centro", "La Joya")
+      <br>— <strong>Grupo:</strong> nombre del grupo de servicio (opcional)
+      <br>— <strong>Enlace QR:</strong> URL opcional que se mostrará como código QR en la tarjeta
+      <br>— <strong>Notas:</strong> instrucciones de acceso o referencias generales
+    </p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p><strong>Dibuja el límite del territorio en el mapa:</strong>
+      <br>— Haz clic en el <strong>ícono del pentágono</strong> (polígono) en la barra de herramientas del mapa
+      <br>— Haz clic en puntos del mapa para definir los vértices del territorio
+      <br>— Haz clic en el primer punto nuevamente para <strong>cerrar la forma</strong>
+      <br>— Puedes arrastrar los vértices para ajustar
+    </p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p>Haz clic en <strong>"Guardar Territorio"</strong>.</p></div>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="crear-territorio-form">
+    <img src="screenshots/02-new-territory.png" alt="Formulario de nuevo territorio con mapa y polígono dibujado">
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Borrador automático</div>
+    <p>Si navegas fuera del formulario sin guardar, la app guardará un borrador automáticamente. La próxima vez que entres al formulario, te preguntará si deseas restaurar el borrador.</p>
+  </div>
+</section>
+
+<!-- ===================== VER TERRITORIO ===================== -->
+<section id="ver-territorio">
+  <h2>Ver detalle de un territorio</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge conductor">Conductor</span> <span class="role-badge publisher">Publicador</span> <span class="role-badge offline">Offline</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Desde la pantalla principal, haz clic en el <strong>nombre o tarjeta</strong> del territorio que deseas ver.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Verás:
+      <br>— <strong>Mapa</strong> con el polígono del territorio
+      <br>— <strong>Puntos de referencia</strong> marcados en el mapa
+      <br>— <strong>Manzanas</strong> numeradas
+      <br>— <strong>Notas</strong> del territorio
+      <br>— <strong>Estado de asignación</strong> (a quién está asignado y desde cuándo)
+      <br>— <strong>Historial de trabajo</strong> con todas las asignaciones pasadas
+    </p></div>
+  </div>
+
+  <p>Desde esta vista también puedes acceder a las acciones principales: <strong>Tarjeta</strong>, <strong>Compartir</strong>, <strong>Editar</strong> y <strong>Volver</strong>.</p>
+
+  <div class="screenshot-placeholder" data-ref="ver-territorio">
+    <img src="screenshots/03-show-territory.png" alt="Vista de detalle del territorio con mapa y landmarks">
+  </div>
+</section>
+
+<!-- ===================== EDITAR TERRITORIO ===================== -->
+<section id="editar-territorio">
+  <h2>Editar territorio</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Desde la vista de detalle del territorio, haz clic en <strong>"Editar"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Se abrirá el mismo formulario de creación pero con los datos actuales cargados. Modifica lo que necesites.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Para <strong>redibujar el polígono</strong>, usa las herramientas del mapa: puedes arrastrar los vértices existentes o dibujar un polígono nuevo (el anterior se reemplaza).</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p>Haz clic en <strong>"Guardar Territorio"</strong> para confirmar los cambios.</p></div>
+  </div>
+
+  <div class="info-card warning">
+    <div class="card-label">Cambios sin guardar</div>
+    <p>Si intentas salir del formulario con cambios sin guardar, la app te pedirá confirmación.</p>
+  </div>
+</section>
+
+<!-- ===================== LANDMARKS ===================== -->
+<section id="landmarks">
+  <h2>Puntos de referencia</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+  <p>Los puntos de referencia son marcadores que se agregan al mapa para señalar lugares importantes dentro del territorio (comercios, edificios, esquinas clave, etc.).</p>
+
+  <h4>Agregar un punto de referencia</h4>
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En la vista de detalle del territorio, haz clic en <strong>"Agregar Referencia"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Haz clic en el <strong>punto del mapa</strong> donde quieres colocar la referencia.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Escribe el <strong>nombre</strong> y opcionalmente una <strong>descripción</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p>Elige el <strong>alcance</strong>:
+      <br>— <strong>Solo este territorio:</strong> el punto se muestra solo en este territorio
+      <br>— <strong>Todos los territorios (Global):</strong> el punto se muestra en todos los mapas como referencia general
+    </p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body"><p>Haz clic en <strong>"Guardar"</strong>.</p></div>
+  </div>
+
+  <p>Para <strong>editar</strong> o <strong>eliminar</strong> un punto existente, usa los botones que aparecen en la lista de puntos debajo del mapa.</p>
+
+  <div class="screenshot-placeholder" data-ref="landmarks-agregar">
+    <div class="icon">&#128247;</div>
+    <span>Agregando un punto de referencia al mapa</span>
+    <span class="ts">timestamp: --:--</span>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Colores</div>
+    <p>Los puntos de referencia se asignan colores automáticamente del siguiente orden: rojo, azul, verde, morado, naranja. Esto ayuda a distinguirlos visualmente en el mapa y en la tarjeta impresa.</p>
+  </div>
+</section>
+
+<!-- ===================== MANZANAS ===================== -->
+<section id="manzanas">
+  <h2>Manzanas</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+  <p>Las manzanas representan bloques de calles dentro del territorio. Se muestran como etiquetas numeradas en el mapa.</p>
+
+  <h4>Agregar una manzana</h4>
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En la vista de detalle, haz clic en <strong>"Dibujar Manzana"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Haz clic en el <strong>punto del mapa</strong> donde quieres ubicar la etiqueta de la manzana.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Escribe el <strong>número o nombre</strong> de la manzana (ej: "1", "2", "A").</p></div>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="manzanas">
+    <div class="icon">&#128247;</div>
+    <span>Manzanas en el mapa del territorio</span>
+    <span class="ts">timestamp: --:--</span>
+  </div>
+</section>
+
+<!-- ===================== ELIMINAR TERRITORIO ===================== -->
+<section id="eliminar-territorio">
+  <h2>Eliminar territorio</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Desde la vista de detalle del territorio o desde la vista de edición, busca el botón <strong>"Eliminar este territorio"</strong> al final de la página.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Confirma la eliminación en el diálogo que aparece. <strong>Esta acción no se puede deshacer.</strong></p></div>
+  </div>
+
+  <div class="info-card warning">
+    <div class="card-label">Precaución</div>
+    <p>Eliminar un territorio borra también todos sus puntos de referencia, manzanas e historial asociado. Considera exportar un JSON de respaldo antes de eliminar.</p>
+  </div>
+</section>
+
+<!-- ===================== ASIGNAR ===================== -->
+<section id="asignar">
+  <h2>Asignar territorio</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Entra al detalle del territorio que deseas asignar.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Haz clic en <strong>"Asignar Territorio"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p><strong>En modo offline:</strong> escribe el nombre de la persona manualmente.
+    <br><strong>En modo online:</strong> selecciona al miembro de la congregación de la lista desplegable.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p>Haz clic en <strong>"Asignar"</strong>. El territorio mostrará el nombre de la persona asignada y la fecha de inicio.</p></div>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="asignar-territorio">
+    <div class="icon">&#128247;</div>
+    <span>Asignando un territorio a un publicador</span>
+    <span class="ts">timestamp: --:--</span>
+  </div>
+</section>
+
+<!-- ===================== COMPLETAR ===================== -->
+<section id="completar">
+  <h2>Completar o devolver asignación</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge conductor">Conductor</span> <span class="role-badge publisher">Publicador</span> <span class="role-badge offline">Offline</span></p>
+
+  <p>Cuando un territorio ya fue trabajado, se puede marcar la asignación como completada o devuelta:</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Ve al detalle del territorio.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>En la sección de asignación activa, haz clic en:
+      <br>— <strong>"Completado"</strong> si el territorio fue trabajado completamente
+      <br>— <strong>"Devolver"</strong> si se devuelve sin completar
+    </p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>La asignación pasa al historial y el territorio queda <strong>disponible</strong> para una nueva asignación.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Permisos</div>
+    <p>Los conductores y publicadores solo pueden completar sus <strong>propias</strong> asignaciones. El administrador puede completar cualquier asignación.</p>
+  </div>
+</section>
+
+<!-- ===================== HISTORIAL ===================== -->
+<section id="historial">
+  <h2>Historial de trabajo</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge conductor">Conductor</span> <span class="role-badge offline">Offline</span></p>
+
+  <p>El historial muestra todas las asignaciones pasadas de un territorio: quién lo trabajó, cuándo empezó, cuándo terminó, y notas.</p>
+
+  <h4>Filtrar historial</h4>
+  <p>Puedes filtrar por estado usando los botones de filtro: <strong>Todos</strong>, <strong>Activos</strong>, <strong>Completados</strong>, <strong>Devueltos</strong>.</p>
+
+  <h4>Agregar registro manual</h4>
+  <p>El administrador puede agregar registros de trabajo manualmente usando el botón <strong>"Agregar Registro"</strong>, indicando persona, fecha de inicio, fecha de fin, tipo y notas.</p>
+
+  <h4>Editar o eliminar</h4>
+  <p>Cada entrada tiene botones de <strong>Editar</strong> y <strong>Eliminar</strong> (según los permisos del usuario). Los conductores y publicadores solo pueden editar sus propias entradas.</p>
+
+  <div class="screenshot-placeholder" data-ref="historial">
+    <div class="icon">&#128247;</div>
+    <span>Historial de trabajo de un territorio</span>
+    <span class="ts">timestamp: --:--</span>
+  </div>
+</section>
+
+<!-- ===================== TARJETA ===================== -->
+<section id="tarjeta">
+  <h2>Ver tarjeta del territorio</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge conductor">Conductor</span> <span class="role-badge publisher">Publicador</span> <span class="role-badge offline">Offline</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Desde el detalle del territorio, haz clic en <strong>"Tarjeta"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Verás una vista optimizada para impresión con:
+      <br>— <strong>Mapa estático</strong> con el polígono y puntos de referencia
+      <br>— <strong>Nombre y número</strong> del territorio
+      <br>— <strong>Código QR</strong> (si configuraste un enlace QR)
+      <br>— <strong>Lista de referencias</strong> con colores
+    </p></div>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="tarjeta-vista">
+    <img src="screenshots/04-card-view.png" alt="Tarjeta de territorio con mapa estático y QR">
+  </div>
+</section>
+
+<!-- ===================== DESCARGAR PNG ===================== -->
+<section id="descargar-png">
+  <h2>Descargar tarjeta como PNG</h2>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Desde la vista de tarjeta, haz clic en <strong>"Descargar PNG"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Se descargará una imagen PNG de alta resolución (2x) con el nombre del archivo basado en el número y nombre del territorio.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Resolución</div>
+    <p>Las imágenes se generan a 2x la resolución de pantalla para que se vean nítidas al imprimir.</p>
+  </div>
+</section>
+
+<!-- ===================== IMPRIMIR ===================== -->
+<section id="imprimir">
+  <h2>Imprimir todas las tarjetas</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge conductor">Conductor</span> <span class="role-badge offline">Offline</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En la barra de navegación, haz clic en <strong>"Imprimir"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Verás todas las tarjetas generadas. Puedes:
+      <br>— <strong>"Imprimir Todo":</strong> abre el diálogo de impresión del navegador con todas las tarjetas
+      <br>— <strong>"Descargar PNGs":</strong> descarga cada tarjeta como imagen individual
+    </p></div>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="imprimir-todas">
+    <img src="screenshots/05-print-all.png" alt="Vista de impresión masiva con todas las tarjetas">
+  </div>
+</section>
+
+<!-- ===================== ZOOM TARJETA ===================== -->
+<section id="zoom-tarjeta">
+  <h2>Ajustar zoom y centro de la tarjeta</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge conductor">Conductor</span> <span class="role-badge offline">Offline</span></p>
+
+  <p>Cada territorio puede tener un zoom y centro personalizado para su tarjeta:</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Desde la vista de tarjeta, haz clic en <strong>"Editar zoom y centro"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Usa el mapa para <strong>hacer zoom</strong> y <strong>mover la vista</strong> hasta que se vea como deseas.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Haz clic en <strong>"Guardar vista"</strong> para que ese zoom y centro se usen siempre para este territorio.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p>Para volver al zoom automático, haz clic en <strong>"Restablecer vista"</strong>.</p></div>
+  </div>
+</section>
+
+<!-- ===================== COMPARTIR ===================== -->
+<section id="compartir">
+  <h2>Compartir con links públicos</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge conductor">Conductor</span> <span class="role-badge publisher">Publicador</span> (solo modo online)</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Desde la vista de detalle de un territorio, haz clic en el botón <strong>"Compartir"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>La app generará un <strong>link público único</strong> y lo copiará a tu portapapeles.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Cualquier persona con ese link puede ver el territorio (mapa, referencias, link a Google Maps) <strong>sin necesidad de cuenta</strong>.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Vista pública</div>
+    <p>La vista pública es de solo lectura y muestra el mapa con un botón para "Abrir en Google Maps". Ideal para enviar por WhatsApp o mensajería a publicadores que no usen la app.</p>
+  </div>
+
+  <div class="screenshot-placeholder" data-ref="link-publico">
+    <div class="icon">&#128247;</div>
+    <span>Vista pública de un territorio compartido</span>
+    <span class="ts">timestamp: --:--</span>
+  </div>
+</section>
+
+<!-- ===================== PANEL ADMIN ===================== -->
+<section id="panel-admin">
+  <h2>Panel de administración</h2>
+  <p><span class="role-badge admin">Admin</span> (solo modo online)</p>
+
+  <p>El panel de administración muestra la información de la congregación y permite gestionar los miembros.</p>
+
+  <h4>Acceder al panel</h4>
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Haz clic en el botón de <strong>menú del usuario</strong> o navega directamente a la sección de <strong>Admin</strong>.</p></div>
+  </div>
+
+  <p>En el panel verás:</p>
+  <ul>
+    <li><strong>Información de la congregación:</strong> nombre e ID</li>
+    <li><strong>Lista de miembros:</strong> nombre, correo, rol actual</li>
+    <li><strong>Formulario de invitación:</strong> para agregar nuevos miembros</li>
+  </ul>
+
+  <div class="screenshot-placeholder" data-ref="panel-admin">
+    <div class="icon">&#128247;</div>
+    <span>Panel de administración</span>
+    <span class="ts">timestamp: --:--</span>
+  </div>
+</section>
+
+<!-- ===================== INVITAR ===================== -->
+<section id="invitar">
+  <h2>Invitar usuarios</h2>
+  <p><span class="role-badge admin">Admin</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En el panel de administración, busca la sección <strong>"Invitar Usuario"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Ingresa:
+      <br>— <strong>Correo electrónico:</strong> el correo de Google del usuario
+      <br>— <strong>Nombre:</strong> nombre para mostrar
+      <br>— <strong>Rol:</strong> Publicador, Conductor o Administrador
+    </p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Haz clic en <strong>"Enviar Invitación"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p>Dile al usuario que <strong>inicie sesión con ese correo de Google</strong> en la app. Se unirá automáticamente a tu congregación con el rol asignado.</p></div>
+  </div>
+
+  <div class="info-card warning">
+    <div class="card-label">Nota</div>
+    <p>El usuario debe usar el mismo correo de Google que ingresaste. Si usa otro correo, no se vinculará automáticamente a la congregación.</p>
+  </div>
+</section>
+
+<!-- ===================== CAMBIAR ROL ===================== -->
+<section id="cambiar-rol">
+  <h2>Cambiar roles de usuarios</h2>
+  <p><span class="role-badge admin">Admin</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En el panel de administración, busca al miembro en la lista.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Haz clic en <strong>"Cambiar rol"</strong> junto al nombre del miembro.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Selecciona el nuevo rol: <strong>Administrador</strong>, <strong>Conductor</strong> o <strong>Publicador</strong>.</p></div>
+  </div>
+
+  <div class="info-card warning">
+    <div class="card-label">Restricción</div>
+    <p>No puedes cambiar tu propio rol. Necesitas que otro administrador lo haga.</p>
+  </div>
+</section>
+
+<!-- ===================== GUARDAR JSON ===================== -->
+<section id="guardar-json">
+  <h2>Guardar datos como JSON</h2>
+  <p>Todos los roles</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En la barra de navegación, abre el <strong>menú (&#8942;)</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Haz clic en <strong>"Guardar JSON"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Se descargará un archivo <code>.json</code> con todos los territorios, puntos de referencia, manzanas e historial.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Respaldo</div>
+    <p>Guarda un JSON periódicamente como respaldo, especialmente si usas el modo offline.</p>
+  </div>
+</section>
+
+<!-- ===================== CARGAR JSON ===================== -->
+<section id="cargar-json">
+  <h2>Cargar datos desde JSON</h2>
+  <p>Todos los roles</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En la barra de navegación, abre el <strong>menú (&#8942;)</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Haz clic en <strong>"Cargar JSON"</strong> y selecciona el archivo.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Confirma que deseas reemplazar los datos actuales. <strong>Esta acción reemplaza todos los datos existentes.</strong></p></div>
+  </div>
+
+  <div class="info-card warning">
+    <div class="card-label">Atención</div>
+    <p>Cargar un JSON reemplaza <strong>todos</strong> los datos actuales. Exporta un respaldo antes si necesitas conservar la información existente.</p>
+  </div>
+</section>
+
+<!-- ===================== IMPORTAR KML ===================== -->
+<section id="importar-kml">
+  <h2>Importar desde KML/KMZ (Google Earth)</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En la barra de navegación, abre el <strong>menú (&#8942;)</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Haz clic en <strong>"Importar KML"</strong> y selecciona un archivo <code>.kml</code> o <code>.kmz</code>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>La app extraerá los polígonos del archivo y creará territorios con los nombres encontrados.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Google Earth</div>
+    <p>Puedes dibujar los territorios en Google Earth, exportar como KML/KMZ, e importarlos aquí. Los polígonos se convierten automáticamente en límites de territorio.</p>
+  </div>
+</section>
+
+<!-- ===================== MIGRAR ===================== -->
+<section id="migrar">
+  <h2>Migrar datos locales a la nube</h2>
+  <p>Si empezaste en modo offline y ahora deseas usar el modo online:</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Ve a <strong>Configuración</strong> (ícono de engranaje o menú).</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Haz clic en <strong>"Registrarse y migrar datos"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Inicia sesión con Google y registra tu congregación.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p>Tus datos locales (territorios, puntos, historial) se subirán a la nube automáticamente.</p></div>
+  </div>
+</section>
+
+<!-- ===================== TEMA ===================== -->
+<section id="tema">
+  <h2>Tema claro / oscuro</h2>
+  <p>Haz clic en el ícono de <strong>luna/sol</strong> en la barra de navegación para alternar entre el tema claro y oscuro. La preferencia se guarda en tu navegador.</p>
+
+  <div class="screenshot-placeholder" data-ref="tema-claro">
+    <img src="screenshots/07-light-mode.png" alt="App en modo claro">
+    <span class="ts">Modo claro</span>
+  </div>
+  <div class="screenshot-placeholder" data-ref="tema-oscuro">
+    <img src="screenshots/01-welcome.png" alt="App en modo oscuro">
+    <span class="ts">Modo oscuro</span>
+  </div>
+</section>
+
+<!-- ===================== IDIOMA ===================== -->
+<section id="idioma">
+  <h2>Idioma</h2>
+  <p>La app soporta <strong>español</strong> e <strong>inglés</strong>. Para cambiar el idioma:</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>En la barra de navegación, busca el selector de idioma (<strong>ES</strong> / <strong>EN</strong>).</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Haz clic para alternar entre idiomas. La interfaz se actualiza inmediatamente.</p></div>
+  </div>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section id="faq">
+  <h2>Preguntas frecuentes</h2>
+
+  <h4>¿Puedo usar la app sin internet?</h4>
+  <p>Sí, en modo offline la app funciona completamente sin internet (después de cargarla la primera vez). Todos los datos se guardan en tu navegador.</p>
+
+  <h4>¿Qué pasa si borro los datos del navegador en modo offline?</h4>
+  <p>Se pierden los territorios. Usa "Guardar JSON" periódicamente como respaldo para evitar pérdida de datos.</p>
+
+  <h4>¿Puedo tener varios administradores?</h4>
+  <p>Sí, el administrador original puede invitar a otros usuarios con el rol de Administrador desde el panel de admin.</p>
+
+  <h4>¿Cómo agrego territorios que ya tengo en Google Earth?</h4>
+  <p>Exporta los territorios desde Google Earth como archivo KML o KMZ, luego usa la opción "Importar KML" en el menú de la app.</p>
+
+  <h4>¿Qué navegadores son compatibles?</h4>
+  <p>Chrome, Firefox, Safari y Edge en sus versiones recientes. La app funciona tanto en computadora como en dispositivos móviles.</p>
+
+  <h4>¿Puedo cambiar de modo offline a online?</h4>
+  <p>Sí, ve a Configuración y usa "Registrarse y migrar datos". Tus datos locales se subirán a la nube.</p>
+
+  <h4>¿El link público expone datos sensibles?</h4>
+  <p>No, el link público solo muestra el mapa del territorio con sus referencias. No muestra historial, asignaciones ni datos de la congregación.</p>
+
+  <h4>¿Puedo imprimir las tarjetas directamente?</h4>
+  <p>Sí, tanto desde la vista individual (botón "Imprimir") como desde la vista masiva ("Imprimir Todo"). También puedes descargar las tarjetas como imágenes PNG.</p>
+</section>
+
+</main>
+</div>
+
+<script>
+// Theme toggle
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('docs-theme', next); } catch(e) {}
+}
+(function() {
+  try {
+    const saved = localStorage.getItem('docs-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  } catch(e) {}
+})();
+
+// Active nav tracking
+(function() {
+  const links = document.querySelectorAll('.sidebar .nav-link');
+  const sections = [];
+  links.forEach(function(link) {
+    const id = link.getAttribute('href').replace('#', '');
+    const el = document.getElementById(id);
+    if (el) sections.push({ id: id, el: el, link: link });
+  });
+
+  function update() {
+    let active = sections[0];
+    for (let i = 0; i < sections.length; i++) {
+      if (sections[i].el.getBoundingClientRect().top <= 100) active = sections[i];
+    }
+    links.forEach(function(l) { l.classList.remove('active'); });
+    if (active) active.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+
+</body>
+</html>
