@@ -2,7 +2,9 @@
 
 # Tarjetas de Territorio — Gestor para Congregaciones
 
-Una aplicación web para gestionar, asignar e imprimir tarjetas de territorio de congregaciones. Funciona en dos modos: **sin conexión** (datos en localStorage) o **en línea** (Firebase, datos compartidos en tiempo real).
+Una aplicación web gratuita y de código abierto para gestionar, asignar e imprimir tarjetas de territorio para congregaciones. Funciona en dos modos: **sin conexión** (datos en tu navegador) o **en línea** (Firebase, datos compartidos en tiempo real).
+
+**[Usar la aplicación ahora](https://elvisozoria.github.io/Congregation-territory-card-manager/)** — no requiere instalación, funciona directo desde el navegador.
 
 ![Vista principal con territorios](docs/screenshots/main-territories-dark.png)
 
@@ -15,7 +17,7 @@ Mira el tutorial completo donde se explica cada función paso a paso:
 
 ## Documentación Completa
 
-La [Guía de Usuario](docs/guia-de-usuario.html) incluye instrucciones detalladas con capturas de pantalla para todas las funciones de la aplicación: crear territorios, asignar, imprimir tarjetas, gestionar roles y más.
+La [Guía de Usuario](https://elvisozoria.github.io/Congregation-territory-card-manager/docs/guia-de-usuario.html) incluye instrucciones detalladas con capturas de pantalla para todas las funciones: crear territorios, asignar, imprimir tarjetas, gestionar roles y más.
 
 ## Funcionalidades
 
@@ -32,21 +34,19 @@ La [Guía de Usuario](docs/guia-de-usuario.html) incluye instrucciones detallada
 - **Bilingue** — Interfaz en español e inglés
 - **Tema claro/oscuro** — Con persistencia en localStorage
 
-## Inicio Rápido
+## Cómo Usar
 
-### Modo Offline (sin servidor)
+### Opción 1: Usar en línea (recomendado)
 
-1. Clona o descarga este repositorio
-2. Ejecuta `npm install && npm run build` (o usa el deploy en GitHub Pages)
-3. Abre la app y selecciona **"Usar sin conexión"**
-4. Crea tu primer territorio
+Abre **[elvisozoria.github.io/Congregation-territory-card-manager](https://elvisozoria.github.io/Congregation-territory-card-manager/)** y listo. Puedes elegir modo offline (datos en tu navegador) o crear una cuenta con Google para sincronizar datos con tu congregación.
 
-### Modo Online (Firebase)
+### Opción 2: Descargar y usar en tu computadora
 
-1. Abre la app y haz clic en **"Crear cuenta"**
-2. Inicia sesión con tu cuenta de Google
-3. Registra el nombre de tu congregación
-4. Invita miembros desde el panel de administración
+1. Descarga o clona este repositorio
+2. Ejecuta `npm install && npm run build`
+3. Abre `dist/index.html` en tu navegador
+
+Puedes modificar el código como quieras y adaptarlo a las necesidades de tu congregación.
 
 ## Guardar tus Datos
 
@@ -62,3 +62,15 @@ La [Guía de Usuario](docs/guia-de-usuario.html) incluye instrucciones detallada
 - html-to-image (exportación PNG)
 - qrcode (generación de códigos QR)
 - JSZip (extracción de KMZ)
+
+## Contribuir
+
+Este es un proyecto de código abierto y todas las contribuciones son bienvenidas. Si tienes ideas para nuevas funcionalidades, encuentras un error, o quieres mejorar el código:
+
+- Abre un [issue](https://github.com/Elvisozoria/Congregation-territory-card-manager/issues) para reportar errores o solicitar funcionalidades
+- Envía un pull request con tus cambios
+- Haz un fork y adáptalo a las necesidades de tu congregación
+
+## Licencia
+
+MIT
