@@ -106,9 +106,8 @@ export function renderCardMap(cardElement, territory, globalLandmarks, options) 
     L.marker([block.lat, block.lng], { icon: bLabel, interactive: false }).addTo(map);
   });
 
-  // QR: usa opts.qrUrl (link público) si está; si no, usa territory.qr_url legacy.
   const qrContainer = cardElement.querySelector('[data-qr-url]');
-  const qrUrl = opts.qrUrl || (qrContainer && qrContainer.dataset.qrUrl) || territory.qr_url || '';
+  const qrUrl = opts.qrUrl || (qrContainer && qrContainer.dataset.qrUrl) || '';
   if (qrContainer && qrUrl) {
     QRCode.toCanvas(qrUrl, {
       width: 60,
