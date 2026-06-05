@@ -6,7 +6,7 @@ Una aplicación web gratuita y de código abierto para gestionar, asignar e impr
 
 **[Usar la aplicación ahora](https://elvisozoria.github.io/Congregation-territory-card-manager/)** — no requiere instalación, funciona directo desde el navegador.
 
-![Vista principal con territorios](docs/screenshots/main-territories-dark.png)
+![Vista principal con territorios](public/docs/screenshots/main-territories-dark.png)
 
 ## Video Tutorial
 
