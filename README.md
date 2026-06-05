@@ -1,72 +1,64 @@
-🌐 *[English](README.en.md)*
+[English](README.en.md)
 
 # Tarjetas de Territorio — Gestor para Congregaciones
 
-Una aplicación web ligera, sin instalación, para gestionar tarjetas de territorio de congregaciones. Sin servidor, sin base de datos — solo abre `index.html` en tu navegador.
+Una aplicación web para gestionar, asignar e imprimir tarjetas de territorio de congregaciones. Funciona en dos modos: **sin conexión** (datos en localStorage) o **en línea** (Firebase, datos compartidos en tiempo real).
 
-![Vista principal con territorios](docs/screenshots/02-index.png)
+![Vista principal con territorios](docs/screenshots/main-territories-dark.png)
+
+## Video Tutorial
+
+Mira el tutorial completo donde se explica cada función paso a paso:
+
+- [Ver en YouTube](https://youtu.be/vCRbdb3Vsfw)
+- [Ver en Delonix Videos](https://videos.delonix.io/recordings/wrgPabe7elLTCmFBIQbW)
+
+## Documentación Completa
+
+La [Guía de Usuario](docs/guia-de-usuario.html) incluye instrucciones detalladas con capturas de pantalla para todas las funciones de la aplicación: crear territorios, asignar, imprimir tarjetas, gestionar roles y más.
 
 ## Funcionalidades
 
-- **Gestión de territorios** — Crea, edita y elimina territorios con polígonos dibujados sobre un mapa interactivo (Leaflet).
-- **Puntos de referencia** — Haz clic en el mapa para agregar marcadores de colores a cada territorio.
-- **Tarjetas de territorio** — Vista de tarjeta imprimible con mapa estático, máscara de polígono, etiquetas de puntos y código QR opcional.
-- **Descarga PNG** — Descarga cualquier tarjeta como imagen PNG en alta resolución (2x).
-- **Imprimir todo** — Renderiza todas las tarjetas para impresión masiva.
-- **Importar KML/KMZ** — Importa polígonos de territorios desde archivos de Google Earth.
-- **Modo oscuro/claro** — Alternador de tema con persistencia en localStorage.
-- **Bilingüe** — Interfaz en español e inglés.
-- **Vista de tarjetas/tabla** — Alterna entre vista de cuadrícula y lista de tabla para los territorios.
+- **Gestión de territorios** — Crea, edita y elimina territorios con polígonos sobre un mapa interactivo (Leaflet)
+- **Puntos de referencia** — Marcadores de colores en el mapa para ubicar lugares clave
+- **Manzanas** — Etiquetas numeradas para bloques de calles dentro del territorio
+- **Asignaciones** — Asigna territorios a publicadores con historial completo de trabajo
+- **Tarjetas imprimibles** — Vista de tarjeta con mapa, polígono, referencias y QR opcional
+- **Descarga PNG** — Descarga tarjetas como imágenes de alta resolución (2x)
+- **Imprimir todo** — Renderiza todas las tarjetas para impresión masiva
+- **Compartir** — Links públicos para compartir territorios sin necesidad de cuenta
+- **Roles y permisos** — Tres niveles: Administrador, Conductor, Publicador
+- **Importar KML/KMZ** — Importa polígonos desde Google Earth
+- **Bilingue** — Interfaz en español e inglés
+- **Tema claro/oscuro** — Con persistencia en localStorage
 
-## Cómo Usar
+## Inicio Rápido
 
-1. Descarga o clona este repositorio
-2. Abre `index.html` en tu navegador
-3. ¡Listo!
+### Modo Offline (sin servidor)
 
-Sin servidor, sin Node.js, sin paso de compilación. Funciona offline y desde `file://`.
+1. Clona o descarga este repositorio
+2. Ejecuta `npm install && npm run build` (o usa el deploy en GitHub Pages)
+3. Abre la app y selecciona **"Usar sin conexión"**
+4. Crea tu primer territorio
 
-![Pantalla de bienvenida](docs/screenshots/01-welcome.png)
+### Modo Online (Firebase)
 
-## Vistas
-
-### Detalle del territorio
-Muestra el mapa con el polígono y los puntos de referencia. Haz clic en el mapa para agregar nuevos puntos.
-
-![Vista de detalle](docs/screenshots/03-show.png)
-
-### Tarjeta imprimible
-Tarjeta lista para imprimir o descargar como PNG.
-
-![Vista de tarjeta](docs/screenshots/04-card.png)
-
-### Formulario de edición
-Edita el nombre, número, grupo y dibuja el polígono del territorio.
-
-![Formulario de edición](docs/screenshots/05-edit.png)
-
-### Modo claro
-La aplicación soporta modo oscuro y claro.
-
-![Modo claro](docs/screenshots/07-light-mode.png)
+1. Abre la app y haz clic en **"Crear cuenta"**
+2. Inicia sesión con tu cuenta de Google
+3. Registra el nombre de tu congregación
+4. Invita miembros desde el panel de administración
 
 ## Guardar tus Datos
 
-- Haz clic en **Guardar JSON** para descargar tus territorios como archivo
-- Haz clic en **Cargar JSON** para restaurar desde un archivo guardado
-- **Consejo:** Guarda tu archivo JSON en Google Drive o Dropbox para respaldo automático
-
-## Importar desde Google Earth
-
-1. Exporta tus territorios como KML o KMZ desde Google Earth
-2. Haz clic en **Importar KML** y selecciona el archivo
-3. Los territorios se agregarán automáticamente
+- **Guardar JSON** — Descarga todos los territorios, puntos e historial como archivo JSON
+- **Cargar JSON** — Restaura datos desde un archivo guardado
+- **Importar KML** — Importa polígonos de Google Earth
 
 ## Stack Tecnológico
 
-- HTML, CSS y JavaScript puro (sin frameworks)
-- Leaflet.js + Leaflet.draw (mapas y dibujo de polígonos)
-- html2canvas (exportación PNG)
-- qrcodejs (generación de códigos QR)
+- Vanilla JavaScript con Vite (bundler)
+- Leaflet.js + Leaflet.draw (mapas y polígonos)
+- Firebase Auth + Firestore (modo online)
+- html-to-image (exportación PNG)
+- qrcode (generación de códigos QR)
 - JSZip (extracción de KMZ)
-- localStorage para persistencia de datos
