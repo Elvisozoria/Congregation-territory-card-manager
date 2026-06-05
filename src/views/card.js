@@ -117,10 +117,11 @@ export function render(container, params) {
   label.textContent = territory.number + ' - ' + territory.name;
   card.appendChild(label);
 
-  // QR: si hay public link, usar; si no, fallback a qr_url
+  // QR: mostrar solo si showQr está activado (o legacy qr_url existe)
   const congPubId = store.getCongregationPublicId ? store.getCongregationPublicId() : null;
   const publicUrl = (congPubId && territory.publicId) ? buildPublicTerritoryUrl(congPubId, territory.publicId) : '';
-  const qrUrlForRender = publicUrl || territory.qr_url || '';
+  const shouldShowQr = territory.showQr || territory.qr_url;
+  const qrUrlForRender = shouldShowQr ? (publicUrl || territory.qr_url || '') : '';
   if (qrUrlForRender) {
     const qrContainer = document.createElement('div');
     qrContainer.className = 'qr-container';

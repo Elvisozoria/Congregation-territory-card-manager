@@ -11,7 +11,7 @@ const SAMPLE_DATA = {
         [-70.7125691, 19.4590277], [-70.7126262, 19.4585969],
         [-70.7132229, 19.4586727], [-70.7138022, 19.4587458], [-70.7143974, 19.4588071]
       ],
-      qr_url: '',
+      showQr: false,
       landmarks: [
         { id: 1, name: 'Colmado Mireya', lat: 19.4591, lng: -70.7133, color: '#EF4444' },
         { id: 2, name: 'Panadería Don Luis', lat: 19.4593, lng: -70.7139, color: '#3B82F6' }
@@ -26,7 +26,7 @@ const SAMPLE_DATA = {
         [-70.7121617, 19.4575243], [-70.7127442, 19.4575955], [-70.7133420, 19.4576780],
         [-70.7139401, 19.4577540], [-70.7145103, 19.4578224]
       ],
-      qr_url: '',
+      showQr: false,
       landmarks: [
         { id: 1, name: 'Farmacia San Martín', lat: 19.4581, lng: -70.7128, color: '#EF4444' },
         { id: 2, name: 'Escuela Primaria', lat: 19.4580, lng: -70.7136, color: '#8B5CF6' },
@@ -42,7 +42,7 @@ const SAMPLE_DATA = {
         [-70.7125257, 19.4548932], [-70.7131270, 19.4549561], [-70.7137009, 19.4550539],
         [-70.7135876, 19.4557333], [-70.7134661, 19.4566536]
       ],
-      qr_url: '',
+      showQr: false,
       landmarks: [
         { id: 1, name: 'Mini Market El Punto', lat: 19.4560, lng: -70.7126, color: '#F59E0B' },
         { id: 2, name: 'Cancha Municipal', lat: 19.4566, lng: -70.7130, color: '#10B981' }
@@ -116,7 +116,7 @@ export function createLocalStore() {
         name: attrs.name || '',
         group_name: attrs.group_name || '',
         polygon: attrs.polygon || [],
-        qr_url: attrs.qr_url || '',
+        showQr: !!attrs.showQr,
         notes: attrs.notes || '',
         landmarks: [],
         blocks: [],
@@ -135,7 +135,7 @@ export function createLocalStore() {
       if (attrs.name !== undefined) territory.name = attrs.name;
       if (attrs.group_name !== undefined) territory.group_name = attrs.group_name;
       if (attrs.polygon !== undefined) territory.polygon = attrs.polygon;
-      if (attrs.qr_url !== undefined) territory.qr_url = attrs.qr_url;
+      if (attrs.showQr !== undefined) territory.showQr = attrs.showQr;
       if (attrs.notes !== undefined) territory.notes = attrs.notes;
       if (attrs.cardZoom !== undefined) territory.cardZoom = attrs.cardZoom;
       if (attrs.cardCenter !== undefined) territory.cardCenter = attrs.cardCenter;
@@ -319,7 +319,7 @@ export function createLocalStore() {
                 if (!Array.isArray(t.landmarks)) t.landmarks = [];
                 if (t.number === undefined) t.number = '';
                 if (t.name === undefined) t.name = '';
-                if (t.qr_url === undefined) t.qr_url = '';
+                if (t.showQr === undefined) t.showQr = !!t.qr_url;
                 if (t.notes === undefined) t.notes = '';
                 if (!Array.isArray(t.blocks)) t.blocks = [];
               });
@@ -362,7 +362,7 @@ export function createLocalStore() {
             existing.polygon = t.polygon;
           } else {
             t.id = nextId(data.territories);
-            t.qr_url = '';
+            t.showQr = false;
             t.notes = '';
             t.landmarks = [];
             t.blocks = [];

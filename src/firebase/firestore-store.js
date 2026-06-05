@@ -114,7 +114,7 @@ export async function createFirestoreStore(user, congregationId) {
     if (attrs.name !== undefined) obj.name = attrs.name;
     if (attrs.group_name !== undefined) obj.group_name = attrs.group_name;
     if (attrs.polygon !== undefined) obj.polygon = polygonToFirestore(attrs.polygon);
-    if (attrs.qr_url !== undefined) obj.qr_url = attrs.qr_url;
+    if (attrs.showQr !== undefined) obj.showQr = attrs.showQr;
     if (attrs.notes !== undefined) obj.notes = attrs.notes;
     if (attrs.landmarks !== undefined) obj.landmarks = attrs.landmarks;
     if (attrs.blocks !== undefined) obj.blocks = attrs.blocks;
@@ -150,7 +150,7 @@ export async function createFirestoreStore(user, congregationId) {
         name: attrs.name || '',
         group_name: attrs.group_name || '',
         polygon: polygonToFirestore(attrs.polygon || []),
-        qr_url: attrs.qr_url || '',
+        showQr: !!attrs.showQr,
         notes: attrs.notes || '',
         landmarks: attrs.landmarks || [],
         blocks: attrs.blocks || [],
@@ -399,7 +399,7 @@ export async function createFirestoreStore(user, congregationId) {
             name: t.name,
             group_name: t.group_name,
             polygon: t.polygon,
-            qr_url: '',
+            showQr: false,
             notes: '',
             landmarks: [],
             blocks: []
