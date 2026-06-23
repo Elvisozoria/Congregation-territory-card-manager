@@ -11,8 +11,17 @@ export function renderCardMap(cardElement, territory, globalLandmarks, options) 
   const mapDiv = cardElement.querySelector('.card-map') || cardElement;
   const editable = !!opts.editable;
 
+  // Pasos de zoom más finos al ajustar la vista para impresión.
+  // Antes cada paso era 1 nivel completo de Leaflet (saltos bruscos);
+  // ahora cada paso es 1/3 de nivel para un encuadre más preciso.
+  // Se aplica también en modo no editable para que el zoom fraccionado
+  // guardado (cardZoom) se respete al renderizar la tarjeta impresa.
+  const ZOOM_STEP = 1 / 3;
+
   const map = L.map(mapDiv, {
     zoomControl: editable,
+    zoomSnap: ZOOM_STEP,
+    zoomDelta: ZOOM_STEP,
     attributionControl: false,
     dragging: editable,
     scrollWheelZoom: editable,
