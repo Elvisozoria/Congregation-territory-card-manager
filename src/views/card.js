@@ -1,4 +1,5 @@
 import { toPng } from 'html-to-image';
+import QRCode from 'qrcode';
 import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
 import { renderCardMap } from '../components/card-map.js';
@@ -122,11 +123,19 @@ export function render(container, params) {
   const publicUrl = (congPubId && territory.publicId) ? buildPublicTerritoryUrl(congPubId, territory.publicId) : '';
   const shouldShowQr = territory.showQr || territory.qr_url;
   const qrUrlForRender = shouldShowQr ? (publicUrl || territory.qr_url || '') : '';
-  if (qrUrlForRender) {
-    const qrContainer = document.createElement('div');
+
+  // Auto-heal: territorios antiguos/importados pueden tener showQr activado pero
+  // sin publicId, así que la URL pública queda vacía y el QR no se dibuja. En ese
+  // caso generamos el publicId on-the-fly y pintamos el QR cuando esté listo.
+  const needsQrHeal = shouldShowQr && !qrUrlForRender && !!congPubId &&
+    !territory.publicId && typeof store.ensureTerritoryPublicId === 'function';
+
+  let qrContainer = null;
+  if (qrUrlForRender || needsQrHeal) {
+    qrContainer = document.createElement('div');
     qrContainer.className = 'qr-container';
     qrContainer.style.cssText = 'position:absolute;bottom:8px;right:8px;z-index:1000;background:white;padding:4px;';
-    qrContainer.setAttribute('data-qr-url', qrUrlForRender);
+    if (qrUrlForRender) qrContainer.setAttribute('data-qr-url', qrUrlForRender);
     card.appendChild(qrContainer);
   }
 
@@ -144,6 +153,33 @@ export function render(container, params) {
     qrUrl: qrUrlForRender,
     onViewChange: function (v) { pendingView = v; }
   });
+
+  if (needsQrHeal) {
+    store.ensureTerritoryPublicId(territory.id).then(function (pubId) {
+      if (!pubId || !qrContainer) return;
+      territory.publicId = pubId;
+      const healedUrl = buildPublicTerritoryUrl(congPubId, pubId);
+      if (!healedUrl) return;
+      qrContainer.setAttribute('data-qr-url', healedUrl);
+      renderQrInto(qrContainer, healedUrl);
+    }).catch(function (e) {
+      console.error('QR auto-heal failed:', e);
+    });
+  }
+
+  function renderQrInto(containerEl, url) {
+    QRCode.toCanvas(url, {
+      width: 60,
+      margin: 0,
+      color: { dark: '#000000', light: '#ffffff' }
+    }).then(function (canvas) {
+      canvas.style.display = 'block';
+      containerEl.innerHTML = '';
+      containerEl.appendChild(canvas);
+    }).catch(function (err) {
+      console.error('QR generation failed:', err);
+    });
+  }
 
   function toggleEditMode() {
     editMode = !editMode;
