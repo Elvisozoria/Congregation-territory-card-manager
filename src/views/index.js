@@ -7,6 +7,7 @@ import {
   canCreateTerritory,
   canDeleteTerritory,
   canEditTerritory,
+  canViewFullHistory,
   ROLES
 } from '../auth/permissions.js';
 
@@ -20,12 +21,44 @@ function setViewPref(view) {
   try { localStorage.setItem(VIEW_KEY, view); } catch (e) { /* ignore */ }
 }
 
+// Cuantas asignaciones recientes se muestran bajo cada territorio (formulario S-13)
+const RECENT_ASSIGNMENTS = 4;
+
+// Tira compacta con las ultimas asignaciones: quien, cuando se asigno, cuando se completo.
+// Da la frecuencia de trabajo del territorio de un vistazo, sin entrar al detalle.
+function buildHistoryStrip(store, territoryId, fullHistory, uid) {
+  const strip = document.createElement('div');
+  strip.className = 'territory-grid-card-history';
+
+  let entries = store.getHistoryForTerritory ? store.getHistoryForTerritory(territoryId) : [];
+  if (!fullHistory) {
+    entries = entries.filter(function (e) { return e.assignedToUid === uid; });
+  }
+
+  if (entries.length === 0) {
+    strip.innerHTML = '<span class="history-strip-empty">' + escapeHtml(t('index.noAssignments')) + '</span>';
+    return strip;
+  }
+
+  strip.innerHTML = entries.slice(0, RECENT_ASSIGNMENTS).map(function (e) {
+    const end = e.endDate || t('show.historyInProgress');
+    return '<span class="history-strip-row">' +
+      '<span class="history-strip-person">' + escapeHtml(e.person || '—') + '</span>' +
+      '<span class="history-strip-dates">' + escapeHtml(e.startDate || '?') + ' &rarr; ' + escapeHtml(end) + '</span>' +
+    '</span>';
+  }).join('');
+
+  return strip;
+}
+
 export let isDirty = false;
 
 export function render(container) {
   const store = getStore();
   const profile = getUserProfile();
   const isPublisher = profile && profile.role === ROLES.PUBLISHER;
+  const fullHistory = canViewFullHistory(profile);
+  const uid = profile ? profile.uid : null;
 
   let territories = store.getAll().slice().sort(function (a, b) {
     return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
@@ -205,6 +238,7 @@ export function render(container) {
       }
 
       card.appendChild(meta);
+      card.appendChild(buildHistoryStrip(store, territory.id, fullHistory, uid));
 
       const actions = document.createElement('div');
       actions.className = 'territory-grid-card-actions';

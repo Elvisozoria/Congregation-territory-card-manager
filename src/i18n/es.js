@@ -6,6 +6,7 @@ export default {
   nav: {
     brand: 'Tarjetas de Territorio',
     printAll: 'Imprimir',
+    s13: 'S-13',
     loadJson: 'Cargar JSON',
     saveJson: 'Guardar JSON',
     importKml: 'Importar KML',
@@ -32,7 +33,24 @@ export default {
     colLandmarks: 'Puntos',
     btnCard: 'Tarjeta',
     btnEdit: 'Editar',
-    btnDelete: 'Eliminar'
+    btnDelete: 'Eliminar',
+    noAssignments: 'Sin asignaciones registradas'
+  },
+
+  // S-13 form view
+  s13: {
+    title: 'Registro de asignación de territorio (S-13)',
+    subtitle: 'Últimas 4 asignaciones de cada territorio. Sirve para ver la frecuencia con la que se trabaja cada uno.',
+    formTitle: 'REGISTRO DE ASIGNACIÓN DE TERRITORIO',
+    serviceYear: 'Año de servicio',
+    print: 'Imprimir S-13',
+    colNumber: 'Núm. de terr.',
+    colLastCompleted: 'Última fecha en que se completó',
+    colAssignedTo: 'Asignado a',
+    colPerson: 'Nombre',
+    colStart: 'Fecha en que se asignó',
+    colEnd: 'Fecha en que se completó',
+    footnote: '*Cuando comience una nueva página, anote en esta columna la última fecha en que los territorios se completaron.'
   },
 
   // Show view

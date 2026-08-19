@@ -6,6 +6,7 @@ import * as ShowView from './views/show.js';
 import * as FormView from './views/form.js';
 import * as CardView from './views/card.js';
 import * as PrintView from './views/print.js';
+import * as S13View from './views/s13.js';
 import * as WelcomeView from './views/welcome.js';
 import * as LoginView from './views/login.js';
 import * as RegisterView from './views/register.js';
@@ -20,6 +21,7 @@ const views = {
   Form: FormView,
   Card: CardView,
   Print: PrintView,
+  S13: S13View,
   Welcome: WelcomeView,
   Login: LoginView,
   Register: RegisterView,
@@ -45,6 +47,7 @@ const routes = [
   { pattern: /^#\/territories\/([^/]+)\/card$/, view: 'Card', params: function (m) { return { id: parseId(m[1]) }; } },
   { pattern: /^#\/territories\/([^/]+)$/, view: 'Show', params: function (m) { return { id: parseId(m[1]) }; } },
   { pattern: /^#\/print$/, view: 'Print', params: function () { return {}; }, allowedRoles: ['admin', 'conductor'] },
+  { pattern: /^#\/s13$/, view: 'S13', params: function () { return {}; }, allowedRoles: ['admin', 'conductor'] },
   { pattern: /^#?\/?$/, view: 'Index', params: function () { return {}; } }
 ];
 

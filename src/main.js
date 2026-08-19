@@ -17,10 +17,12 @@ document.addEventListener('DOMContentLoaded', function () {
   // Ocultar elementos del navbar irrelevantes en vista pública
   if (isPublicRoute) {
     const navPrintEl = document.getElementById('nav-print');
+    const navS13El = document.getElementById('nav-s13');
     const moreMenuEl = document.getElementById('more-menu-wrapper');
     const fileInputEl = document.getElementById('file-input');
     const kmlInputEl = document.getElementById('kml-input');
     if (navPrintEl) navPrintEl.style.display = 'none';
+    if (navS13El) navS13El.style.display = 'none';
     if (moreMenuEl) moreMenuEl.style.display = 'none';
     if (fileInputEl) fileInputEl.style.display = 'none';
     if (kmlInputEl) kmlInputEl.style.display = 'none';
@@ -169,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateNavbarText() {
     document.getElementById('nav-brand').textContent = t('nav.brand');
     document.getElementById('nav-print').textContent = t('nav.printAll');
+    document.getElementById('nav-s13').textContent = t('nav.s13');
     if (_buildMoreMenu) _buildMoreMenu();
     if (mode === 'online') buildUserMenu();
   }
