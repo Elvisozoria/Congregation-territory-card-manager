@@ -4,6 +4,21 @@
  */
 
 /**
+ * Oculta una dirección de correo para poder loguearla.
+ * El repo es público, así que los logs de Actions también lo son: una dirección
+ * completa en el log queda expuesta a cualquiera. Se deja lo justo para
+ * reconocer de quién se trata al depurar.
+ */
+export function redactEmail(email) {
+  if (!email || typeof email !== 'string') return '(sin correo)';
+  const at = email.lastIndexOf('@');
+  if (at < 1) return '(correo inválido)';
+  const user = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  return user.slice(0, 1) + '***@' + domain;
+}
+
+/**
  * Decide si corresponde enviar. Corta si ya se notificó este evento (el cron
  * puede reprocesar la misma entrada) o si se agotó el cupo del día.
  * Es la que protege la factura de AWS, por eso vive aparte y con test.

@@ -41,6 +41,20 @@ Lo único que sigue viajando en el bundle es la config pública de Firebase
 (`apiKey` y compañía), que es un identificador, no un secreto: quien protege los
 datos son las `firestore.rules`.
 
+### Los logs de Actions son públicos
+
+Los *secrets* no se ven — GitHub los guarda cifrados y los enmascara en los
+logs — pero en un repo público **el log de cada corrida sí lo puede leer
+cualquiera**. Por eso este script nunca escribe en el log:
+
+- direcciones de correo completas: se ofuscan (`j***@gmail.com`);
+- el cuerpo de los mensajes, que lleva nombres de publicadores y notas;
+- el error crudo de `JSON.parse` sobre el service account, que incluiría un
+  pedazo de la clave privada.
+
+Al tocar el script, mantener esa regla: al log van ids de documento y conteos,
+no datos de personas.
+
 ## Configuración
 
 Secrets del repositorio (Settings → Secrets and variables → Actions):
@@ -68,8 +82,9 @@ Variables (mismo panel, pestaña *Variables*), todas opcionales:
 
 ## Probarlo sin mandar nada
 
-Desde la pestaña Actions, *Run workflow* con **dry run** marcado: imprime los
-correos en el log en vez de enviarlos. Local:
+Desde la pestaña Actions, *Run workflow* con **dry run** marcado: en vez de
+enviar, escribe destinatario ofuscado y asunto. Para ver el texto completo hay
+que correrlo local, donde el log es tuyo:
 
 ```bash
 cd scripts

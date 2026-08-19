@@ -4,7 +4,8 @@ import {
   decideSend,
   buildEmail,
   buildCompletionEmail,
-  pendingNotification
+  pendingNotification,
+  redactEmail
 } from '../mail.mjs';
 
 const base = { historyExists: true, notifiedAt: null, sent: 0, limit: 100 };
@@ -123,4 +124,19 @@ test('una entrada ya avisada del cierre no vuelve a avisar', () => {
     status: 'completed', assignedToUid: 'u1', createdBy: 'admin1',
     completionNotifiedAt: new Date()
   }), null);
+});
+
+test('los correos se ofuscan antes de tocar el log público de Actions', () => {
+  assert.equal(redactEmail('juan.perez@gmail.com'), 'j***@gmail.com');
+  assert.equal(redactEmail('a@b.com'), 'a***@b.com');
+  // Nunca debe quedar la parte local completa.
+  assert.doesNotMatch(redactEmail('juan.perez@gmail.com'), /juan/);
+});
+
+test('ofuscar aguanta basura sin reventar el cron', () => {
+  assert.equal(redactEmail(''), '(sin correo)');
+  assert.equal(redactEmail(null), '(sin correo)');
+  assert.equal(redactEmail(undefined), '(sin correo)');
+  assert.equal(redactEmail('sinarroba'), '(correo inválido)');
+  assert.equal(redactEmail('@nolocal.com'), '(correo inválido)');
 });

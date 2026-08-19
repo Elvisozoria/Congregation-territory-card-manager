@@ -13,7 +13,13 @@ import { readFileSync } from 'node:fs';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
-import { decideSend, pendingNotification, buildEmail, buildCompletionEmail } from './mail.mjs';
+import {
+  decideSend,
+  pendingNotification,
+  buildEmail,
+  buildCompletionEmail,
+  redactEmail
+} from './mail.mjs';
 
 const MAIL_FROM = process.env.MAIL_FROM || 'territorios@delonix.io';
 const APP_URL = process.env.APP_URL || '';
@@ -29,7 +35,14 @@ function serviceAccount() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) throw new Error('Falta FIREBASE_SERVICE_ACCOUNT');
   // Acepta el JSON directo o una ruta a archivo, para poder correrlo local.
-  return JSON.parse(raw.trim().startsWith('{') ? raw : readFileSync(raw, 'utf8'));
+  const json = raw.trim().startsWith('{') ? raw : readFileSync(raw, 'utf8');
+  try {
+    return JSON.parse(json);
+  } catch (e) {
+    // El error de JSON.parse incluye un fragmento de la entrada, y este log es
+    // público: se traga el detalle para no filtrar la clave privada.
+    throw new Error('FIREBASE_SERVICE_ACCOUNT no es JSON válido');
+  }
 }
 
 initializeApp({ credential: cert(serviceAccount()) });
@@ -81,7 +94,8 @@ async function loadTerritory(congRef, territoryId) {
 
 async function send(to, mail) {
   if (DRY_RUN) {
-    console.log(`[dry-run] Para: ${to}\nAsunto: ${mail.subject}\n${mail.text}\n`);
+    // Sin el cuerpo: lleva nombres y notas, y este log es público.
+    console.log(`[dry-run] → ${redactEmail(to)} · ${mail.subject}`);
     return;
   }
   await ses.send(new SendEmailCommand({
@@ -134,7 +148,7 @@ async function handle(congRef, doc) {
 
   try {
     await send(email, mail);
-    console.log(`Enviado (${plan.kind}) ${doc.id} → ${email}`);
+    console.log(`Enviado (${plan.kind}) ${doc.id} → ${redactEmail(email)}`);
     return 'sent';
   } catch (err) {
     console.error(`SES rechazó ${doc.id}: ${err.message}`);
