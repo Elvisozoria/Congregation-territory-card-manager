@@ -103,12 +103,15 @@ service cloud.firestore {
         allow create: if isAdminOf(congId);
 
         // Actualizar: admin cualquier cosa; conductor/publisher solo su propia entrada
-        // y solo pueden cambiar status/endDate/notes (no person, no tipo, no asignación)
+        // y solo pueden cambiar status/endDate/notes (no person, no tipo, no asignación).
+        // notifyPending va en la lista porque cerrar una asignación levanta la
+        // bandera que recoge el notificador; los sellos notifiedAt /
+        // completionNotifiedAt no, esos solo los escribe el service account.
         allow update: if isAdminOf(congId)
           || (isMemberOf(congId)
               && resource.data.assignedToUid == request.auth.uid
               && request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly(['status', 'endDate', 'notes']));
+                  .hasOnly(['status', 'endDate', 'notes', 'notifyPending']));
 
         // Borrar: solo admin
         allow delete: if isAdminOf(congId);
