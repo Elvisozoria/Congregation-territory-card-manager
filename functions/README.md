@@ -1,8 +1,13 @@
 # Notificaciones por correo
 
-Una sola función: `notifyOnAssignment`. Se dispara cuando se crea un documento en
-`congregations/{congId}/history/{histId}` y le manda un correo al publicador
-asignado, vía Amazon SES.
+Dos funciones sobre `congregations/{congId}/history/{histId}`, ambas por SES:
+
+| Función | Cuándo | A quién |
+|---|---|---|
+| `notifyOnAssignment` | se crea una asignación activa | al publicador asignado (`assignedToUid`) |
+| `notifyOnCompletion` | el estado pasa de `active` a `completed` o `returned` | al admin que la asignó (`createdBy`) |
+
+Si el admin completó su propia asignación no se manda nada: ya lo sabe.
 
 ## Por qué una Cloud Function y no el cliente
 
@@ -59,8 +64,10 @@ El control real está en la función, no en AWS: antes de cada envío incrementa
 `MAIL_DAILY_LIMIT`. Si algo entra en bucle, se detiene **antes** de llamar a SES,
 así que no hay forma de que dispare la factura.
 
-Esa misma transacción marca `notifiedAt` en la entrada de historial, así que un
-reintento del trigger (son at-least-once) no manda el correo dos veces.
+Esa misma transacción sella la entrada de historial, así que un reintento del
+trigger (son at-least-once) no manda el correo dos veces. Cada evento usa su
+propio campo — `notifiedAt` al asignar, `completionNotifiedAt` al cerrar — así
+que asignar y completar se notifican por separado sobre el mismo documento.
 
 Para subir o bajar el tope no hace falta tocar código: cambia
 `MAIL_DAILY_LIMIT` y vuelve a desplegar.
@@ -70,7 +77,7 @@ de SES con alarma de CloudWatch sobre la métrica `Send`.
 
 ## Qué NO hace
 
-- No notifica al completar ni al devolver un territorio, sólo al asignar.
+- No avisa a todos los admins al completar, sólo al que asignó.
 - No reintenta si SES rechaza el envío: la reserva del cupo ya se consumió.
   Es a propósito — un correo perdido cuesta menos que un bucle de reintentos.
   El fallo queda en los logs (`firebase functions:log`).

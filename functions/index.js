@@ -1,12 +1,14 @@
 /**
- * Notificación por correo al asignar un territorio.
+ * Notificaciones por correo del ciclo de un territorio:
+ *   - al asignarlo    → se avisa al publicador asignado
+ *   - al completarlo o devolverlo → se avisa al admin que lo asignó
  *
  * Corre en Cloud Functions, no en el cliente: la app publicada en GitHub Pages
- * nunca ve las direcciones de correo ni las credenciales de SES. El disparador
- * es la creación del documento de historial, así que no hay endpoint que un
- * usuario pueda llamar para mandar correos.
+ * nunca ve las direcciones de correo ni las credenciales de SES. Los disparadores
+ * son escrituras en Firestore, así que no hay endpoint que un usuario pueda
+ * llamar para mandar correos.
  */
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { defineInt, defineSecret, defineString } from 'firebase-functions/params';
 import { logger } from 'firebase-functions';
 import { initializeApp } from 'firebase-admin/app';
@@ -21,6 +23,13 @@ const DAILY_LIMIT = defineInt('MAIL_DAILY_LIMIT', { default: 100 });
 const AWS_KEY = defineSecret('AWS_SES_ACCESS_KEY_ID');
 const AWS_SECRET = defineSecret('AWS_SES_SECRET_ACCESS_KEY');
 
+const TRIGGER = {
+  document: 'congregations/{congId}/history/{histId}',
+  region: 'us-east1',
+  secrets: [AWS_KEY, AWS_SECRET],
+  retry: false
+};
+
 initializeApp();
 const db = getFirestore();
 
@@ -29,7 +38,7 @@ function today() {
 }
 
 /**
- * Decide si corresponde enviar. Corta si ya se notificó esta asignación (los
+ * Decide si corresponde enviar. Corta si ya se notificó este evento (los
  * triggers de Firestore son at-least-once) o si se agotó el cupo del día.
  * Pura a propósito: es la que protege la factura de AWS, y así se puede probar.
  */
@@ -42,14 +51,15 @@ export function decideSend({ historyExists, notifiedAt, sent, limit }) {
 
 /**
  * Aplica la decisión en una transacción, para que dos ejecuciones simultáneas
- * no se pasen del cupo.
+ * no se pasen del cupo. `marker` es el campo que sella este evento concreto:
+ * asignar y completar se notifican por separado sobre el mismo documento.
  *
  * ponytail: la reserva se consume aunque SES falle después, así que un envío
  * fallido no se reintenta. Es deliberado — un correo perdido cuesta menos que
  * un bucle de reintentos contra una cuenta de AWS. Si hace falta reintentar,
- * marcar notifiedAt sólo tras el envío y aceptar el riesgo de duplicados.
+ * marcar el campo sólo tras el envío y aceptar el riesgo de duplicados.
  */
-async function reserveSend(historyRef, limit) {
+async function reserveSend(historyRef, limit, marker) {
   const quotaRef = db.collection('mailQuota').doc(today());
 
   return db.runTransaction(async (tx) => {
@@ -57,20 +67,32 @@ async function reserveSend(historyRef, limit) {
 
     const decision = decideSend({
       historyExists: history.exists,
-      notifiedAt: history.exists ? history.get('notifiedAt') : null,
+      notifiedAt: history.exists ? history.get(marker) : null,
       sent: quota.exists ? quota.get('sent') || 0 : 0,
       limit
     });
     if (!decision.ok) return decision;
 
     tx.set(quotaRef, { sent: decision.sent, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-    tx.update(historyRef, { notifiedAt: FieldValue.serverTimestamp() });
+    tx.update(historyRef, { [marker]: FieldValue.serverTimestamp() });
     return decision;
   });
 }
 
+function territoryLabel(territory) {
+  return [territory.number, territory.name].filter(Boolean).join(' — ');
+}
+
+function compose(lines, link) {
+  const body = link ? lines.concat(['', `Verlo en la app: ${link}`]) : lines;
+  const text = body.concat(['', 'Tarjetas de Territorio']).join('\n');
+  const html = `<p>${lines.join('<br>')}</p>` +
+    (link ? `<p><a href="${link}">Ver el territorio</a></p>` : '');
+  return { text, html };
+}
+
 export function buildEmail(person, territory, entry, appUrl) {
-  const label = [territory.number, territory.name].filter(Boolean).join(' — ');
+  const label = territoryLabel(territory);
   const link = appUrl ? `${appUrl}#/territories/${territory.id}` : '';
 
   const lines = [
@@ -80,94 +102,147 @@ export function buildEmail(person, territory, entry, appUrl) {
     `Fecha de asignación: ${entry.startDate || 'hoy'}.`
   ];
   if (entry.notes) lines.push(`Nota: ${entry.notes}`);
-  if (link) lines.push('', `Verlo en la app: ${link}`);
-  lines.push('', 'Tarjetas de Territorio');
 
-  const text = lines.join('\n');
-  const html = `<p>${lines.slice(0, -2).join('<br>')}</p>` +
-    (link ? `<p><a href="${link}">Ver el territorio</a></p>` : '');
-
-  return { subject: `Territorio asignado: ${label}`, text, html };
+  return { subject: `Territorio asignado: ${label}`, ...compose(lines, link) };
 }
 
-export const notifyOnAssignment = onDocumentCreated(
-  {
-    document: 'congregations/{congId}/history/{histId}',
-    region: 'us-east1',
-    secrets: [AWS_KEY, AWS_SECRET],
-    retry: false
-  },
-  async (event) => {
-    const snap = event.data;
-    if (!snap) return;
+export function buildCompletionEmail(recipient, territory, entry, appUrl) {
+  const label = territoryLabel(territory);
+  const link = appUrl ? `${appUrl}#/territories/${territory.id}` : '';
+  const returned = entry.status === 'returned';
+  const verb = returned ? 'devolvió' : 'completó';
 
-    const entry = snap.data();
+  const lines = [
+    `Hola ${recipient},`,
+    '',
+    `${entry.person || 'El publicador'} ${verb} el territorio ${label}.`,
+    `Fecha de asignación: ${entry.startDate || '—'}.`,
+    `Fecha en que se ${verb}: ${entry.endDate || 'sin registrar'}.`
+  ];
+  if (entry.notes) lines.push(`Nota: ${entry.notes}`);
 
-    // Sólo asignaciones activas a un usuario con cuenta.
-    if ((entry.type || 'assignment') !== 'assignment') return;
-    if ((entry.status || 'active') !== 'active') return;
-    if (!entry.assignedToUid) {
-      logger.info('Asignación sin usuario vinculado, no se notifica', { histId: event.params.histId });
-      return;
-    }
+  return {
+    subject: `Territorio ${returned ? 'devuelto' : 'completado'}: ${label}`,
+    ...compose(lines, link)
+  };
+}
 
-    const from = MAIL_FROM.value();
-    if (!from) {
-      logger.error('MAIL_FROM sin configurar; no se envía nada');
-      return;
-    }
+async function loadTerritory(congId, territoryId) {
+  const snap = await db.doc(`congregations/${congId}/territories/${territoryId}`).get();
+  return {
+    id: territoryId,
+    number: snap.exists ? snap.get('number') : territoryId,
+    name: snap.exists ? snap.get('name') : ''
+  };
+}
 
-    const user = await db.collection('users').doc(entry.assignedToUid).get();
-    const email = user.exists ? user.get('email') : null;
-    if (!email) {
-      logger.info('Usuario sin correo, no se notifica', { uid: entry.assignedToUid });
-      return;
-    }
+async function sendMail(to, mail) {
+  const ses = new SESv2Client({
+    region: AWS_REGION.value(),
+    credentials: { accessKeyId: AWS_KEY.value(), secretAccessKey: AWS_SECRET.value() }
+  });
 
-    const territorySnap = await db
-      .doc(`congregations/${event.params.congId}/territories/${entry.territoryId}`)
-      .get();
-    const territory = {
-      id: entry.territoryId,
-      number: territorySnap.exists ? territorySnap.get('number') : entry.territoryId,
-      name: territorySnap.exists ? territorySnap.get('name') : ''
-    };
-
-    const reservation = await reserveSend(snap.ref, DAILY_LIMIT.value());
-    if (!reservation.ok) {
-      logger.warn('Envío omitido', { reason: reservation.reason, histId: event.params.histId });
-      return;
-    }
-
-    const { subject, text, html } = buildEmail(
-      user.get('displayName') || entry.person || 'hermano',
-      territory,
-      entry,
-      APP_URL.value()
-    );
-
-    const ses = new SESv2Client({
-      region: AWS_REGION.value(),
-      credentials: { accessKeyId: AWS_KEY.value(), secretAccessKey: AWS_SECRET.value() }
-    });
-
-    try {
-      await ses.send(new SendEmailCommand({
-        FromEmailAddress: from,
-        Destination: { ToAddresses: [email] },
-        Content: {
-          Simple: {
-            Subject: { Data: subject, Charset: 'UTF-8' },
-            Body: {
-              Text: { Data: text, Charset: 'UTF-8' },
-              Html: { Data: html, Charset: 'UTF-8' }
-            }
-          }
+  await ses.send(new SendEmailCommand({
+    FromEmailAddress: MAIL_FROM.value(),
+    Destination: { ToAddresses: [to] },
+    Content: {
+      Simple: {
+        Subject: { Data: mail.subject, Charset: 'UTF-8' },
+        Body: {
+          Text: { Data: mail.text, Charset: 'UTF-8' },
+          Html: { Data: mail.html, Charset: 'UTF-8' }
         }
-      }));
-      logger.info('Notificación enviada', { histId: event.params.histId, sentToday: reservation.sent });
-    } catch (err) {
-      logger.error('SES rechazó el envío', { histId: event.params.histId, error: err.message });
+      }
     }
+  }));
+}
+
+/**
+ * Tronco común: valida config, resuelve destinatario, reserva cupo y envía.
+ * `plan` trae { uid, ref, marker, build } — a quién, sobre qué documento, con
+ * qué sello, y qué texto.
+ */
+async function notify(event, entry, plan) {
+  const { histId, congId } = event.params;
+
+  if (!MAIL_FROM.value()) {
+    logger.error('MAIL_FROM sin configurar; no se envía nada');
+    return;
   }
-);
+  if (!plan.uid) {
+    logger.info('Sin usuario a quien notificar', { histId, marker: plan.marker });
+    return;
+  }
+
+  const user = await db.collection('users').doc(plan.uid).get();
+  const email = user.exists ? user.get('email') : null;
+  if (!email) {
+    logger.info('Usuario sin correo, no se notifica', { uid: plan.uid });
+    return;
+  }
+
+  const territory = await loadTerritory(congId, entry.territoryId);
+
+  const reservation = await reserveSend(plan.ref, DAILY_LIMIT.value(), plan.marker);
+  if (!reservation.ok) {
+    logger.warn('Envío omitido', { reason: reservation.reason, histId, marker: plan.marker });
+    return;
+  }
+
+  const mail = plan.build(user.get('displayName'), territory);
+
+  try {
+    await sendMail(email, mail);
+    logger.info('Notificación enviada', { histId, marker: plan.marker, sentToday: reservation.sent });
+  } catch (err) {
+    logger.error('SES rechazó el envío', { histId, marker: plan.marker, error: err.message });
+  }
+}
+
+export const notifyOnAssignment = onDocumentCreated(TRIGGER, async (event) => {
+  if (!event.data) return;
+  const entry = event.data.data();
+
+  // Sólo asignaciones activas a un usuario con cuenta.
+  if ((entry.type || 'assignment') !== 'assignment') return;
+  if ((entry.status || 'active') !== 'active') return;
+
+  await notify(event, entry, {
+    uid: entry.assignedToUid,
+    ref: event.data.ref,
+    marker: 'notifiedAt',
+    build: (name, territory) =>
+      buildEmail(name || entry.person || 'hermano', territory, entry, APP_URL.value())
+  });
+});
+
+/**
+ * Al completar o devolver se avisa al admin que asignó el territorio
+ * (`createdBy`), que es quien lleva el registro. Si el admin se completó su
+ * propia asignación no se manda nada: ya lo sabe.
+ */
+export const notifyOnCompletion = onDocumentUpdated(TRIGGER, async (event) => {
+  if (!event.data) return;
+
+  const before = event.data.before.data();
+  const entry = event.data.after.data();
+
+  if ((entry.type || 'assignment') !== 'assignment') return;
+
+  const wasActive = (before.status || 'active') === 'active';
+  const isClosed = entry.status === 'completed' || entry.status === 'returned';
+  if (!wasActive || !isClosed) return;
+
+  if (entry.createdBy && entry.createdBy === entry.assignedToUid) {
+    logger.info('Quien asignó es quien completó; no se notifica', { histId: event.params.histId });
+    return;
+  }
+
+  await notify(event, entry, {
+    uid: entry.createdBy,
+    ref: event.data.after.ref,
+    marker: 'completionNotifiedAt',
+    build: (name, territory) =>
+      buildCompletionEmail(name || 'hermano', territory, entry, APP_URL.value())
+  });
+});

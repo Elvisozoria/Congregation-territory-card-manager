@@ -8,27 +8,53 @@ export let isDirty = false;
 // Columnas de asignación del formulario S-13 impreso.
 const SLOTS = 4;
 
-// Año de servicio: 1 de septiembre – 31 de agosto.
+// Año de servicio: 1 de septiembre – 31 de agosto. El año de servicio 2026
+// arranca el 2025-09-01 y termina el 2026-08-31.
 export function serviceYear(date) {
   const y = date.getFullYear();
   return date.getMonth() >= 8 ? y + 1 : y;
 }
 
-// Convierte el historial de un territorio en una fila del S-13.
-// `history` viene en orden descendente por startDate (como lo devuelve el store).
-export function buildS13Row(history, slots) {
+// Igual, pero sobre una fecha ISO ('YYYY-MM-DD') como las que guarda el store.
+export function serviceYearOf(isoDate) {
+  if (!isoDate) return null;
+  const parts = String(isoDate).split('-');
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (!y || !m) return null;
+  return m >= 9 ? y + 1 : y;
+}
+
+// Primer día del año de servicio, para separar lo anterior de lo de este año.
+function serviceYearStart(year) {
+  return (year - 1) + '-09-01';
+}
+
+/**
+ * Convierte el historial de un territorio en una fila del S-13.
+ * `history` viene en orden descendente por startDate (como lo devuelve el store).
+ * Si se pasa `year`, sólo entran las asignaciones de ese año de servicio.
+ */
+export function buildS13Row(history, slots, year) {
   const assignments = history.filter(function (e) {
     return (e.type || 'assignment') === 'assignment';
   });
 
+  const shown = year
+    ? assignments.filter(function (e) { return serviceYearOf(e.startDate) === year; })
+    : assignments;
+
+  // Con un año elegido, esta columna es el acarreo del formulario: la última vez
+  // que se completó ANTES de que empezara ese año. Sin filtro, la última de todas.
+  const cutoff = year ? serviceYearStart(year) : null;
   const lastCompleted = assignments
-    .filter(function (e) { return e.endDate; })
+    .filter(function (e) { return e.endDate && (!cutoff || e.endDate < cutoff); })
     .map(function (e) { return e.endDate; })
     .sort()
     .pop() || '';
 
   // Las últimas `slots` asignaciones, en orden cronológico como en el formulario impreso.
-  const recent = assignments.slice(0, slots).reverse();
+  const recent = shown.slice(0, slots).reverse();
   const cells = [];
   for (let i = 0; i < slots; i++) {
     const e = recent[i];
@@ -40,6 +66,16 @@ export function buildS13Row(history, slots) {
   }
 
   return { lastCompleted: lastCompleted, cells: cells };
+}
+
+// Años de servicio presentes en los datos, del más reciente al más viejo.
+export function availableServiceYears(allHistory) {
+  const years = new Set();
+  allHistory.forEach(function (e) {
+    const y = serviceYearOf(e.startDate);
+    if (y) years.add(y);
+  });
+  return Array.from(years).sort(function (a, b) { return b - a; });
 }
 
 export function render(container) {
@@ -56,6 +92,18 @@ export function render(container) {
     return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
   });
 
+  // El historial se lee una vez por territorio y se reusa al cambiar de año.
+  const historyByTerritory = {};
+  const allEntries = [];
+  territories.forEach(function (terr) {
+    const h = store.getHistoryForTerritory ? store.getHistoryForTerritory(terr.id) : [];
+    historyByTerritory[terr.id] = h;
+    Array.prototype.push.apply(allEntries, h);
+  });
+
+  const years = availableServiceYears(allEntries);
+  let selectedYear = null; // null = todos los años
+
   document.body.classList.add('print-layout');
 
   // Controles (no se imprimen)
@@ -66,7 +114,26 @@ export function render(container) {
     '<p style="color:var(--text-secondary);font-size:0.875rem;">' + escapeHtml(t('s13.subtitle')) + '</p>';
 
   const btnRow = document.createElement('div');
-  btnRow.style.marginTop = '0.5rem';
+  btnRow.style.cssText = 'margin-top:0.5rem;display:flex;gap:0.5rem;justify-content:center;align-items:center;flex-wrap:wrap;';
+
+  if (years.length > 0) {
+    const filterLabel = document.createElement('label');
+    filterLabel.style.cssText = 'font-size:0.875rem;color:var(--text-secondary);';
+    filterLabel.textContent = t('s13.serviceYear') + ':';
+
+    const yearSelect = document.createElement('select');
+    yearSelect.className = 'history-input';
+    yearSelect.style.width = 'auto';
+    yearSelect.innerHTML = '<option value="">' + escapeHtml(t('s13.allYears')) + '</option>' +
+      years.map(function (y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
+    yearSelect.addEventListener('change', function () {
+      selectedYear = yearSelect.value ? parseInt(yearSelect.value, 10) : null;
+      renderSheet();
+    });
+
+    filterLabel.appendChild(yearSelect);
+    btnRow.appendChild(filterLabel);
+  }
 
   const printBtn = document.createElement('a');
   printBtn.href = '#';
@@ -83,67 +150,70 @@ export function render(container) {
   backBtn.textContent = t('print.back');
 
   btnRow.appendChild(printBtn);
-  btnRow.appendChild(document.createTextNode(' '));
   btnRow.appendChild(backBtn);
   controls.appendChild(btnRow);
   container.appendChild(controls);
 
-  // Hoja
   const sheet = document.createElement('div');
   sheet.className = 's13-sheet';
+  container.appendChild(sheet);
 
-  const head = document.createElement('div');
-  head.className = 's13-head';
-  head.innerHTML = '<h3>' + escapeHtml(t('s13.formTitle')) + '</h3>' +
-    '<p>' + escapeHtml(t('s13.serviceYear')) + ': <strong>' + serviceYear(new Date()) + '</strong></p>';
-  sheet.appendChild(head);
+  function renderSheet() {
+    sheet.innerHTML = '';
 
-  const table = document.createElement('table');
-  table.className = 's13-table';
+    const head = document.createElement('div');
+    head.className = 's13-head';
+    head.innerHTML = '<h3>' + escapeHtml(t('s13.formTitle')) + '</h3>' +
+      '<p>' + escapeHtml(t('s13.serviceYear')) + ': <strong>' +
+      escapeHtml(selectedYear ? String(selectedYear) : t('s13.allYears')) + '</strong></p>';
+    sheet.appendChild(head);
 
-  let thead = '<thead><tr>' +
-    '<th rowspan="2" class="s13-col-num">' + escapeHtml(t('s13.colNumber')) + '</th>' +
-    '<th rowspan="2" class="s13-col-last">' + escapeHtml(t('s13.colLastCompleted')) + '</th>';
-  for (let i = 0; i < SLOTS; i++) {
-    thead += '<th colspan="3" class="s13-slot-head">' + escapeHtml(t('s13.colAssignedTo')) + '</th>';
-  }
-  thead += '</tr><tr>';
-  for (let i = 0; i < SLOTS; i++) {
-    thead += '<th class="s13-sub">' + escapeHtml(t('s13.colPerson')) + '</th>' +
-      '<th class="s13-sub">' + escapeHtml(t('s13.colStart')) + '</th>' +
-      '<th class="s13-sub">' + escapeHtml(t('s13.colEnd')) + '</th>';
-  }
-  thead += '</tr></thead>';
-  table.innerHTML = thead + '<tbody></tbody>';
+    const table = document.createElement('table');
+    table.className = 's13-table';
 
-  const tbody = table.querySelector('tbody');
+    let thead = '<thead><tr>' +
+      '<th rowspan="2" class="s13-col-num">' + escapeHtml(t('s13.colNumber')) + '</th>' +
+      '<th rowspan="2" class="s13-col-last">' + escapeHtml(t('s13.colLastCompleted')) + '</th>';
+    for (let i = 0; i < SLOTS; i++) {
+      thead += '<th colspan="3" class="s13-slot-head">' + escapeHtml(t('s13.colAssignedTo')) + '</th>';
+    }
+    thead += '</tr><tr>';
+    for (let i = 0; i < SLOTS; i++) {
+      thead += '<th class="s13-sub">' + escapeHtml(t('s13.colPerson')) + '</th>' +
+        '<th class="s13-sub">' + escapeHtml(t('s13.colStart')) + '</th>' +
+        '<th class="s13-sub">' + escapeHtml(t('s13.colEnd')) + '</th>';
+    }
+    thead += '</tr></thead>';
+    table.innerHTML = thead + '<tbody></tbody>';
 
-  territories.forEach(function (territory) {
-    const history = store.getHistoryForTerritory ? store.getHistoryForTerritory(territory.id) : [];
-    const data = buildS13Row(history, SLOTS);
+    const tbody = table.querySelector('tbody');
 
-    let row = '<td class="s13-col-num">' + escapeHtml(String(territory.number)) + '</td>' +
-      '<td class="s13-col-last">' + escapeHtml(data.lastCompleted) + '</td>';
+    territories.forEach(function (territory) {
+      const data = buildS13Row(historyByTerritory[territory.id] || [], SLOTS, selectedYear);
 
-    data.cells.forEach(function (c) {
-      row += '<td class="s13-person">' + escapeHtml(c.person) + '</td>' +
-        '<td class="s13-date">' + escapeHtml(c.startDate) + '</td>' +
-        '<td class="s13-date">' + escapeHtml(c.endDate) + '</td>';
+      let row = '<td class="s13-col-num">' + escapeHtml(String(territory.number)) + '</td>' +
+        '<td class="s13-col-last">' + escapeHtml(data.lastCompleted) + '</td>';
+
+      data.cells.forEach(function (c) {
+        row += '<td class="s13-person">' + escapeHtml(c.person) + '</td>' +
+          '<td class="s13-date">' + escapeHtml(c.startDate) + '</td>' +
+          '<td class="s13-date">' + escapeHtml(c.endDate) + '</td>';
+      });
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = row;
+      tbody.appendChild(tr);
     });
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = row;
-    tbody.appendChild(tr);
-  });
+    sheet.appendChild(table);
 
-  sheet.appendChild(table);
+    const footnote = document.createElement('p');
+    footnote.className = 's13-footnote';
+    footnote.textContent = t('s13.footnote');
+    sheet.appendChild(footnote);
+  }
 
-  const footnote = document.createElement('p');
-  footnote.className = 's13-footnote';
-  footnote.textContent = t('s13.footnote');
-  sheet.appendChild(footnote);
-
-  container.appendChild(sheet);
+  renderSheet();
 
   return function () {
     document.body.classList.remove('print-layout');

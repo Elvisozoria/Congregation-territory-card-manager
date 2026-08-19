@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { serviceYear, buildS13Row } from '../src/views/s13.js';
+import {
+  serviceYear,
+  serviceYearOf,
+  buildS13Row,
+  availableServiceYears
+} from '../src/views/s13.js';
 
 test('service year runs Sept 1 - Aug 31', () => {
   assert.equal(serviceYear(new Date('2026-08-31T12:00:00')), 2026);
@@ -45,4 +50,47 @@ test('preaching entries are excluded from the assignment record', () => {
   ], 4);
   assert.deepEqual(row.cells.map((c) => c.person), ['Ana', '', '', '']);
   assert.equal(row.lastCompleted, '2026-05-10');
+});
+
+test('service year of an ISO date: September flips to the next year', () => {
+  assert.equal(serviceYearOf('2025-08-31'), 2025);
+  assert.equal(serviceYearOf('2025-09-01'), 2026);
+  assert.equal(serviceYearOf('2026-08-31'), 2026);
+  assert.equal(serviceYearOf(''), null);
+  assert.equal(serviceYearOf(null), null);
+});
+
+test('filtering by service year keeps only that year\'s assignments', () => {
+  const history = [
+    { person: 'Nueva', startDate: '2025-10-01', endDate: '2025-10-20' }, // año 2026
+    { person: 'Vieja', startDate: '2025-03-01', endDate: '2025-03-15' }  // año 2025
+  ];
+
+  const y2026 = buildS13Row(history, 4, 2026);
+  assert.deepEqual(y2026.cells.map((c) => c.person), ['Nueva', '', '', '']);
+
+  const y2025 = buildS13Row(history, 4, 2025);
+  assert.deepEqual(y2025.cells.map((c) => c.person), ['Vieja', '', '', '']);
+});
+
+test('with a year selected, last-completed is the carry-over from before it', () => {
+  const history = [
+    { person: 'Nueva', startDate: '2025-10-01', endDate: '2025-10-20' },
+    { person: 'Vieja', startDate: '2025-03-01', endDate: '2025-03-15' }
+  ];
+  // El año 2026 empieza el 2025-09-01, así que acarrea la última de antes.
+  assert.equal(buildS13Row(history, 4, 2026).lastCompleted, '2025-03-15');
+  // Sin nada anterior, la columna queda vacía.
+  assert.equal(buildS13Row(history, 4, 2025).lastCompleted, '');
+  // Sin filtro, es la última de todas.
+  assert.equal(buildS13Row(history, 4, null).lastCompleted, '2025-10-20');
+});
+
+test('available service years come back newest first, no duplicates', () => {
+  assert.deepEqual(availableServiceYears([
+    { startDate: '2025-10-01' },
+    { startDate: '2025-11-05' },
+    { startDate: '2025-03-01' },
+    { startDate: '' }
+  ]), [2026, 2025]);
 });

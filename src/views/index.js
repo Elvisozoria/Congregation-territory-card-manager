@@ -287,7 +287,7 @@ export function render(container) {
     const table = document.createElement('table');
     table.className = 'territory-table';
 
-    const thead = '<thead><tr><th>' + escapeHtml(t('index.colNumber')) + '</th><th>' + escapeHtml(t('index.colName')) + '</th><th>' + escapeHtml(t('index.colGroup')) + '</th><th>' + escapeHtml(t('index.colLandmarks')) + '</th><th></th></tr></thead>';
+    const thead = '<thead><tr><th>' + escapeHtml(t('index.colNumber')) + '</th><th>' + escapeHtml(t('index.colName')) + '</th><th>' + escapeHtml(t('index.colGroup')) + '</th><th>' + escapeHtml(t('index.colLandmarks')) + '</th><th>' + escapeHtml(t('index.colHistory')) + '</th><th></th></tr></thead>';
     table.innerHTML = thead + '<tbody></tbody>';
 
     const tbodyEl = table.querySelector('tbody');
@@ -314,6 +314,10 @@ export function render(container) {
 
       const tdLandmarks = document.createElement('td');
       tdLandmarks.textContent = territory.landmarks.length;
+
+      const tdHistory = document.createElement('td');
+      tdHistory.className = 'history-cell';
+      tdHistory.appendChild(buildHistoryStrip(store, territory.id, fullHistory, uid));
 
       const tdActions = document.createElement('td');
       tdActions.className = 'actions';
@@ -349,6 +353,7 @@ export function render(container) {
       tr.appendChild(tdName);
       tr.appendChild(tdGroup);
       tr.appendChild(tdLandmarks);
+      tr.appendChild(tdHistory);
       tr.appendChild(tdActions);
       tbodyEl.appendChild(tr);
     });

@@ -157,6 +157,8 @@ a.navbar-brand:hover { color: white; }
 .territory-table tr:hover td { background: var(--row-hover); }
 .territory-table .number { font-weight: 700; color: var(--text-primary); }
 .territory-table .actions { display: flex; gap: 0.5rem; align-items: center; }
+.territory-table .history-cell { min-width: 14rem; }
+.territory-table .history-cell .territory-grid-card-history { margin-top: 0; }
 .territory-table a { font-weight: 500; }
 .territory-table .actions .btn-outline-danger { opacity: 0; transition: opacity 0.2s; }
 .territory-table tr:hover .actions .btn-outline-danger, .territory-table tr:focus-within .actions .btn-outline-danger { opacity: 1; }
