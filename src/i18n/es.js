@@ -45,6 +45,8 @@ export default {
     formTitle: 'REGISTRO DE ASIGNACIÓN DE TERRITORIO',
     serviceYear: 'Año de servicio',
     allYears: 'Todos',
+    serviceYearHint: 'El año de servicio va del 1 de septiembre al 31 de agosto.',
+    currentYear: '(actual)',
     print: 'Imprimir S-13',
     colNumber: 'Núm. de terr.',
     colLastCompleted: 'Última fecha en que se completó',

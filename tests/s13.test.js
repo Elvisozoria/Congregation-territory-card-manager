@@ -4,7 +4,8 @@ import {
   serviceYear,
   serviceYearOf,
   buildS13Row,
-  availableServiceYears
+  availableServiceYears,
+  serviceYearLabel
 } from '../src/views/s13.js';
 
 test('service year runs Sept 1 - Aug 31', () => {
@@ -93,4 +94,12 @@ test('available service years come back newest first, no duplicates', () => {
     { startDate: '2025-03-01' },
     { startDate: '' }
   ]), [2026, 2025]);
+});
+
+test('service years are labelled by the range they span, not the ending year', () => {
+  // El que arranca en septiembre de 2026 se llama 2026-2027.
+  assert.equal(serviceYearLabel(2027), '2026-2027');
+  assert.equal(serviceYearLabel(serviceYearOf('2026-09-01')), '2026-2027');
+  // El que corre ahora (agosto de 2026) es el 2025-2026.
+  assert.equal(serviceYearLabel(serviceYear(new Date('2026-08-19T12:00:00'))), '2025-2026');
 });

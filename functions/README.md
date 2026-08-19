@@ -39,7 +39,7 @@ al desplegar o se ponen en `.env` dentro de `functions/`):
 
 | Param | Qué es | Default |
 |---|---|---|
-| `MAIL_FROM` | Remitente verificado en SES | — (obligatorio) |
+| `MAIL_FROM` | Remitente verificado en SES | `territorios@delonix.io` |
 | `APP_URL` | URL pública de la app, para el enlace del correo | — |
 | `AWS_SES_REGION` | Región de SES | `us-east-1` |
 | `MAIL_DAILY_LIMIT` | Tope de correos por día | `100` |

@@ -16,7 +16,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 
 const AWS_REGION = defineString('AWS_SES_REGION', { default: 'us-east-1' });
-const MAIL_FROM = defineString('MAIL_FROM');
+const MAIL_FROM = defineString('MAIL_FROM', { default: 'territorios@delonix.io' });
 const APP_URL = defineString('APP_URL');
 const DAILY_LIMIT = defineInt('MAIL_DAILY_LIMIT', { default: 100 });
 

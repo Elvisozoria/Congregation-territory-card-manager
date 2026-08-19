@@ -8,8 +8,9 @@ export let isDirty = false;
 // Columnas de asignación del formulario S-13 impreso.
 const SLOTS = 4;
 
-// Año de servicio: 1 de septiembre – 31 de agosto. El año de servicio 2026
-// arranca el 2025-09-01 y termina el 2026-08-31.
+// Año de servicio: 1 de septiembre – 31 de agosto. Internamente se identifica
+// por el año en que termina (el que va de sept/2025 a ago/2026 es el 2026);
+// en pantalla siempre se muestra el rango — ver serviceYearLabel.
 export function serviceYear(date) {
   const y = date.getFullYear();
   return date.getMonth() >= 8 ? y + 1 : y;
@@ -28,6 +29,12 @@ export function serviceYearOf(isoDate) {
 // Primer día del año de servicio, para separar lo anterior de lo de este año.
 function serviceYearStart(year) {
   return (year - 1) + '-09-01';
+}
+
+// El año de servicio se nombra por el rango que abarca, no por el año en que
+// termina: el que arranca en septiembre de 2026 se llama "2026-2027".
+export function serviceYearLabel(year) {
+  return (year - 1) + '-' + year;
 }
 
 /**
@@ -121,11 +128,16 @@ export function render(container) {
     filterLabel.style.cssText = 'font-size:0.875rem;color:var(--text-secondary);';
     filterLabel.textContent = t('s13.serviceYear') + ':';
 
+    const currentYear = serviceYear(new Date());
+
     const yearSelect = document.createElement('select');
     yearSelect.className = 'history-input';
     yearSelect.style.width = 'auto';
     yearSelect.innerHTML = '<option value="">' + escapeHtml(t('s13.allYears')) + '</option>' +
-      years.map(function (y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
+      years.map(function (y) {
+        const label = serviceYearLabel(y) + (y === currentYear ? ' ' + t('s13.currentYear') : '');
+        return '<option value="' + y + '">' + escapeHtml(label) + '</option>';
+      }).join('');
     yearSelect.addEventListener('change', function () {
       selectedYear = yearSelect.value ? parseInt(yearSelect.value, 10) : null;
       renderSheet();
@@ -133,6 +145,11 @@ export function render(container) {
 
     filterLabel.appendChild(yearSelect);
     btnRow.appendChild(filterLabel);
+
+    const hint = document.createElement('span');
+    hint.style.cssText = 'font-size:0.75rem;color:var(--text-muted);flex-basis:100%;';
+    hint.textContent = t('s13.serviceYearHint');
+    btnRow.appendChild(hint);
   }
 
   const printBtn = document.createElement('a');
@@ -165,7 +182,7 @@ export function render(container) {
     head.className = 's13-head';
     head.innerHTML = '<h3>' + escapeHtml(t('s13.formTitle')) + '</h3>' +
       '<p>' + escapeHtml(t('s13.serviceYear')) + ': <strong>' +
-      escapeHtml(selectedYear ? String(selectedYear) : t('s13.allYears')) + '</strong></p>';
+      escapeHtml(selectedYear ? serviceYearLabel(selectedYear) : t('s13.allYears')) + '</strong></p>';
     sheet.appendChild(head);
 
     const table = document.createElement('table');

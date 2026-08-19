@@ -45,6 +45,8 @@ export default {
     formTitle: 'TERRITORY ASSIGNMENT RECORD',
     serviceYear: 'Service year',
     allYears: 'All',
+    serviceYearHint: 'The service year runs from September 1 to August 31.',
+    currentYear: '(current)',
     print: 'Print S-13',
     colNumber: 'Terr. no.',
     colLastCompleted: 'Date last completed',
