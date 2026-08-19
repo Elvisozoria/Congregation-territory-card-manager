@@ -143,6 +143,13 @@ a.navbar-brand:hover { color: white; }
 .territory-grid-card-meta { display: flex; gap: 1rem; font-size: 0.8125rem; color: var(--text-secondary); }
 .territory-grid-card-actions { display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-secondary); }
 
+/* Ultimas asignaciones bajo cada tarjeta (resumen S-13) */
+.territory-grid-card-history { margin-top: 0.625rem; display: flex; flex-direction: column; gap: 0.125rem; font-size: 0.75rem; }
+.history-strip-row { display: flex; justify-content: space-between; gap: 0.5rem; color: var(--text-secondary); }
+.history-strip-person { font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-strip-dates { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.history-strip-empty { color: var(--text-muted); font-style: italic; }
+
 /* Table (kept as fallback but hidden by default) */
 .territory-table { width: 100%; border-collapse: collapse; }
 .territory-table th { text-align: left; padding: 0.75rem 1rem; border-bottom: 2px solid var(--border-primary); font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -150,6 +157,8 @@ a.navbar-brand:hover { color: white; }
 .territory-table tr:hover td { background: var(--row-hover); }
 .territory-table .number { font-weight: 700; color: var(--text-primary); }
 .territory-table .actions { display: flex; gap: 0.5rem; align-items: center; }
+.territory-table .history-cell { min-width: 14rem; }
+.territory-table .history-cell .territory-grid-card-history { margin-top: 0; }
 .territory-table a { font-weight: 500; }
 .territory-table .actions .btn-outline-danger { opacity: 0; transition: opacity 0.2s; }
 .territory-table tr:hover .actions .btn-outline-danger, .territory-table tr:focus-within .actions .btn-outline-danger { opacity: 1; }
@@ -388,3 +397,29 @@ a.navbar-brand:hover { color: white; }
 }
 body.print-layout .navbar { display: none; }
 body.print-layout .container { max-width: none; padding: 0; }
+
+/* --- Hoja S-13: registro de asignacion de territorio --- */
+.s13-sheet { padding: 0 1.5rem 2rem; }
+.s13-head { text-align: center; margin-bottom: 0.75rem; }
+.s13-head h3 { font-size: 1rem; letter-spacing: 0.05em; margin: 0 0 0.25rem; }
+.s13-head p { font-size: 0.8125rem; color: var(--text-secondary); margin: 0; }
+.s13-table { width: 100%; border-collapse: collapse; font-size: 0.6875rem; table-layout: fixed; }
+.s13-table th, .s13-table td { border: 1px solid var(--border-primary); padding: 0.25rem 0.3rem; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s13-table th { background: var(--bg-secondary); font-weight: 600; line-height: 1.15; white-space: normal; }
+.s13-table td { height: 1.5rem; }
+.s13-col-num { width: 3rem; font-weight: 700; }
+.s13-col-last { width: 6rem; }
+.s13-slot-head { border-bottom: none; }
+.s13-sub { font-size: 0.625rem; font-weight: 500; color: var(--text-secondary); }
+.s13-person { text-align: left; }
+.s13-date { font-variant-numeric: tabular-nums; }
+.s13-footnote { font-size: 0.625rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+@media print {
+  /* El S-13 es ancho: apaisado y en negro sobre blanco */
+  .s13-sheet { padding: 0; }
+  .s13-table { font-size: 0.5625rem; }
+  .s13-table th, .s13-table td { border-color: #000; color: #000; }
+  .s13-table th { background: #eee; }
+  .s13-table tr { break-inside: avoid; }
+}

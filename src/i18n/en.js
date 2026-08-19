@@ -6,6 +6,7 @@ export default {
   nav: {
     brand: 'Territory Cards',
     printAll: 'Print All',
+    s13: 'S-13',
     loadJson: 'Load JSON',
     saveJson: 'Save JSON',
     importKml: 'Import KML',
@@ -30,9 +31,30 @@ export default {
     colName: 'Name',
     colGroup: 'Group',
     colLandmarks: 'Landmarks',
+    colHistory: 'Recent assignments',
     btnCard: 'Card',
     btnEdit: 'Edit',
-    btnDelete: 'Delete'
+    btnDelete: 'Delete',
+    noAssignments: 'No assignments recorded'
+  },
+
+  // S-13 form view
+  s13: {
+    title: 'Territory Assignment Record (S-13)',
+    subtitle: 'Last 4 assignments per territory. Shows how often each one is worked.',
+    formTitle: 'TERRITORY ASSIGNMENT RECORD',
+    serviceYear: 'Service year',
+    allYears: 'All',
+    serviceYearHint: 'The service year runs from September 1 to August 31.',
+    currentYear: '(current)',
+    print: 'Print S-13',
+    colNumber: 'Terr. no.',
+    colLastCompleted: 'Date last completed',
+    colAssignedTo: 'Assigned to',
+    colPerson: 'Name',
+    colStart: 'Date assigned',
+    colEnd: 'Date completed',
+    footnote: '*When starting a new page, record in this column the date the territories were last completed.'
   },
 
   // Show view
