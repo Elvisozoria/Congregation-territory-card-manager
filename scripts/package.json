@@ -1,0 +1,18 @@
+{
+  "name": "territory-card-manager-notifier",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "notify": "node notify.mjs",
+    "dry-run": "DRY_RUN=true node notify.mjs",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.716.0",
+    "firebase-admin": "^13.0.0"
+  }
+}

@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { decideSend, buildEmail, buildCompletionEmail } from '../index.js';
+import {
+  decideSend,
+  buildEmail,
+  buildCompletionEmail,
+  pendingNotification
+} from '../mail.mjs';
 
 const base = { historyExists: true, notifiedAt: null, sent: 0, limit: 100 };
 
@@ -79,4 +84,43 @@ test('asignar y completar usan sellos distintos, así que no se pisan', () => {
   const yaAsignado = { historyExists: true, sent: 0, limit: 100 };
   assert.equal(decideSend({ ...yaAsignado, notifiedAt: new Date() }).ok, false);
   assert.equal(decideSend({ ...yaAsignado, notifiedAt: null }).ok, true);
+});
+
+test('una asignación nueva pide el aviso al publicador', () => {
+  assert.deepEqual(
+    pendingNotification({ type: 'assignment', status: 'active', assignedToUid: 'u1' }),
+    { kind: 'assignment', uid: 'u1', marker: 'notifiedAt' }
+  );
+});
+
+test('cerrar una asignación pide el aviso a quien la asignó', () => {
+  const entry = {
+    status: 'completed', assignedToUid: 'u1', createdBy: 'admin1', notifiedAt: new Date()
+  };
+  assert.deepEqual(pendingNotification(entry), {
+    kind: 'completion', uid: 'admin1', marker: 'completionNotifiedAt'
+  });
+  assert.deepEqual(pendingNotification({ ...entry, status: 'returned' }), {
+    kind: 'completion', uid: 'admin1', marker: 'completionNotifiedAt'
+  });
+});
+
+test('no se notifica lo que ya se notificó, ni sin destinatario', () => {
+  const base = { type: 'assignment', status: 'active', assignedToUid: 'u1' };
+  assert.equal(pendingNotification({ ...base, notifiedAt: new Date() }), null);
+  assert.equal(pendingNotification({ ...base, assignedToUid: null }), null);
+  assert.equal(pendingNotification({ ...base, type: 'preaching' }), null);
+});
+
+test('si el admin cerró su propia asignación no se le avisa a sí mismo', () => {
+  assert.equal(pendingNotification({
+    status: 'completed', assignedToUid: 'admin1', createdBy: 'admin1'
+  }), null);
+});
+
+test('una entrada ya avisada del cierre no vuelve a avisar', () => {
+  assert.equal(pendingNotification({
+    status: 'completed', assignedToUid: 'u1', createdBy: 'admin1',
+    completionNotifiedAt: new Date()
+  }), null);
 });
