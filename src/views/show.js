@@ -2,7 +2,7 @@ import L from 'leaflet';
 import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
 import { renderSingleMap } from '../components/map.js';
-import { escapeHtml } from '../utils/helpers.js';
+import { escapeHtml, escapeAttr, todayISO, formatDate } from '../utils/helpers.js';
 import { buildPublicTerritoryUrl } from '../utils/public-id.js';
 import {
   canEditTerritory,
@@ -674,37 +674,42 @@ export function render(container, params) {
       assignmentBanner.innerHTML =
         '<div class="assignment-info">' +
           '<strong>' + escapeHtml(t('show.assignedTo', { person: activeAssignment.person })) + '</strong> ' +
-          '<span>' + escapeHtml(t('show.assignedSince', { date: activeAssignment.startDate })) + '</span>' +
+          '<span>' + escapeHtml(t('show.assignedSince', { date: formatDate(activeAssignment.startDate) })) + '</span>' +
         '</div>' +
         '<div class="assignment-actions"></div>';
 
       const actionsDiv = assignmentBanner.querySelector('.assignment-actions');
 
       if (canCompleteAssignment(profile, activeAssignment)) {
-        const completeBtn = document.createElement('button');
-        completeBtn.className = 'btn btn-primary btn-sm';
-        completeBtn.textContent = t('show.markCompleted');
-        completeBtn.addEventListener('click', function () {
+        // La fecha de cierre se elige: se suele registrar días después de que
+        // el territorio se terminó de trabajar.
+        const closeDate = document.createElement('input');
+        closeDate.type = 'date';
+        closeDate.className = 'history-input assignment-date';
+        closeDate.value = todayISO();
+        closeDate.title = t('show.closeDate');
+        closeDate.setAttribute('aria-label', t('show.closeDate'));
+
+        function closeWith(status) {
           store.updateHistoryEntry(activeAssignment.id, {
-            status: 'completed',
-            endDate: new Date().toISOString().split('T')[0]
+            status: status,
+            endDate: closeDate.value || todayISO()
           });
           rerenderAssignmentBanner();
           rerenderHistory();
-        });
+        }
+
+        const completeBtn = document.createElement('button');
+        completeBtn.className = 'btn btn-primary btn-sm';
+        completeBtn.textContent = t('show.markCompleted');
+        completeBtn.addEventListener('click', function () { closeWith('completed'); });
 
         const returnBtn = document.createElement('button');
         returnBtn.className = 'btn btn-secondary btn-sm';
         returnBtn.textContent = t('show.markReturned');
-        returnBtn.addEventListener('click', function () {
-          store.updateHistoryEntry(activeAssignment.id, {
-            status: 'returned',
-            endDate: new Date().toISOString().split('T')[0]
-          });
-          rerenderAssignmentBanner();
-          rerenderHistory();
-        });
+        returnBtn.addEventListener('click', function () { closeWith('returned'); });
 
+        actionsDiv.appendChild(closeDate);
         actionsDiv.appendChild(completeBtn);
         actionsDiv.appendChild(returnBtn);
       }
@@ -714,25 +719,7 @@ export function render(container, params) {
       assignBtn.className = 'btn btn-primary btn-sm';
       assignBtn.textContent = t('show.assignTerritory');
       assignBtn.addEventListener('click', function () {
-        if (profile) {
-          openAssignDialog();
-        } else {
-          // Offline mode: prompt simple
-          const person = prompt(t('show.assignPerson'));
-          if (person && person.trim()) {
-            store.addHistoryEntry({
-              territoryId: params.id,
-              person: person.trim(),
-              startDate: new Date().toISOString().split('T')[0],
-              endDate: null,
-              notes: '',
-              type: 'assignment',
-              status: 'active'
-            });
-            rerenderAssignmentBanner();
-            rerenderHistory();
-          }
-        }
+        openAssignDialog();
       });
       assignmentBanner.appendChild(assignBtn);
     } else {
@@ -741,65 +728,98 @@ export function render(container, params) {
     }
   }
 
-  // Diálogo de asignación con dropdown de miembros (admin)
+  /**
+   * Diálogo de asignación. Mismo formulario en línea y sin conexión: cambia
+   * sólo cómo se elige a la persona (lista de miembros vs. nombre escrito).
+   *
+   * La fecha se pide, no se asume: se asigna un día pero el territorio se
+   * trabaja otro, y ese segundo es el que va al S-13.
+   */
   async function openAssignDialog() {
     const existing = assignmentBanner.querySelector('.assign-form');
     if (existing) { existing.remove(); return; }
 
     const form = document.createElement('div');
     form.className = 'assign-form';
-    form.style.cssText = 'margin-top:0.5rem;padding:0.75rem;background:#F9FAFB;border-radius:4px;';
-    form.innerHTML = '<p style="font-size:0.875rem;">' + escapeHtml(t('admin.loading')) + '</p>';
     assignmentBanner.appendChild(form);
 
-    let members = [];
-    try {
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
-      const { db } = await import('../firebase/config.js');
-      const q = query(collection(db, 'users'), where('congregationId', '==', profile.congregationId));
-      const snap = await getDocs(q);
-      members = snap.docs.map(function (d) { return { uid: d.id, ...d.data() }; })
-        .filter(function (m) { return m.role === 'conductor' || m.role === 'publisher' || m.role === 'admin' || m.role === 'member'; });
-    } catch (err) {
-      console.error('Failed to load members for assignment:', err);
+    let members = null;
+
+    if (profile) {
+      form.innerHTML = '<p style="font-size:0.875rem;">' + escapeHtml(t('admin.loading')) + '</p>';
+      try {
+        const { collection, query, where, getDocs } = await import('firebase/firestore');
+        const { db } = await import('../firebase/config.js');
+        const q = query(collection(db, 'users'), where('congregationId', '==', profile.congregationId));
+        const snap = await getDocs(q);
+        members = snap.docs.map(function (d) { return { uid: d.id, ...d.data() }; })
+          .filter(function (m) { return m.role === 'conductor' || m.role === 'publisher' || m.role === 'admin' || m.role === 'member'; });
+      } catch (err) {
+        console.error('Failed to load members for assignment:', err);
+        members = [];
+      }
+
+      if (members.length === 0) {
+        form.innerHTML = '<p style="font-size:0.875rem;">' + escapeHtml(t('show.assignNoMembers')) + '</p>';
+        return;
+      }
     }
 
-    if (members.length === 0) {
-      form.innerHTML = '<p style="font-size:0.875rem;">' + escapeHtml(t('show.assignNoMembers')) + '</p>';
-      return;
-    }
+    const personField = members
+      ? '<select class="history-input" data-field="assignee"></select>'
+      : '<input type="text" class="history-input" data-field="assignee" />';
 
     form.innerHTML =
       '<div class="form-group">' +
-        '<label>' + escapeHtml(t('show.assignSelectPerson')) + '</label>' +
-        '<select class="history-input" data-field="assignee"></select>' +
+        '<label>' + escapeHtml(members ? t('show.assignSelectPerson') : t('show.assignPerson')) + '</label>' +
+        personField +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>' + escapeHtml(t('show.assignStartDate')) + '</label>' +
+        '<input type="date" class="history-input" data-field="startDate" value="' + todayISO() + '" />' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>' + escapeHtml(t('show.assignNotes')) + '</label>' +
+        '<input type="text" class="history-input" data-field="notes" placeholder="' +
+          escapeAttr(t('show.assignNotesPlaceholder')) + '" />' +
       '</div>';
 
-    const select = form.querySelector('[data-field="assignee"]');
-    members.forEach(function (m) {
-      const opt = document.createElement('option');
-      opt.value = m.uid;
-      opt.textContent = (m.displayName || m.email) + ' (' + (m.role || '') + ')';
-      opt.dataset.name = m.displayName || m.email;
-      select.appendChild(opt);
-    });
+    const personInput = form.querySelector('[data-field="assignee"]');
+
+    if (members) {
+      members.forEach(function (m) {
+        const opt = document.createElement('option');
+        opt.value = m.uid;
+        opt.textContent = (m.displayName || m.email) + ' (' + (m.role || '') + ')';
+        opt.dataset.name = m.displayName || m.email;
+        personInput.appendChild(opt);
+      });
+    }
 
     const btnRow = document.createElement('div');
     btnRow.className = 'history-form-actions';
+
     const saveBtn = document.createElement('button');
     saveBtn.className = 'btn btn-primary btn-sm';
     saveBtn.textContent = t('show.assignSubmit');
     saveBtn.addEventListener('click', function () {
-      const opt = select.options[select.selectedIndex];
-      const uid = opt.value;
-      const name = opt.dataset.name;
+      let person, uid = null;
+      if (members) {
+        const opt = personInput.options[personInput.selectedIndex];
+        person = opt.dataset.name;
+        uid = opt.value;
+      } else {
+        person = personInput.value.trim();
+        if (!person) { personInput.focus(); return; }
+      }
+
       store.addHistoryEntry({
         territoryId: params.id,
-        person: name,
+        person: person,
         assignedToUid: uid,
-        startDate: new Date().toISOString().split('T')[0],
+        startDate: form.querySelector('[data-field="startDate"]').value || todayISO(),
         endDate: null,
-        notes: '',
+        notes: form.querySelector('[data-field="notes"]').value.trim(),
         type: 'assignment',
         status: 'active'
       });
@@ -807,10 +827,12 @@ export function render(container, params) {
       rerenderAssignmentBanner();
       rerenderHistory();
     });
+
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'btn btn-secondary btn-sm';
     cancelBtn.textContent = t('show.assignCancel');
     cancelBtn.addEventListener('click', function () { form.remove(); });
+
     btnRow.appendChild(saveBtn);
     btnRow.appendChild(cancelBtn);
     form.appendChild(btnRow);
@@ -941,8 +963,8 @@ export function render(container, params) {
 
         const dateRow = document.createElement('div');
         dateRow.className = 'history-dates';
-        const startStr = entry.startDate || '?';
-        const endStr = entry.endDate || t('show.historyInProgress');
+        const startStr = formatDate(entry.startDate) || '?';
+        const endStr = formatDate(entry.endDate) || t('show.historyInProgress');
         const duration = formatDuration(entry.startDate, entry.endDate);
         dateRow.textContent = startStr + ' → ' + endStr + (duration ? '  ·  ' + duration : '');
         info.appendChild(dateRow);

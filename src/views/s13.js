@@ -1,6 +1,6 @@
 import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
-import { escapeHtml } from '../utils/helpers.js';
+import { escapeHtml, formatDate } from '../utils/helpers.js';
 import { canViewPrintAll } from '../auth/permissions.js';
 
 export let isDirty = false;
@@ -185,6 +185,11 @@ export function render(container) {
       escapeHtml(selectedYear ? serviceYearLabel(selectedYear) : t('s13.allYears')) + '</strong></p>';
     sheet.appendChild(head);
 
+    // La tabla tiene 14 columnas: en pantalla angosta se desplaza en su propio
+    // contenedor en vez de comprimirse hasta truncar las fechas.
+    const scroller = document.createElement('div');
+    scroller.className = 's13-scroll';
+
     const table = document.createElement('table');
     table.className = 's13-table';
 
@@ -208,13 +213,21 @@ export function render(container) {
     territories.forEach(function (territory) {
       const data = buildS13Row(historyByTerritory[territory.id] || [], SLOTS, selectedYear);
 
-      let row = '<td class="s13-col-num">' + escapeHtml(String(territory.number)) + '</td>' +
-        '<td class="s13-col-last">' + escapeHtml(data.lastCompleted) + '</td>';
+      // Fechas cortas: en la columna del formulario impreso no entra un ISO.
+      const short = function (iso) { return escapeHtml(formatDate(iso, { short: true })); };
+
+      // El número enlaza al territorio: desde aquí se ve el dato mal y se
+      // corrige en un clic, sin buscarlo en la lista.
+      let row = '<td class="s13-col-num">' +
+          '<a href="#/territories/' + encodeURIComponent(territory.id) + '">' +
+          escapeHtml(String(territory.number)) + '</a>' +
+        '</td>' +
+        '<td class="s13-col-last">' + short(data.lastCompleted) + '</td>';
 
       data.cells.forEach(function (c) {
         row += '<td class="s13-person">' + escapeHtml(c.person) + '</td>' +
-          '<td class="s13-date">' + escapeHtml(c.startDate) + '</td>' +
-          '<td class="s13-date">' + escapeHtml(c.endDate) + '</td>';
+          '<td class="s13-date">' + short(c.startDate) + '</td>' +
+          '<td class="s13-date">' + short(c.endDate) + '</td>';
       });
 
       const tr = document.createElement('tr');
@@ -222,7 +235,8 @@ export function render(container) {
       tbody.appendChild(tr);
     });
 
-    sheet.appendChild(table);
+    scroller.appendChild(table);
+    sheet.appendChild(scroller);
 
     const footnote = document.createElement('p');
     footnote.className = 's13-footnote';

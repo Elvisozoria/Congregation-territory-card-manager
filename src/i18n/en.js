@@ -134,6 +134,10 @@ export default {
     assignSelectPerson: 'Select who to assign',
     assignNoMembers: 'No members available to assign.',
     assignSubmit: 'Assign',
+    assignStartDate: 'Date it is assigned to be worked',
+    assignNotes: 'Comment (optional)',
+    assignNotesPlaceholder: 'e.g. start at 5th street',
+    closeDate: 'Date completed or returned',
     assignCancel: 'Cancel',
     // History types & status
     typeAssignment: 'Assignment',
