@@ -134,6 +134,10 @@ export default {
     assignSelectPerson: 'Selecciona a quién asignar',
     assignNoMembers: 'No hay miembros disponibles para asignar.',
     assignSubmit: 'Asignar',
+    assignStartDate: 'Fecha en que se asigna para trabajar',
+    assignNotes: 'Comentario (opcional)',
+    assignNotesPlaceholder: 'Ej: empezar por la calle 5',
+    closeDate: 'Fecha en que se completó o devolvió',
     assignCancel: 'Cancelar',
     // History types & status
     typeAssignment: 'Asignación',

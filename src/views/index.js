@@ -1,7 +1,7 @@
 import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
 import { renderOverviewMap } from '../components/map.js';
-import { escapeHtml } from '../utils/helpers.js';
+import { escapeHtml, formatDate } from '../utils/helpers.js';
 import { refresh } from '../router.js';
 import {
   canCreateTerritory,
@@ -41,10 +41,10 @@ function buildHistoryStrip(store, territoryId, fullHistory, uid) {
   }
 
   strip.innerHTML = entries.slice(0, RECENT_ASSIGNMENTS).map(function (e) {
-    const end = e.endDate || t('show.historyInProgress');
+    const end = formatDate(e.endDate) || t('show.historyInProgress');
     return '<span class="history-strip-row">' +
       '<span class="history-strip-person">' + escapeHtml(e.person || '—') + '</span>' +
-      '<span class="history-strip-dates">' + escapeHtml(e.startDate || '?') + ' &rarr; ' + escapeHtml(end) + '</span>' +
+      '<span class="history-strip-dates">' + escapeHtml(formatDate(e.startDate) || '?') + ' &rarr; ' + escapeHtml(end) + '</span>' +
     '</span>';
   }).join('');
 
