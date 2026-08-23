@@ -342,6 +342,11 @@ export async function createFirestoreStore(user, congregationId) {
         createdBy: user.uid,
         createdAt: serverTimestamp()
       };
+      // Bandera que recoge el notificador (cron en GitHub Actions). Solo tiene
+      // sentido para una asignación activa a alguien con cuenta.
+      data.notifyPending = data.type === 'assignment'
+        && data.status === 'active'
+        && !!data.assignedToUid;
       const ref = await addDoc(histCol, data);
       return { id: ref.id, ...data };
     },
@@ -356,6 +361,10 @@ export async function createFirestoreStore(user, congregationId) {
       if (attrs.notes !== undefined) updates.notes = attrs.notes;
       if (attrs.type !== undefined) updates.type = attrs.type;
       if (attrs.status !== undefined) updates.status = attrs.status;
+      // Cerrar una asignación también se notifica (al admin que la asignó).
+      if (attrs.status === 'completed' || attrs.status === 'returned') {
+        updates.notifyPending = true;
+      }
       await updateDoc(ref, updates);
       return history.find(function (h) { return h.id === id; });
     },
