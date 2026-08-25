@@ -1,7 +1,7 @@
 import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
-import { escapeHtml, formatDate } from '../utils/helpers.js';
-import { canViewPrintAll } from '../auth/permissions.js';
+import { escapeHtml, formatDate, todayISO } from '../utils/helpers.js';
+import { canViewPrintAll, canClearS13 } from '../auth/permissions.js';
 
 export let isDirty = false;
 
@@ -75,6 +75,16 @@ export function buildS13Row(history, slots, year) {
   return { lastCompleted: lastCompleted, cells: cells };
 }
 
+/**
+ * Deja fuera lo anterior al corte. Limpiar el S-13 no borra nada: las entradas
+ * siguen en el historial de cada territorio, sólo dejan de contar para la hoja.
+ * Se compara por la fecha de asignación (ISO, comparable como string).
+ */
+export function afterCutoff(entries, cutoff) {
+  if (!cutoff) return entries;
+  return entries.filter(function (e) { return (e.startDate || '') >= cutoff; });
+}
+
 // Años de servicio presentes en los datos, del más reciente al más viejo.
 export function availableServiceYears(allHistory) {
   const years = new Set();
@@ -99,11 +109,13 @@ export function render(container) {
     return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
   });
 
+  const cutoff = store.getS13Cutoff ? store.getS13Cutoff() : null;
+
   // El historial se lee una vez por territorio y se reusa al cambiar de año.
   const historyByTerritory = {};
   const allEntries = [];
   territories.forEach(function (terr) {
-    const h = store.getHistoryForTerritory ? store.getHistoryForTerritory(terr.id) : [];
+    const h = afterCutoff(store.getHistoryForTerritory ? store.getHistoryForTerritory(terr.id) : [], cutoff);
     historyByTerritory[terr.id] = h;
     Array.prototype.push.apply(allEntries, h);
   });
@@ -168,7 +180,40 @@ export function render(container) {
 
   btnRow.appendChild(printBtn);
   btnRow.appendChild(backBtn);
+
+  // Limpiar la hoja: sólo admin, y sólo cambia desde dónde cuenta el registro.
+  if (canClearS13(profile) && store.setS13Cutoff) {
+    const clearBtn = document.createElement('button');
+    clearBtn.className = cutoff ? 'btn btn-secondary' : 'btn btn-danger';
+    clearBtn.textContent = cutoff ? t('s13.restore') : t('s13.clear');
+    clearBtn.addEventListener('click', async function () {
+      if (!confirm(cutoff ? t('s13.confirmRestore') : t('s13.confirmClear'))) return;
+      clearBtn.disabled = true;
+      try {
+        await store.setS13Cutoff(cutoff ? null : todayISO());
+        // La hoja entera depende del corte (años disponibles incluidos): se
+        // vuelve a dibujar desde cero en vez de parchear trozos.
+        container.innerHTML = '';
+        render(container);
+      } catch (e) {
+        console.error('No se pudo cambiar el corte del S-13:', e);
+        alert(t('s13.clearFailed'));
+        clearBtn.disabled = false;
+      }
+    });
+    btnRow.appendChild(clearBtn);
+  }
+
   controls.appendChild(btnRow);
+
+  if (cutoff) {
+    const cutoffNote = document.createElement('p');
+    cutoffNote.className = 'no-print';
+    cutoffNote.style.cssText = 'font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;';
+    cutoffNote.textContent = t('s13.clearedSince', { date: formatDate(cutoff) });
+    controls.appendChild(cutoffNote);
+  }
+
   container.appendChild(controls);
 
   const sheet = document.createElement('div');

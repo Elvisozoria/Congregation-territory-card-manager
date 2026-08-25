@@ -54,7 +54,13 @@ export default {
     colPerson: 'Name',
     colStart: 'Date assigned',
     colEnd: 'Date completed',
-    footnote: '*When starting a new page, record in this column the date the territories were last completed.'
+    footnote: '*When starting a new page, record in this column the date the territories were last completed.',
+    clear: 'Clear S-13',
+    restore: 'Show earlier record',
+    confirmClear: 'Start a blank S-13 sheet? Earlier assignments are not deleted: they stay in each territory\'s history and you can show them again anytime.',
+    confirmRestore: 'Show earlier assignments in the S-13 again?',
+    clearedSince: 'Sheet cleared: the S-13 only counts from {date}.',
+    clearFailed: 'Could not clear the S-13. Please try again.'
   },
 
   // Show view

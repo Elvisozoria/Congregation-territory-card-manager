@@ -88,6 +88,10 @@ export function render(container, params) {
   let pendingLatlng = null;
   let landmarksExpanded = false;
   let blocksExpanded = false;
+  // Va aquí arriba y no junto a rerenderHistory: la primera pasada de historial
+  // corre antes, y un `let` más abajo la deja en zona muerta (territorio con
+  // historial = pantalla de error).
+  let historyFilter = 'all'; // all|active|completed|returned
 
   // Header
   const header = document.createElement('div');
@@ -839,8 +843,6 @@ export function render(container, params) {
   }
 
   // --- History ---
-
-  let historyFilter = 'all'; // all|active|completed|returned
 
   function formatDuration(startISO, endISO) {
     if (!startISO) return '';
