@@ -142,6 +142,14 @@ export function canViewPrintAll(profile) {
   return role === ROLES.ADMIN || role === ROLES.CONDUCTOR;
 }
 
+// Limpiar el S-13 (empezar hoja nueva) afecta a toda la congregación: sólo admin.
+// Sin conexión no hay roles, cada quien administra sus propios datos.
+export function canClearS13(profile) {
+  if (isOffline(profile)) return true;
+  if (isAnonymous(profile)) return false;
+  return roleOf(profile) === ROLES.ADMIN;
+}
+
 export function canEditCardZoom(profile) {
   if (isOffline(profile)) return true;
   if (isAnonymous(profile)) return false;

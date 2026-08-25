@@ -54,7 +54,13 @@ export default {
     colPerson: 'Nombre',
     colStart: 'Fecha en que se asignó',
     colEnd: 'Fecha en que se completó',
-    footnote: '*Cuando comience una nueva página, anote en esta columna la última fecha en que los territorios se completaron.'
+    footnote: '*Cuando comience una nueva página, anote en esta columna la última fecha en que los territorios se completaron.',
+    clear: 'Limpiar S-13',
+    restore: 'Mostrar registro anterior',
+    confirmClear: '¿Empezar una hoja S-13 en blanco? Las asignaciones anteriores no se borran: siguen en el historial de cada territorio y puedes volver a mostrarlas cuando quieras.',
+    confirmRestore: '¿Volver a mostrar las asignaciones anteriores en el S-13?',
+    clearedSince: 'Hoja limpiada: el S-13 sólo cuenta desde {date}.',
+    clearFailed: 'No se pudo limpiar el S-13. Inténtalo de nuevo.'
   },
 
   // Show view

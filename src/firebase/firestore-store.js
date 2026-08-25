@@ -16,6 +16,7 @@ export async function createFirestoreStore(user, congregationId) {
   let globalLandmarks = [];
   let defaultCenter = [0, 0];
   let congregationPublicId = null;
+  let s13Cutoff = null;
 
   const terrCol = collection(db, 'congregations', congregationId, 'territories');
   const histCol = collection(db, 'congregations', congregationId, 'history');
@@ -27,6 +28,7 @@ export async function createFirestoreStore(user, congregationId) {
     const snap = await getDoc(congRef);
     if (snap.exists()) {
       const data = snap.data();
+      s13Cutoff = data.s13Cutoff || null;
       if (data.publicId) {
         congregationPublicId = data.publicId;
       } else {
@@ -436,6 +438,20 @@ export async function createFirestoreStore(user, congregationId) {
 
     getDefaultCenter() {
       return defaultCenter;
+    },
+
+    // Corte del S-13: fecha ISO a partir de la cual cuenta el registro. Vive en
+    // el documento de la congregación para que la hoja limpia la vean todos.
+    // ponytail: se lee al abrir la sesión, no en tiempo real; quien ya tenía la
+    // app abierta ve el corte al recargar.
+    getS13Cutoff() {
+      return s13Cutoff;
+    },
+
+    async setS13Cutoff(iso) {
+      s13Cutoff = iso || null;
+      await updateDoc(doc(db, 'congregations', congregationId), { s13Cutoff: s13Cutoff });
+      notify();
     },
 
     destroy() {

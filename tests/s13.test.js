@@ -5,7 +5,8 @@ import {
   serviceYearOf,
   buildS13Row,
   availableServiceYears,
-  serviceYearLabel
+  serviceYearLabel,
+  afterCutoff
 } from '../src/views/s13.js';
 
 test('service year runs Sept 1 - Aug 31', () => {
@@ -102,4 +103,16 @@ test('service years are labelled by the range they span, not the ending year', (
   assert.equal(serviceYearLabel(serviceYearOf('2026-09-01')), '2026-2027');
   // El que corre ahora (agosto de 2026) es el 2025-2026.
   assert.equal(serviceYearLabel(serviceYear(new Date('2026-08-19T12:00:00'))), '2025-2026');
+});
+
+test('limpiar el S-13 esconde lo anterior al corte, no lo borra', () => {
+  const entries = [
+    { startDate: '2026-08-20', person: 'Gavy' },
+    { startDate: '2026-08-24', person: 'Luis' }
+  ];
+  assert.equal(afterCutoff(entries, '2026-08-25').length, 0);
+  assert.deepEqual(afterCutoff(entries, '2026-08-24').map(function (e) { return e.person; }), ['Luis']);
+  // Sin corte pasa todo, y las entradas originales quedan intactas.
+  assert.equal(afterCutoff(entries, null).length, 2);
+  assert.equal(entries.length, 2);
 });

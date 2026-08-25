@@ -394,6 +394,18 @@ export function createLocalStore() {
 
     getDefaultCenter() {
       return defaultCenter;
+    },
+
+    // Corte del S-13: fecha ISO a partir de la cual cuenta el registro. Lo
+    // anterior sigue guardado y visible en cada territorio; sólo desaparece de
+    // la hoja, para empezar una limpia sin perder nada.
+    getS13Cutoff() {
+      return data.s13Cutoff || null;
+    },
+
+    setS13Cutoff(iso) {
+      data.s13Cutoff = iso || null;
+      notify();
     }
   };
 }
