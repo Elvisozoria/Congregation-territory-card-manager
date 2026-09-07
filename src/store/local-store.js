@@ -120,6 +120,7 @@ export function createLocalStore() {
         houses: parseHouses(attrs.houses),
         polygon: attrs.polygon || [],
         showQr: !!attrs.showQr,
+        showHouses: !!attrs.showHouses,
         notes: attrs.notes || '',
         landmarks: [],
         blocks: [],
@@ -140,6 +141,7 @@ export function createLocalStore() {
       if (attrs.houses !== undefined) territory.houses = parseHouses(attrs.houses);
       if (attrs.polygon !== undefined) territory.polygon = attrs.polygon;
       if (attrs.showQr !== undefined) territory.showQr = attrs.showQr;
+      if (attrs.showHouses !== undefined) territory.showHouses = !!attrs.showHouses;
       if (attrs.notes !== undefined) territory.notes = attrs.notes;
       if (attrs.cardZoom !== undefined) territory.cardZoom = attrs.cardZoom;
       if (attrs.cardCenter !== undefined) territory.cardCenter = attrs.cardCenter;
@@ -324,6 +326,7 @@ export function createLocalStore() {
                 if (t.number === undefined) t.number = '';
                 if (t.name === undefined) t.name = '';
                 if (t.showQr === undefined) t.showQr = !!t.qr_url;
+                if (t.showHouses === undefined) t.showHouses = false;
                 if (t.notes === undefined) t.notes = '';
                 if (!Array.isArray(t.blocks)) t.blocks = [];
                 // Un respaldo viejo trae group_name: se guarda ya como etiqueta.

@@ -67,7 +67,7 @@ export function render(container, params) {
 
   // Form container
   const formContainer = document.createElement('div');
-  formContainer.className = 'form-container';
+  formContainer.className = 'form-container form-split';
 
   // Error container
   const errorDiv = document.createElement('div');
@@ -91,6 +91,7 @@ export function render(container, params) {
     return '<option value="' + escapeAttr(tag) + '"></option>';
   }).join('');
   const valShowQr = src ? !!src.showQr : false;
+  const valShowHouses = src ? !!src.showHouses : false;
   const valNotes = src ? src.notes || '' : '';
 
   form.innerHTML =
@@ -123,11 +124,21 @@ export function render(container, params) {
       '</label>' +
       '<p class="field-hint">' + escapeHtml(t('form.fieldQrHint')) + '</p>' +
     '</div>' +
+    '<div class="form-group toggle-group">' +
+      '<label class="toggle-label">' +
+        '<span>' + escapeHtml(t('form.fieldShowHouses')) + '</span>' +
+        '<label class="switch">' +
+          '<input type="checkbox" id="field-show-houses"' + (valShowHouses ? ' checked' : '') + ' />' +
+          '<span class="slider"></span>' +
+        '</label>' +
+      '</label>' +
+      '<p class="field-hint">' + escapeHtml(t('form.fieldShowHousesHint')) + '</p>' +
+    '</div>' +
     '<div class="form-group">' +
       '<label for="field-notes">' + escapeHtml(t('form.fieldNotes')) + '</label>' +
       '<textarea id="field-notes" rows="3" placeholder="' + escapeAttr(t('form.fieldNotesPlaceholder')) + '">' + escapeHtml(valNotes) + '</textarea>' +
     '</div>' +
-    '<div class="form-instruction">' + t('form.drawInstruction') + '</div>';
+    '';
 
   function onBeforeUnload(e) {
     if (isDirty) { e.preventDefault(); e.returnValue = ''; }
@@ -145,6 +156,7 @@ export function render(container, params) {
         tags: parseTagsInput(document.getElementById('field-tags').value),
         houses: document.getElementById('field-houses').value,
         showQr: document.getElementById('field-qr').checked,
+        showHouses: document.getElementById('field-show-houses').checked,
         notes: document.getElementById('field-notes').value
       });
     }, 2000);
@@ -168,7 +180,29 @@ export function render(container, params) {
     }
   }, 500);
 
-  form.appendChild(mapDiv);
+  // El mapa va en su propia columna, no al final de una columna estrecha:
+  // dibujar el contorno de un territorio necesita sitio.
+  const mapPane = document.createElement('div');
+  mapPane.className = 'form-map-pane';
+
+  const mapHead = document.createElement('div');
+  mapHead.className = 'form-map-head';
+  mapHead.innerHTML = '<span>' + escapeHtml(t('form.mapTitle')) + '</span>';
+
+  const expandBtn = document.createElement('button');
+  expandBtn.type = 'button';
+  expandBtn.className = 'btn btn-secondary btn-sm';
+  expandBtn.textContent = t('form.mapExpand');
+  expandBtn.addEventListener('click', function () {
+    const on = mapPane.classList.toggle('fullscreen');
+    expandBtn.textContent = on ? t('form.mapCollapse') : t('form.mapExpand');
+    document.body.classList.toggle('map-fullscreen-open', on);
+    window.setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 60);
+  });
+  mapHead.appendChild(expandBtn);
+
+  mapPane.appendChild(mapHead);
+  mapPane.appendChild(mapDiv);
   form.appendChild(hiddenInput);
 
   // Submit button
@@ -207,6 +241,7 @@ export function render(container, params) {
     const tags = parseTagsInput(document.getElementById('field-tags').value);
     const houses = parseHouses(document.getElementById('field-houses').value);
     const showQr = document.getElementById('field-qr').checked;
+    const showHouses = document.getElementById('field-show-houses').checked;
     const notes = document.getElementById('field-notes').value.trim();
     let polygon = [];
 
@@ -236,7 +271,7 @@ export function render(container, params) {
       return;
     }
 
-    const attrs = { number, name, tags, houses, showQr, notes, polygon };
+    const attrs = { number, name, tags, houses, showQr, showHouses, notes, polygon };
 
     isDirty = false;
     clearDraft(params.id);
@@ -250,6 +285,7 @@ export function render(container, params) {
   });
 
   formContainer.appendChild(form);
+  formContainer.appendChild(mapPane);
   container.appendChild(formContainer);
 
   const existingPolygon = territory ? territory.polygon : [];

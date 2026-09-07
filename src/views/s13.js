@@ -184,7 +184,8 @@ export function render(container) {
   // Limpiar la hoja: sólo admin, y sólo cambia desde dónde cuenta el registro.
   if (canClearS13(profile) && store.setS13Cutoff) {
     const clearBtn = document.createElement('button');
-    clearBtn.className = cutoff ? 'btn btn-secondary' : 'btn btn-danger';
+    // No es destructivo: lo anterior se conserva y se puede volver a mostrar.
+    clearBtn.className = 'btn btn-secondary';
     clearBtn.textContent = cutoff ? t('s13.restore') : t('s13.clear');
     clearBtn.addEventListener('click', async function () {
       if (!confirm(cutoff ? t('s13.confirmRestore') : t('s13.confirmClear'))) return;

@@ -87,7 +87,10 @@ export function render(container, params) {
   let landmarkMarkers = [];
   let blockLayers = [];
   let pendingLatlng = null;
-  let landmarksExpanded = false;
+  // Los puntos de referencia se abren solos cuando hay alguno: su descripción
+  // (el colmado que abre temprano, la bifurcación) es lo que orienta a quien no
+  // conoce la zona, y venía plegada.
+  let landmarksExpanded = (territory.landmarks || []).length > 0;
   let blocksExpanded = false;
   // Va aquí arriba y no junto a rerenderHistory: la primera pasada de historial
   // corre antes, y un `let` más abajo la deja en zona muerta (territorio con
@@ -105,9 +108,16 @@ export function render(container, params) {
   if (allowEditTerr) {
     headerActions += '<a href="#/territories/' + territory.id + '/edit" class="btn btn-secondary">' + escapeHtml(t('show.btnEdit')) + '</a> ';
   }
-  headerActions += '<a href="#/" class="btn btn-secondary">' + escapeHtml(t('show.btnBack')) + '</a>';
+  // "Volver" no es una acción sobre el territorio: pasa a ser una miga de pan
+  // arriba a la izquierda, y deja las tres acciones reales sin competencia.
   header.innerHTML = '<h1>' + escapeHtml(territory.number) + ' - ' + escapeHtml(territory.name) + '</h1>' +
     '<div>' + headerActions + '</div>';
+
+  const crumb = document.createElement('a');
+  crumb.className = 'crumb';
+  crumb.href = '#/';
+  crumb.textContent = '\u2190 ' + t('index.title');
+  container.appendChild(crumb);
 
   const shareBtnEl = header.querySelector('.share-btn');
   if (shareBtnEl) {
@@ -690,6 +700,10 @@ export function render(container, params) {
       if (canCompleteAssignment(profile, activeAssignment)) {
         // La fecha de cierre se elige: se suele registrar días después de que
         // el territorio se terminó de trabajar.
+        const closeLabel = document.createElement('label');
+        closeLabel.className = 'close-date-label';
+        closeLabel.textContent = t('show.closeDate');
+
         const closeDate = document.createElement('input');
         closeDate.type = 'date';
         closeDate.className = 'history-input assignment-date';
@@ -716,6 +730,7 @@ export function render(container, params) {
         returnBtn.textContent = t('show.markReturned');
         returnBtn.addEventListener('click', function () { closeWith('returned'); });
 
+        actionsDiv.appendChild(closeLabel);
         actionsDiv.appendChild(closeDate);
         actionsDiv.appendChild(completeBtn);
         actionsDiv.appendChild(returnBtn);
@@ -766,20 +781,17 @@ export function render(container, params) {
         members = [];
       }
 
-      if (members.length === 0) {
-        form.innerHTML = '<p style="font-size:0.875rem;">' + escapeHtml(t('show.assignNoMembers')) + '</p>';
-        return;
-      }
     }
 
-    const personField = members
-      ? '<select class="history-input" data-field="assignee"></select>'
-      : '<input type="text" class="history-input" data-field="assignee" />';
-
+    // Se escribe el nombre, siempre. La mayoría de los publicadores no tienen
+    // cuenta en la app y no tienen por qué tenerla: antes eso hacía imposible
+    // asignarles un territorio. Quien sí tiene cuenta aparece como sugerencia,
+    // y sólo entonces se guarda además el vínculo con su usuario.
     form.innerHTML =
       '<div class="form-group">' +
-        '<label>' + escapeHtml(members ? t('show.assignSelectPerson') : t('show.assignPerson')) + '</label>' +
-        personField +
+        '<label>' + escapeHtml(t('show.assignPerson')) + '</label>' +
+        '<input type="text" class="history-input" data-field="assignee" list="assign-people" autocomplete="off" />' +
+        '<datalist id="assign-people"></datalist>' +
       '</div>' +
       '<div class="form-group">' +
         '<label>' + escapeHtml(t('show.assignStartDate')) + '</label>' +
@@ -793,15 +805,22 @@ export function render(container, params) {
 
     const personInput = form.querySelector('[data-field="assignee"]');
 
-    if (members) {
-      members.forEach(function (m) {
+    const suggestions = form.querySelector('#assign-people');
+    const byName = new Map();
+    (members || []).forEach(function (m) {
+      const name = m.displayName || m.email;
+      if (name) byName.set(name, m.uid);
+    });
+    // Quien ya trabajó territorios antes, aunque no tenga cuenta.
+    (store.getAllHistory ? store.getAllHistory() : []).forEach(function (h) {
+      if (h.person && !byName.has(h.person)) byName.set(h.person, null);
+    });
+    Array.from(byName.keys()).sort(function (a, b) { return a.localeCompare(b); })
+      .forEach(function (name) {
         const opt = document.createElement('option');
-        opt.value = m.uid;
-        opt.textContent = (m.displayName || m.email) + ' (' + (m.role || '') + ')';
-        opt.dataset.name = m.displayName || m.email;
-        personInput.appendChild(opt);
+        opt.value = name;
+        suggestions.appendChild(opt);
       });
-    }
 
     const btnRow = document.createElement('div');
     btnRow.className = 'history-form-actions';
@@ -810,15 +829,9 @@ export function render(container, params) {
     saveBtn.className = 'btn btn-primary btn-sm';
     saveBtn.textContent = t('show.assignSubmit');
     saveBtn.addEventListener('click', function () {
-      let person, uid = null;
-      if (members) {
-        const opt = personInput.options[personInput.selectedIndex];
-        person = opt.dataset.name;
-        uid = opt.value;
-      } else {
-        person = personInput.value.trim();
-        if (!person) { personInput.focus(); return; }
-      }
+      const person = personInput.value.trim();
+      if (!person) { personInput.focus(); return; }
+      const uid = byName.get(person) || null;
 
       store.addHistoryEntry({
         territoryId: params.id,
@@ -892,8 +905,9 @@ export function render(container, params) {
       entries = entries.filter(function (e) { return e.assignedToUid === profile.uid; });
     }
 
-    // Filtros (solo si hay entradas)
-    if (entries.length > 0) {
+    // Cuatro filtros para dos registros no ayudan a nadie: aparecen cuando la
+    // lista es lo bastante larga como para que filtrar signifique algo.
+    if (entries.length >= 5) {
       const filterRow = document.createElement('div');
       filterRow.className = 'history-filters';
       filterRow.style.cssText = 'display:flex;gap:0.25rem;margin-bottom:0.75rem;flex-wrap:wrap;';

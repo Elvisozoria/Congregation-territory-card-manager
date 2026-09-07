@@ -69,6 +69,14 @@ export function initPolygonDraw(mapContainer, hiddenInput, existingPolygon) {
     }
   }).addTo(map);
 
+  // Territorio sin contorno: se entra directo en modo dibujo. Antes había que
+  // encontrar el icono del pentágono, y hacía falta un párrafo para explicarlo.
+  if (!hasExisting) {
+    window.setTimeout(function () {
+      try { new L.Draw.Polygon(map, drawControl.options.draw.polygon).enable(); } catch (e) { /* ignore */ }
+    }, 300);
+  }
+
   map.on(L.Draw.Event.CREATED, function (e) {
     drawnItems.clearLayers();
     drawnItems.addLayer(e.layer);

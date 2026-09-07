@@ -66,3 +66,35 @@ export function parseTagsInput(text) {
 export function formatTagsInput(tags) {
   return normalizeTags(tags).join(', ');
 }
+
+// Una etiqueta puede llevar su dimensión delante, "zona:Norte" o "modo:a pie".
+// Sirve para que el filtro no mezcle en una misma fila la zona con la hora del
+// día. Sigue siendo texto: no hay modelo nuevo detrás.
+export function splitTag(tag) {
+  const raw = String(tag == null ? '' : tag);
+  const i = raw.indexOf(':');
+  if (i <= 0 || i === raw.length - 1) return { group: '', label: raw.trim(), full: raw.trim() };
+  return {
+    group: raw.slice(0, i).trim(),
+    label: raw.slice(i + 1).trim(),
+    full: raw.trim()
+  };
+}
+
+// Agrupa una lista de etiquetas por su dimensión, conservando el orden de cada
+// grupo. Las que no llevan prefijo caen juntas en un grupo sin nombre.
+export function groupTags(tags) {
+  const groups = new Map();
+  normalizeTags(tags).forEach(function (tag) {
+    const parsed = splitTag(tag);
+    if (!groups.has(parsed.group)) groups.set(parsed.group, []);
+    groups.get(parsed.group).push(parsed);
+  });
+  return Array.from(groups.entries())
+    .map(function (entry) { return { group: entry[0], tags: entry[1] }; })
+    .sort(function (a, b) {
+      if (!a.group) return 1;
+      if (!b.group) return -1;
+      return a.group.localeCompare(b.group);
+    });
+}

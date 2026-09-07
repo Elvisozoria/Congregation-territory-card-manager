@@ -2,6 +2,7 @@ import L from 'leaflet';
 import { streetLayer } from './tiles.js';
 import QRCode from 'qrcode';
 import { escapeHtml } from '../utils/helpers.js';
+import { t } from '../i18n/i18n.js';
 
 const WORLD_BOUNDS = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
 
@@ -33,6 +34,22 @@ export function renderCardMap(cardElement, territory, globalLandmarks, options) 
   });
 
   streetLayer().addTo(map);
+
+  // Casas aproximadas impresas en la tarjeta, si el territorio lo tiene
+  // activado. Se pinta aquí y no en cada vista para que la tarjeta suelta y la
+  // hoja de impresión salgan iguales.
+  if (territory.showHouses && territory.houses) {
+    const houses = document.createElement('div');
+    houses.className = 'card-houses';
+    // Estilo en línea como el número y el QR de la tarjeta: html-to-image
+    // exporta el PNG a partir del nodo, y ahí las reglas de la hoja externa no
+    // siempre viajan con él.
+    houses.style.cssText = 'position:absolute;top:8px;right:8px;z-index:1000;' +
+      'background:rgba(255,255,255,0.9);color:#1F2937;padding:3px 7px;' +
+      'border-radius:4px;font-size:0.75rem;font-weight:600;';
+    houses.textContent = t('card.housesBadge', { count: territory.houses });
+    cardElement.appendChild(houses);
+  }
 
   let defaultBounds = null;
 
