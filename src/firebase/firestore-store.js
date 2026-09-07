@@ -4,6 +4,8 @@ import {
 } from 'firebase/firestore';
 import { db } from './config.js';
 import { parse as parseKml } from '../utils/kml-import.js';
+import { normalizeTags, territoryTags } from '../utils/tags.js';
+import { parseHouses } from '../utils/helpers.js';
 import { generatePublicId } from '../utils/public-id.js';
 
 export async function createFirestoreStore(user, congregationId) {
@@ -17,6 +19,7 @@ export async function createFirestoreStore(user, congregationId) {
   let defaultCenter = [0, 0];
   let congregationPublicId = null;
   let s13Cutoff = null;
+  let boundary = null;
 
   const terrCol = collection(db, 'congregations', congregationId, 'territories');
   const histCol = collection(db, 'congregations', congregationId, 'history');
@@ -29,6 +32,7 @@ export async function createFirestoreStore(user, congregationId) {
     if (snap.exists()) {
       const data = snap.data();
       s13Cutoff = data.s13Cutoff || null;
+      boundary = data.boundary || null;
       if (data.publicId) {
         congregationPublicId = data.publicId;
       } else {
@@ -114,7 +118,8 @@ export async function createFirestoreStore(user, congregationId) {
     const obj = {};
     if (attrs.number !== undefined) obj.number = attrs.number;
     if (attrs.name !== undefined) obj.name = attrs.name;
-    if (attrs.group_name !== undefined) obj.group_name = attrs.group_name;
+    if (attrs.tags !== undefined) obj.tags = normalizeTags(attrs.tags);
+    if (attrs.houses !== undefined) obj.houses = parseHouses(attrs.houses);
     if (attrs.polygon !== undefined) obj.polygon = polygonToFirestore(attrs.polygon);
     if (attrs.showQr !== undefined) obj.showQr = attrs.showQr;
     if (attrs.notes !== undefined) obj.notes = attrs.notes;
@@ -150,7 +155,8 @@ export async function createFirestoreStore(user, congregationId) {
       const data = {
         number: attrs.number || '',
         name: attrs.name || '',
-        group_name: attrs.group_name || '',
+        tags: normalizeTags(attrs.tags),
+        houses: parseHouses(attrs.houses),
         polygon: polygonToFirestore(attrs.polygon || []),
         showQr: !!attrs.showQr,
         notes: attrs.notes || '',
@@ -401,14 +407,14 @@ export async function createFirestoreStore(user, congregationId) {
         if (existing) {
           await this.updateTerritory(existing.id, {
             name: t.name,
-            group_name: t.group_name,
+            tags: normalizeTags(territoryTags(existing).concat(t.tags || [])),
             polygon: t.polygon
           });
         } else {
           await this.createTerritory({
             number: t.number,
             name: t.name,
-            group_name: t.group_name,
+            tags: t.tags,
             polygon: t.polygon,
             showQr: false,
             notes: '',
@@ -451,6 +457,19 @@ export async function createFirestoreStore(user, congregationId) {
     async setS13Cutoff(iso) {
       s13Cutoff = iso || null;
       await updateDoc(doc(db, 'congregations', congregationId), { s13Cutoff: s13Cutoff });
+      notify();
+    },
+
+    // Límite de la congregación. Los puntos van como una sola cadena de texto,
+    // no como lista de objetos: son más de mil y nunca se editan a mano.
+    // ponytail: se lee al abrir la sesión, igual que el corte del S-13.
+    getBoundary() {
+      return boundary;
+    },
+
+    async setBoundary(value) {
+      boundary = value || null;
+      await updateDoc(doc(db, 'congregations', congregationId), { boundary: boundary });
       notify();
     },
 

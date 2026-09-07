@@ -1,6 +1,8 @@
 import L from 'leaflet';
 import 'leaflet-draw';
 import { getStore } from '../store/index.js';
+import { buildBoundaryLayer } from './map.js';
+import { t } from '../i18n/i18n.js';
 
 export function initPolygonDraw(mapContainer, hiddenInput, existingPolygon) {
   const store = getStore();
@@ -12,9 +14,26 @@ export function initPolygonDraw(mapContainer, hiddenInput, existingPolygon) {
     attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
   }).addTo(map);
 
+  // Dibujar es donde más sirve ver el límite, sobre todo en una congregación
+  // que está trazando sus territorios por primera vez. No restringe nada.
+  const boundaryLayer = buildBoundaryLayer();
+  if (boundaryLayer) {
+    boundaryLayer.addTo(map);
+    const overlays = {};
+    overlays[t('map.boundaryLayer')] = boundaryLayer;
+    L.control.layers(null, overlays).addTo(map);
+  }
+
   const drawnItems = new L.FeatureGroup().addTo(map);
 
-  if (existingPolygon && existingPolygon.length >= 3) {
+  // Territorio nuevo y sin centro guardado: encuadrar el límite. Si no, la
+  // primera congregación que dibuja abre el mapa en vista mundial.
+  const hasExisting = existingPolygon && existingPolygon.length >= 3;
+  if (!hasExisting && boundaryLayer) {
+    map.fitBounds(boundaryLayer.getBounds());
+  }
+
+  if (hasExisting) {
     const coords = existingPolygon.map(function (c) { return [c[1], c[0]]; });
     const polygon = L.polygon(coords, {
       color: '#1E40AF',

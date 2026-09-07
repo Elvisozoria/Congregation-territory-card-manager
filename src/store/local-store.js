@@ -1,10 +1,12 @@
 import { parse as parseKml } from '../utils/kml-import.js';
+import { normalizeTags, territoryTags } from '../utils/tags.js';
+import { parseHouses } from '../utils/helpers.js';
 
 // Demo territories traced along real streets in Centro Histórico, Santiago de los Caballeros
 const SAMPLE_DATA = {
   territories: [
     {
-      id: 1, number: '1', name: 'La Joya', group_name: 'Centro',
+      id: 1, number: '1', name: 'La Joya', tags: ['Centro'],
       polygon: [
         [-70.7142421, 19.4596383], [-70.7140219, 19.4596124], [-70.7136891, 19.4595746],
         [-70.7131125, 19.4595053], [-70.7125173, 19.4594188],
@@ -18,7 +20,7 @@ const SAMPLE_DATA = {
       ]
     },
     {
-      id: 2, number: '2', name: 'La Trinitaria', group_name: 'Centro',
+      id: 2, number: '2', name: 'La Trinitaria', tags: ['Centro'],
       polygon: [
         [-70.7143974, 19.4588071], [-70.7138022, 19.4587458], [-70.7132229, 19.4586727],
         [-70.7126262, 19.4585969], [-70.7120424, 19.4585345], [-70.7114533, 19.4584644],
@@ -34,7 +36,7 @@ const SAMPLE_DATA = {
       ]
     },
     {
-      id: 3, number: '3', name: 'Pueblo Nuevo', group_name: 'Centro',
+      id: 3, number: '3', name: 'Pueblo Nuevo', tags: ['Centro'],
       polygon: [
         [-70.7133420, 19.4576780], [-70.7127442, 19.4575955], [-70.7121617, 19.4575243],
         [-70.7115854, 19.4574568],
@@ -54,7 +56,7 @@ const SAMPLE_DATA = {
 const STORAGE_KEY = 'territory-cards-data';
 
 export function createLocalStore() {
-  let data = { territories: [], history: [], globalLandmarks: [] };
+  let data = { territories: [], history: [], globalLandmarks: [], boundary: null };
   let listeners = [];
   let defaultCenter = [0, 0];
 
@@ -114,7 +116,8 @@ export function createLocalStore() {
         id: nextId(data.territories),
         number: attrs.number || '',
         name: attrs.name || '',
-        group_name: attrs.group_name || '',
+        tags: normalizeTags(attrs.tags),
+        houses: parseHouses(attrs.houses),
         polygon: attrs.polygon || [],
         showQr: !!attrs.showQr,
         notes: attrs.notes || '',
@@ -133,7 +136,8 @@ export function createLocalStore() {
       if (!territory) return null;
       if (attrs.number !== undefined) territory.number = attrs.number;
       if (attrs.name !== undefined) territory.name = attrs.name;
-      if (attrs.group_name !== undefined) territory.group_name = attrs.group_name;
+      if (attrs.tags !== undefined) territory.tags = normalizeTags(attrs.tags);
+      if (attrs.houses !== undefined) territory.houses = parseHouses(attrs.houses);
       if (attrs.polygon !== undefined) territory.polygon = attrs.polygon;
       if (attrs.showQr !== undefined) territory.showQr = attrs.showQr;
       if (attrs.notes !== undefined) territory.notes = attrs.notes;
@@ -322,9 +326,14 @@ export function createLocalStore() {
                 if (t.showQr === undefined) t.showQr = !!t.qr_url;
                 if (t.notes === undefined) t.notes = '';
                 if (!Array.isArray(t.blocks)) t.blocks = [];
+                // Un respaldo viejo trae group_name: se guarda ya como etiqueta.
+                t.tags = territoryTags(t);
+                delete t.group_name;
               });
               if (!Array.isArray(parsed.history)) parsed.history = [];
               if (!Array.isArray(parsed.globalLandmarks)) parsed.globalLandmarks = [];
+              // Un respaldo sin límite no debe borrar el que ya está cargado.
+              if (parsed.boundary === undefined) parsed.boundary = data.boundary || null;
               data = parsed;
               notify();
               resolve();
@@ -358,7 +367,7 @@ export function createLocalStore() {
           const existing = data.territories.find(function (e) { return e.number === t.number; });
           if (existing) {
             existing.name = t.name;
-            existing.group_name = t.group_name;
+            existing.tags = normalizeTags(territoryTags(existing).concat(t.tags || []));
             existing.polygon = t.polygon;
           } else {
             t.id = nextId(data.territories);
@@ -374,7 +383,7 @@ export function createLocalStore() {
     },
 
     reset() {
-      data = { territories: [], history: [], globalLandmarks: [] };
+      data = { territories: [], history: [], globalLandmarks: [], boundary: null };
       try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
       notify();
     },
@@ -405,6 +414,18 @@ export function createLocalStore() {
 
     setS13Cutoff(iso) {
       data.s13Cutoff = iso || null;
+      notify();
+    },
+
+    // Límite de la congregación, el que asigna la sucursal. Es orientación
+    // visual al dibujar, nunca una restricción: se pueden hacer territorios
+    // fuera de la línea porque los linderos reales no siempre coinciden.
+    getBoundary() {
+      return data.boundary || null;
+    },
+
+    setBoundary(boundary) {
+      data.boundary = boundary || null;
       notify();
     }
   };

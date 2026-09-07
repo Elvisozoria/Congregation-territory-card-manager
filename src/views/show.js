@@ -3,6 +3,7 @@ import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
 import { renderSingleMap } from '../components/map.js';
 import { escapeHtml, escapeAttr, todayISO, formatDate } from '../utils/helpers.js';
+import { territoryTags } from '../utils/tags.js';
 import { buildPublicTerritoryUrl } from '../utils/public-id.js';
 import {
   canEditTerritory,
@@ -114,11 +115,13 @@ export function render(container, params) {
       shareTerritoryUrl(store, params.id);
     });
   }
-  if (territory.group_name) {
-    const groupBadge = document.createElement('span');
-    groupBadge.style.cssText = 'font-size:0.8125rem;color:var(--text-secondary);font-weight:400;margin-left:0.75rem;';
-    groupBadge.textContent = territory.group_name;
-    header.querySelector('h1').appendChild(groupBadge);
+  const headerMeta = territoryTags(territory);
+  if (territory.houses) headerMeta.push(t('show.housesCount', { count: territory.houses }));
+  if (headerMeta.length > 0) {
+    const tagBadge = document.createElement('span');
+    tagBadge.style.cssText = 'font-size:0.8125rem;color:var(--text-secondary);font-weight:400;margin-left:0.75rem;';
+    tagBadge.textContent = headerMeta.join(' · ');
+    header.querySelector('h1').appendChild(tagBadge);
   }
   container.appendChild(header);
 

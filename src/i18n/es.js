@@ -29,7 +29,13 @@ export default {
     newTerritory: 'Nuevo Territorio',
     colNumber: '#',
     colName: 'Nombre',
-    colGroup: 'Grupo',
+    colTags: 'Etiquetas',
+    colHouses: 'Casas',
+    untagged: 'Sin etiqueta',
+    clearFilter: 'Quitar filtro',
+    groupByTag: 'Agrupar por etiqueta',
+    sortByNumber: 'Ordenar por número',
+    sortByHouses: 'Ordenar por casas',
     colLandmarks: 'Puntos',
     colHistory: 'Últimas asignaciones',
     btnCard: 'Tarjeta',
@@ -103,6 +109,7 @@ export default {
     historyEdit: 'Editar',
     historyDelete: 'Eliminar',
     confirmDeleteHistory: '¿Eliminar este registro de trabajo?',
+    housesCount: '{count} casas aprox.',
     // Territory notes
     notes: 'Notas',
     // Landmark form (inline)
@@ -162,7 +169,11 @@ export default {
     cancel: 'Cancelar',
     fieldNumber: 'Número',
     fieldName: 'Nombre',
-    fieldGroup: 'Grupo',
+    fieldTags: 'Etiquetas',
+    fieldHouses: 'Casas (aprox.)',
+    housesHint: 'Estimado de casas del territorio. Sirve para repartir la carga parejo y saber si es una salida o tres.',
+    tagsPlaceholder: 'Pedro García, tardes, a pie',
+    tagsHint: 'Separadas por coma. Sirven para agrupar y filtrar: zona, hora del día, modo de recorrido, tipo.',
     fieldQr: 'Mostrar código QR',
     fieldQrHint: 'Muestra un código QR en la tarjeta que enlaza a la vista pública del territorio.',
     fieldNotes: 'Notas / Referencias de acceso',
@@ -297,7 +308,28 @@ export default {
     migrateTitle: 'Migrar datos a la nube',
     migrateDesc: 'Si te registras en modo en línea, podrás subir tus datos locales a la nube.',
     migrateButton: 'Registrarse y migrar datos',
-    switchToOffline: 'Cambiar a modo sin conexión'
+    switchToOffline: 'Cambiar a modo sin conexión',
+    boundaryTitle: 'Límite de la congregación',
+    boundaryDesc: 'Sube el archivo KML o KMZ que da la sucursal. Se dibuja sobre los mapas como guía al trazar territorios. No impide crear territorios fuera de la línea.',
+    boundaryUpload: 'Subir límite',
+    boundaryReplace: 'Reemplazar límite',
+    boundaryRemove: 'Quitar límite',
+    boundaryLoaded: 'Límite cargado',
+    boundaryUpdated: 'Actualizado por la sucursal',
+    boundaryPoints: 'puntos',
+    boundaryBorders: 'Linderos',
+    boundaryNorth: 'Norte',
+    boundaryEast: 'Este',
+    boundarySouth: 'Sur',
+    boundaryWest: 'Oeste',
+    boundaryNone: 'Todavía no has subido el límite de la congregación.',
+    boundaryError: 'No se pudo leer el límite: ',
+    boundaryEmpty: 'El archivo no contiene un polígono válido.',
+    boundaryConfirmRemove: '¿Quitar el límite de la congregación?'
+  },
+
+  map: {
+    boundaryLayer: 'Límite de la congregación'
   },
 
   // Alerts

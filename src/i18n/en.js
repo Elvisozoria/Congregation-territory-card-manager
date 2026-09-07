@@ -29,7 +29,13 @@ export default {
     newTerritory: 'New Territory',
     colNumber: '#',
     colName: 'Name',
-    colGroup: 'Group',
+    colTags: 'Tags',
+    colHouses: 'Houses',
+    untagged: 'Untagged',
+    clearFilter: 'Clear filter',
+    groupByTag: 'Group by tag',
+    sortByNumber: 'Sort by number',
+    sortByHouses: 'Sort by houses',
     colLandmarks: 'Landmarks',
     colHistory: 'Recent assignments',
     btnCard: 'Card',
@@ -103,6 +109,7 @@ export default {
     historyEdit: 'Edit',
     historyDelete: 'Delete',
     confirmDeleteHistory: 'Delete this work record?',
+    housesCount: '{count} houses approx.',
     // Territory notes
     notes: 'Notes',
     // Landmark form (inline)
@@ -162,7 +169,11 @@ export default {
     cancel: 'Cancel',
     fieldNumber: 'Number',
     fieldName: 'Name',
-    fieldGroup: 'Group',
+    fieldTags: 'Tags',
+    fieldHouses: 'Houses (approx.)',
+    housesHint: 'Estimated houses in the territory. Used to share the load evenly and to tell one outing from three.',
+    tagsPlaceholder: 'Pedro Garcia, afternoons, on foot',
+    tagsHint: 'Comma separated. Used to group and filter: area, time of day, how you cover it, type.',
     fieldQr: 'Show QR code',
     fieldQrHint: 'Displays a QR code on the card linking to the public view of this territory.',
     fieldNotes: 'Notes / Access instructions',
@@ -297,7 +308,28 @@ export default {
     migrateTitle: 'Migrate data to cloud',
     migrateDesc: 'If you register for online mode, you can upload your local data to the cloud.',
     migrateButton: 'Register and migrate data',
-    switchToOffline: 'Switch to offline mode'
+    switchToOffline: 'Switch to offline mode',
+    boundaryTitle: 'Congregation boundary',
+    boundaryDesc: 'Upload the KML or KMZ file the branch provides. It is drawn over the maps as a guide while tracing territories. It does not prevent creating territories outside the line.',
+    boundaryUpload: 'Upload boundary',
+    boundaryReplace: 'Replace boundary',
+    boundaryRemove: 'Remove boundary',
+    boundaryLoaded: 'Boundary loaded',
+    boundaryUpdated: 'Updated by the branch',
+    boundaryPoints: 'points',
+    boundaryBorders: 'Borders',
+    boundaryNorth: 'North',
+    boundaryEast: 'East',
+    boundarySouth: 'South',
+    boundaryWest: 'West',
+    boundaryNone: 'You have not uploaded the congregation boundary yet.',
+    boundaryError: 'Could not read the boundary: ',
+    boundaryEmpty: 'The file does not contain a valid polygon.',
+    boundaryConfirmRemove: 'Remove the congregation boundary?'
+  },
+
+  map: {
+    boundaryLayer: 'Congregation boundary'
   },
 
   // Alerts

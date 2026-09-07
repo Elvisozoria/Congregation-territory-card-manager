@@ -42,3 +42,13 @@ export function formatDate(iso, opts) {
     ? m[2] + '/' + m[3] + '/' + year
     : m[3] + '/' + m[2] + '/' + year;
 }
+
+// Casas estimadas de un territorio: entero no negativo, o null cuando no se
+// sabe. Siempre es aproximado, así que no hay marcador de exacto: para
+// balancear la carga, un estimado sirve igual que un conteo exacto.
+export function parseHouses(value) {
+  if (value === null || value === undefined || String(value).trim() === '') return null;
+  const n = Math.round(Number(value));
+  if (!isFinite(n) || n < 0) return null;
+  return n;
+}
