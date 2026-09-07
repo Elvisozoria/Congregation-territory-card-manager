@@ -26,7 +26,14 @@ export function initPolygonDraw(mapContainer, hiddenInput, existingPolygon) {
 
   const drawnItems = new L.FeatureGroup().addTo(map);
 
-  if (existingPolygon && existingPolygon.length >= 3) {
+  // Territorio nuevo y sin centro guardado: encuadrar el límite. Si no, la
+  // primera congregación que dibuja abre el mapa en vista mundial.
+  const hasExisting = existingPolygon && existingPolygon.length >= 3;
+  if (!hasExisting && boundaryLayer) {
+    map.fitBounds(boundaryLayer.getBounds());
+  }
+
+  if (hasExisting) {
     const coords = existingPolygon.map(function (c) { return [c[1], c[0]]; });
     const polygon = L.polygon(coords, {
       color: '#1E40AF',

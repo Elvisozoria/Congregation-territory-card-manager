@@ -173,6 +173,7 @@ function buildBoundarySection() {
 
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
+  fileInput.id = 'boundary-file';
   fileInput.accept = '.kml,.kmz';
   fileInput.style.display = 'none';
 

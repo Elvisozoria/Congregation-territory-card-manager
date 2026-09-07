@@ -35,6 +35,7 @@ function addBoundaryOverlay(map, baseLayers) {
     boundaryLayer.addTo(map);
   }
   L.control.layers(baseLayers, overlays).addTo(map);
+  return boundaryLayer;
 }
 
 export function renderOverviewMap(container, territories) {
@@ -60,7 +61,7 @@ export function renderOverviewMap(container, territories) {
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.7 })
   ]);
 
-  addBoundaryOverlay(map, { 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid });
+  const boundaryLayer = addBoundaryOverlay(map, { 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid });
 
   const bounds = [];
 
@@ -95,6 +96,9 @@ export function renderOverviewMap(container, territories) {
 
   if (bounds.length > 0) {
     map.fitBounds(L.latLngBounds(bounds));
+  } else if (boundaryLayer) {
+    // Sin territorios dibujados todavía, el límite es lo único que hay que ver.
+    map.fitBounds(boundaryLayer.getBounds());
   }
 
   return function () { map.remove(); };
