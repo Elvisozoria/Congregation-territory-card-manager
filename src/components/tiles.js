@@ -25,9 +25,12 @@ const CARTO_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">Ope
   '&copy; <a href="https://carto.com/attributions">CARTO</a>';
 const ESRI_ATTR = 'Tiles &copy; <a href="https://www.esri.com/">Esri</a>';
 
+// El parámetro es `key`. Con `api_key` la petición responde 200 y devuelve el
+// mapa, pero con la marca de agua encima: no falla, sólo ignora la llave, así
+// que desde fuera parece que la llave no sirve.
 function carto(style) {
   return 'https://{s}.basemaps.cartocdn.com/rastertiles/' + style +
-    '/{z}/{x}/{y}{r}.png?api_key=' + encodeURIComponent(CARTO_KEY);
+    '/{z}/{x}/{y}{r}.png?key=' + encodeURIComponent(CARTO_KEY);
 }
 
 // Respaldo sin llave. El lienzo gris claro de Esri es casi blanco y sin relieve
