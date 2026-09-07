@@ -1,5 +1,6 @@
 import { parse as parseKml } from '../utils/kml-import.js';
 import { normalizeTags, territoryTags } from '../utils/tags.js';
+import { parseHouses } from '../utils/helpers.js';
 
 // Demo territories traced along real streets in Centro Histórico, Santiago de los Caballeros
 const SAMPLE_DATA = {
@@ -116,6 +117,7 @@ export function createLocalStore() {
         number: attrs.number || '',
         name: attrs.name || '',
         tags: normalizeTags(attrs.tags),
+        houses: parseHouses(attrs.houses),
         polygon: attrs.polygon || [],
         showQr: !!attrs.showQr,
         notes: attrs.notes || '',
@@ -135,6 +137,7 @@ export function createLocalStore() {
       if (attrs.number !== undefined) territory.number = attrs.number;
       if (attrs.name !== undefined) territory.name = attrs.name;
       if (attrs.tags !== undefined) territory.tags = normalizeTags(attrs.tags);
+      if (attrs.houses !== undefined) territory.houses = parseHouses(attrs.houses);
       if (attrs.polygon !== undefined) territory.polygon = attrs.polygon;
       if (attrs.showQr !== undefined) territory.showQr = attrs.showQr;
       if (attrs.notes !== undefined) territory.notes = attrs.notes;

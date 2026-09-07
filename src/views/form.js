@@ -1,7 +1,7 @@
 import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
 import { initPolygonDraw } from '../components/polygon-draw.js';
-import { escapeHtml, escapeAttr } from '../utils/helpers.js';
+import { escapeHtml, escapeAttr, parseHouses } from '../utils/helpers.js';
 import { canCreateTerritory, canEditTerritory } from '../auth/permissions.js';
 import { territoryTags, allTags, parseTagsInput, formatTagsInput } from '../utils/tags.js';
 
@@ -83,6 +83,7 @@ export function render(container, params) {
   const valNum = src ? src.number || '' : '';
   const valName = src ? src.name || '' : '';
   const valTags = src ? formatTagsInput(src.tags !== undefined ? src.tags : territoryTags(src)) : '';
+  const valHouses = src && src.houses ? String(src.houses) : '';
 
   // Las sugerencias salen de las etiquetas ya en uso: no hay catálogo que
   // administrar, el datalist nativo hace el autocompletado.
@@ -106,6 +107,11 @@ export function render(container, params) {
       '<input type="text" id="field-tags" list="tag-suggestions" placeholder="' + escapeAttr(t('form.tagsPlaceholder')) + '" value="' + escapeAttr(valTags) + '" />' +
       '<datalist id="tag-suggestions">' + tagSuggestions + '</datalist>' +
       '<small style="color:var(--text-secondary);">' + escapeHtml(t('form.tagsHint')) + '</small>' +
+    '</div>' +
+    '<div class="form-group">' +
+      '<label for="field-houses">' + escapeHtml(t('form.fieldHouses')) + '</label>' +
+      '<input type="number" id="field-houses" min="0" step="1" inputmode="numeric" placeholder="25" value="' + escapeAttr(valHouses) + '" />' +
+      '<small style="color:var(--text-secondary);">' + escapeHtml(t('form.housesHint')) + '</small>' +
     '</div>' +
     '<div class="form-group toggle-group">' +
       '<label class="toggle-label">' +
@@ -137,6 +143,7 @@ export function render(container, params) {
         number: document.getElementById('field-number').value,
         name: document.getElementById('field-name').value,
         tags: parseTagsInput(document.getElementById('field-tags').value),
+        houses: document.getElementById('field-houses').value,
         showQr: document.getElementById('field-qr').checked,
         notes: document.getElementById('field-notes').value
       });
@@ -198,6 +205,7 @@ export function render(container, params) {
     const number = document.getElementById('field-number').value.trim();
     const name = document.getElementById('field-name').value.trim();
     const tags = parseTagsInput(document.getElementById('field-tags').value);
+    const houses = parseHouses(document.getElementById('field-houses').value);
     const showQr = document.getElementById('field-qr').checked;
     const notes = document.getElementById('field-notes').value.trim();
     let polygon = [];
@@ -228,7 +236,7 @@ export function render(container, params) {
       return;
     }
 
-    const attrs = { number, name, tags, showQr, notes, polygon };
+    const attrs = { number, name, tags, houses, showQr, notes, polygon };
 
     isDirty = false;
     clearDraft(params.id);

@@ -5,6 +5,7 @@ import {
 import { db } from './config.js';
 import { parse as parseKml } from '../utils/kml-import.js';
 import { normalizeTags, territoryTags } from '../utils/tags.js';
+import { parseHouses } from '../utils/helpers.js';
 import { generatePublicId } from '../utils/public-id.js';
 
 export async function createFirestoreStore(user, congregationId) {
@@ -118,6 +119,7 @@ export async function createFirestoreStore(user, congregationId) {
     if (attrs.number !== undefined) obj.number = attrs.number;
     if (attrs.name !== undefined) obj.name = attrs.name;
     if (attrs.tags !== undefined) obj.tags = normalizeTags(attrs.tags);
+    if (attrs.houses !== undefined) obj.houses = parseHouses(attrs.houses);
     if (attrs.polygon !== undefined) obj.polygon = polygonToFirestore(attrs.polygon);
     if (attrs.showQr !== undefined) obj.showQr = attrs.showQr;
     if (attrs.notes !== undefined) obj.notes = attrs.notes;
@@ -154,6 +156,7 @@ export async function createFirestoreStore(user, congregationId) {
         number: attrs.number || '',
         name: attrs.name || '',
         tags: normalizeTags(attrs.tags),
+        houses: parseHouses(attrs.houses),
         polygon: polygonToFirestore(attrs.polygon || []),
         showQr: !!attrs.showQr,
         notes: attrs.notes || '',

@@ -115,11 +115,12 @@ export function render(container, params) {
       shareTerritoryUrl(store, params.id);
     });
   }
-  const tags = territoryTags(territory);
-  if (tags.length > 0) {
+  const headerMeta = territoryTags(territory);
+  if (territory.houses) headerMeta.push(t('show.housesCount', { count: territory.houses }));
+  if (headerMeta.length > 0) {
     const tagBadge = document.createElement('span');
     tagBadge.style.cssText = 'font-size:0.8125rem;color:var(--text-secondary);font-weight:400;margin-left:0.75rem;';
-    tagBadge.textContent = tags.join(' · ');
+    tagBadge.textContent = headerMeta.join(' · ');
     header.querySelector('h1').appendChild(tagBadge);
   }
   container.appendChild(header);

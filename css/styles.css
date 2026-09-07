@@ -268,6 +268,7 @@ a.navbar-brand:hover { color: white; }
 .tag-chip:hover { color: var(--text-primary); }
 .tag-chip.active { background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary); }
 .tag-chip-clear { background: none; border-style: dashed; }
+.tag-sort-select { font-size: 0.8125rem; color: var(--text-secondary); background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: 6px; padding: 0.25rem 0.5rem; cursor: pointer; }
 .tag-group-toggle { display: flex; align-items: center; gap: 0.25rem; font-size: 0.8125rem; color: var(--text-secondary); cursor: pointer; margin-left: auto; }
 .tag-group-heading { font-size: 0.9375rem; font-weight: 600; color: var(--text-secondary); margin: 1.5rem 0 0.625rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border-secondary); }
 .tag-group-heading:first-child { margin-top: 0; }

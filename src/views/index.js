@@ -29,6 +29,16 @@ function setFilterPref(tags) {
   try { localStorage.setItem(FILTER_KEY, JSON.stringify(tags)); } catch (e) { /* ignore */ }
 }
 
+const SORT_KEY = 'territory-sort';
+
+function getSortPref() {
+  try { return localStorage.getItem(SORT_KEY) === 'houses' ? 'houses' : 'number'; } catch (e) { return 'number'; }
+}
+
+function setSortPref(value) {
+  try { localStorage.setItem(SORT_KEY, value); } catch (e) { /* ignore */ }
+}
+
 function getGroupPref() {
   try { return localStorage.getItem(GROUP_KEY) === '1'; } catch (e) { return false; }
 }
@@ -213,10 +223,11 @@ export function render(container) {
     return availableTags.some(function (a) { return a.toLowerCase() === String(tag).toLowerCase(); });
   });
   let groupByTag = getGroupPref();
+  let sortBy = getSortPref();
 
   const filterBar = document.createElement('div');
   filterBar.className = 'tag-filter-bar';
-  if (availableTags.length > 0) container.appendChild(filterBar);
+  container.appendChild(filterBar);
 
   // Map
   const mapDiv = document.createElement('div');
@@ -249,7 +260,15 @@ export function render(container) {
   }
 
   function visibleTerritories() {
-    return territories.filter(function (territory) { return matchesTags(territory, selectedTags); });
+    const list = territories.filter(function (territory) { return matchesTags(territory, selectedTags); });
+    if (sortBy !== 'houses') return list;
+    // Por casas, de mayor a menor: es el orden con el que se reparte carga.
+    // Los que no tienen conteo van al final, no al principio como haría un 0.
+    return list.sort(function (a, b) {
+      const ha = a.houses == null ? -1 : a.houses;
+      const hb = b.houses == null ? -1 : b.houses;
+      return hb - ha;
+    });
   }
 
   function buildGroupHeading(label, count) {
@@ -260,7 +279,6 @@ export function render(container) {
   }
 
   function paintFilterBar() {
-    if (availableTags.length === 0) return;
     filterBar.innerHTML = '';
 
     availableTags.forEach(function (tag) {
@@ -291,6 +309,24 @@ export function render(container) {
       });
       filterBar.appendChild(clear);
     }
+
+    const sortSelect = document.createElement('select');
+    sortSelect.className = 'tag-sort-select';
+    [['number', t('index.sortByNumber')], ['houses', t('index.sortByHouses')]].forEach(function (opt) {
+      const option = document.createElement('option');
+      option.value = opt[0];
+      option.textContent = opt[1];
+      if (sortBy === opt[0]) option.selected = true;
+      sortSelect.appendChild(option);
+    });
+    sortSelect.addEventListener('change', function () {
+      sortBy = sortSelect.value;
+      setSortPref(sortBy);
+      redraw();
+    });
+    filterBar.appendChild(sortSelect);
+
+    if (availableTags.length === 0) return;
 
     const groupLabel = document.createElement('label');
     groupLabel.className = 'tag-group-toggle';
@@ -348,6 +384,9 @@ export function render(container) {
       const meta = document.createElement('div');
       meta.className = 'territory-grid-card-meta';
       meta.innerHTML = '<span>' + territory.landmarks.length + ' ' + escapeHtml(t('index.colLandmarks').toLowerCase()) + '</span>';
+      if (territory.houses) {
+        meta.innerHTML += '<span>' + escapeHtml(t('show.housesCount', { count: territory.houses })) + '</span>';
+      }
 
       // Assignment badge
       const activeAssignment = store.getActiveAssignment ? store.getActiveAssignment(territory.id) : null;
@@ -431,6 +470,9 @@ export function render(container) {
       const tdGroup = document.createElement('td');
       tdGroup.textContent = territoryTags(territory).join(', ');
 
+      const tdHouses = document.createElement('td');
+      tdHouses.textContent = territory.houses ? String(territory.houses) : '';
+
       const tdLandmarks = document.createElement('td');
       tdLandmarks.textContent = territory.landmarks.length;
 
@@ -471,6 +513,7 @@ export function render(container) {
       tr.appendChild(tdNum);
       tr.appendChild(tdName);
       tr.appendChild(tdGroup);
+      tr.appendChild(tdHouses);
       tr.appendChild(tdLandmarks);
       tr.appendChild(tdHistory);
       tr.appendChild(tdActions);
@@ -479,7 +522,7 @@ export function render(container) {
 
   function renderTable() {
     contentArea.innerHTML = '';
-    const thead = '<thead><tr><th>' + escapeHtml(t('index.colNumber')) + '</th><th>' + escapeHtml(t('index.colName')) + '</th><th>' + escapeHtml(t('index.colTags')) + '</th><th>' + escapeHtml(t('index.colLandmarks')) + '</th><th>' + escapeHtml(t('index.colHistory')) + '</th><th></th></tr></thead>';
+    const thead = '<thead><tr><th>' + escapeHtml(t('index.colNumber')) + '</th><th>' + escapeHtml(t('index.colName')) + '</th><th>' + escapeHtml(t('index.colTags')) + '</th><th>' + escapeHtml(t('index.colHouses')) + '</th><th>' + escapeHtml(t('index.colLandmarks')) + '</th><th>' + escapeHtml(t('index.colHistory')) + '</th><th></th></tr></thead>';
 
     groupsOf(visibleTerritories()).forEach(function (group) {
       if (group.label !== null) contentArea.appendChild(buildGroupHeading(group.label, group.items.length));
