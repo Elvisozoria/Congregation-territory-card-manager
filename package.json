@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/dates.test.js tests/s13.test.js tests/tags.test.js tests/houses.test.js tests/kml-boundary.test.js tests/kml-notes.test.js tests/auth-watch.test.js"
   },
   "devDependencies": {
     "vite": "^8.0.5"

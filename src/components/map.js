@@ -42,7 +42,9 @@ export function renderOverviewMap(container, territories) {
   const store = getStore();
   const defaultCenter = store.getDefaultCenter();
   const defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
-  const map = L.map(container, { center: defaultCenter, zoom: defaultZoom });
+  // zoomSnap 0 permite zoom fraccionado: sin esto fitBounds baja al entero
+  // inferior y deja los territorios pequenos en medio de un mapa muy abierto.
+  const map = L.map(container, { center: defaultCenter, zoom: defaultZoom, zoomSnap: 0 });
 
   const osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
@@ -108,7 +110,9 @@ export function renderSingleMap(container, territory, onMapClick, onMapReady) {
   const store = getStore();
   const defaultCenter = store.getDefaultCenter();
   const defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
-  const map = L.map(container, { center: defaultCenter, zoom: defaultZoom });
+  // zoomSnap 0 permite zoom fraccionado: sin esto fitBounds baja al entero
+  // inferior y deja los territorios pequenos en medio de un mapa muy abierto.
+  const map = L.map(container, { center: defaultCenter, zoom: defaultZoom, zoomSnap: 0 });
 
   const osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
