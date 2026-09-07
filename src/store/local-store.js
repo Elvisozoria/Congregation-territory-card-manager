@@ -369,10 +369,12 @@ export function createLocalStore() {
             existing.name = t.name;
             existing.tags = normalizeTags(territoryTags(existing).concat(t.tags || []));
             existing.polygon = t.polygon;
+            // Las notas escritas a mano mandan: el KML solo rellena si estan vacias.
+            if (t.notes && !existing.notes) existing.notes = t.notes;
           } else {
             t.id = nextId(data.territories);
             t.showQr = false;
-            t.notes = '';
+            t.notes = t.notes || '';
             t.landmarks = [];
             t.blocks = [];
             data.territories.push(t);
