@@ -30,6 +30,16 @@ function setFilterPref(tags) {
   try { localStorage.setItem(FILTER_KEY, JSON.stringify(tags)); } catch (e) { /* ignore */ }
 }
 
+const MAP_KEY = 'territory-map-visible';
+
+function getMapPref() {
+  try { return localStorage.getItem(MAP_KEY) === 'hidden' ? 'hidden' : 'shown'; } catch (e) { return 'shown'; }
+}
+
+function setMapPref(value) {
+  try { localStorage.setItem(MAP_KEY, value); } catch (e) { /* ignore */ }
+}
+
 const SORT_KEY = 'territory-sort';
 
 function getSortPref() {
@@ -92,7 +102,9 @@ function buildQuickAction(store, territory, profile, onDone) {
   const active = store.getActiveAssignment ? store.getActiveAssignment(territory.id) : null;
 
   const btn = document.createElement('button');
-  btn.className = 'btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary');
+  // Clase propia para que la acción principal conserve su peso aunque el resto
+  // de botones de la ficha estén apagados a texto.
+  btn.className = 'btn btn-sm quick-action ' + (active ? 'btn-secondary' : 'btn-primary');
   btn.textContent = active ? t('index.quickComplete') : t('index.quickAssign');
   btn.addEventListener('click', async function (e) {
     e.preventDefault();
@@ -375,10 +387,36 @@ export function render(container) {
   filterBar.className = 'tag-filter-bar';
   container.appendChild(filterBar);
 
-  // Map
+  // El mapa ocupa un tercio de la pantalla y con la lista ya filtrada muchas
+  // veces estorba. Se puede recoger, y la app lo recuerda.
+  const mapHead = document.createElement('div');
+  mapHead.className = 'list-head';
+
+  const mapToggle = document.createElement('button');
+  mapToggle.type = 'button';
+  mapToggle.className = 'map-toggle';
+  mapHead.appendChild(document.createElement('span'));
+  mapHead.appendChild(mapToggle);
+  container.appendChild(mapHead);
+
   const mapDiv = document.createElement('div');
   mapDiv.className = 'map-container';
   container.appendChild(mapDiv);
+
+  function paintMapToggle() {
+    const hidden = getMapPref() === 'hidden';
+    mapDiv.style.display = hidden ? 'none' : '';
+    mapToggle.textContent = hidden ? t('index.showMap') : t('index.hideMap');
+  }
+
+  mapToggle.addEventListener('click', function () {
+    setMapPref(getMapPref() === 'hidden' ? 'shown' : 'hidden');
+    paintMapToggle();
+    if (getMapPref() !== 'hidden') {
+      window.setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 60);
+    }
+  });
+  paintMapToggle();
 
   // Un territorio con varias etiquetas sale bajo cada una: es justo lo que se
   // busca al pedir "muéstrame los de Pedro García" y "los de a pie".
@@ -543,13 +581,13 @@ export function render(container) {
       num.className = 'territory-grid-card-number';
       num.textContent = territory.number;
       cardHeader.appendChild(num);
-      const cardTags = territoryTags(territory);
-      if (cardTags.length > 0) {
-        const group = document.createElement('span');
-        group.className = 'territory-grid-card-group';
-        group.textContent = cardTags.map(function (x) { return splitTag(x).label; }).join(' · ');
-        cardHeader.appendChild(group);
-      }
+      // El estado va donde el ojo ya mira, junto al número. Antes era una
+      // etiqueta más entre los contadores.
+      const activeForPill = store.getActiveAssignment ? store.getActiveAssignment(territory.id) : null;
+      const pill = document.createElement('span');
+      pill.className = 'state-pill ' + (activeForPill ? 'out' : 'free');
+      pill.textContent = activeForPill ? activeForPill.person : t('show.available');
+      cardHeader.appendChild(pill);
       card.appendChild(cardHeader);
 
       const name = document.createElement('div');
@@ -573,12 +611,10 @@ export function render(container) {
         meta.innerHTML += '<span>' + escapeHtml(t('show.housesCount', { count: territory.houses })) + '</span>';
       }
 
-      // Assignment badge
-      const activeAssignment = store.getActiveAssignment ? store.getActiveAssignment(territory.id) : null;
-      if (activeAssignment) {
-        meta.innerHTML += '<span class="status-badge status-active">' + escapeHtml(activeAssignment.person) + '</span>';
-      } else {
-        meta.innerHTML += '<span class="status-badge status-completed" style="opacity:0.5">' + escapeHtml(t('show.available')) + '</span>';
+      const cardTags = territoryTags(territory);
+      if (cardTags.length > 0) {
+        meta.innerHTML += '<span class="territory-grid-card-group">' +
+          escapeHtml(cardTags.map(function (x) { return splitTag(x).label; }).join(' · ')) + '</span>';
       }
 
       card.appendChild(meta);

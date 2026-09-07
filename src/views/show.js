@@ -108,9 +108,16 @@ export function render(container, params) {
   if (allowEditTerr) {
     headerActions += '<a href="#/territories/' + territory.id + '/edit" class="btn btn-secondary">' + escapeHtml(t('show.btnEdit')) + '</a> ';
   }
-  headerActions += '<a href="#/" class="btn btn-secondary">' + escapeHtml(t('show.btnBack')) + '</a>';
+  // "Volver" no es una acción sobre el territorio: pasa a ser una miga de pan
+  // arriba a la izquierda, y deja las tres acciones reales sin competencia.
   header.innerHTML = '<h1>' + escapeHtml(territory.number) + ' - ' + escapeHtml(territory.name) + '</h1>' +
     '<div>' + headerActions + '</div>';
+
+  const crumb = document.createElement('a');
+  crumb.className = 'crumb';
+  crumb.href = '#/';
+  crumb.textContent = '\u2190 ' + t('index.title');
+  container.appendChild(crumb);
 
   const shareBtnEl = header.querySelector('.share-btn');
   if (shareBtnEl) {

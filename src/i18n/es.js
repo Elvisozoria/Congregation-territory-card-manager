@@ -39,6 +39,8 @@ export default {
     promptAssign: '¿A quién se asigna el territorio {number}?',
     confirmComplete: '¿Marcar como completado el territorio de {name}?',
     printFiltered: 'Imprimir estos',
+    showMap: 'Mostrar mapa',
+    hideMap: 'Ocultar mapa',
     pendingTitle: 'Qué toca ahora',
     pendingOpen: 'Llevan mucho asignados',
     pendingNever: 'Nunca se han trabajado',

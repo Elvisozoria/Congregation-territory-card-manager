@@ -124,7 +124,8 @@ export function render(container) {
     logoutSection.className = 'admin-section';
     logoutSection.dataset.order = '60';
     const logoutBtn = document.createElement('button');
-    logoutBtn.className = 'btn btn-danger';
+    // Cerrar sesión no destruye nada: el rojo se reserva para borrar.
+    logoutBtn.className = 'btn btn-secondary';
     logoutBtn.textContent = t('settings.logout');
     logoutBtn.addEventListener('click', async function () {
       const { signOut } = await import('../firebase/auth.js');

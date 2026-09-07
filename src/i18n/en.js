@@ -39,6 +39,8 @@ export default {
     promptAssign: 'Who is territory {number} assigned to?',
     confirmComplete: 'Mark the assignment for {name} as completed?',
     printFiltered: 'Print these',
+    showMap: 'Show map',
+    hideMap: 'Hide map',
     pendingTitle: 'What needs attention',
     pendingOpen: 'Out for a long time',
     pendingNever: 'Never worked',
