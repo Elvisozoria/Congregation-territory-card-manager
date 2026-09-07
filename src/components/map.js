@@ -48,7 +48,7 @@ export function renderOverviewMap(container, territories) {
   const map = L.map(container, { center: defaultCenter, zoom: defaultZoom, zoomSnap: 0 });
 
   const bases = baseLayers();
-  bases['Street'].addTo(map);
+  bases['Clean'].addTo(map);
 
   const boundaryLayer = addBoundaryOverlay(map, bases);
 
@@ -102,7 +102,7 @@ export function renderSingleMap(container, territory, onMapClick, onMapReady) {
   const map = L.map(container, { center: defaultCenter, zoom: defaultZoom, zoomSnap: 0 });
 
   const bases = baseLayers();
-  bases['Street'].addTo(map);
+  bases['Clean'].addTo(map);
 
   addBoundaryOverlay(map, bases);
 
