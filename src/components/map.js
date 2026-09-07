@@ -3,6 +3,7 @@ import { getStore } from '../store/index.js';
 import { escapeHtml } from '../utils/helpers.js';
 import { parseCoordString } from '../utils/kml-import.js';
 import { t } from '../i18n/i18n.js';
+import { baseLayers } from './tiles.js';
 
 const TERRITORY_COLORS = ['#1E40AF', '#B91C1C', '#047857', '#7C3AED', '#B45309', '#BE185D'];
 
@@ -27,14 +28,14 @@ export function buildBoundaryLayer() {
 
 // El control de capas de Leaflet ya da la casilla de encender y apagar, así que
 // el interruptor de "ver límite" no se construye a mano.
-function addBoundaryOverlay(map, baseLayers) {
+function addBoundaryOverlay(map, bases) {
   const boundaryLayer = buildBoundaryLayer();
   const overlays = {};
   if (boundaryLayer) {
     overlays[t('map.boundaryLayer')] = boundaryLayer;
     boundaryLayer.addTo(map);
   }
-  L.control.layers(baseLayers, overlays).addTo(map);
+  L.control.layers(bases, overlays).addTo(map);
   return boundaryLayer;
 }
 
@@ -42,26 +43,14 @@ export function renderOverviewMap(container, territories) {
   const store = getStore();
   const defaultCenter = store.getDefaultCenter();
   const defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
-  const map = L.map(container, { center: defaultCenter, zoom: defaultZoom });
+  // zoomSnap 0 permite zoom fraccionado: sin esto fitBounds baja al entero
+  // inferior y deja los territorios pequenos en medio de un mapa muy abierto.
+  const map = L.map(container, { center: defaultCenter, zoom: defaultZoom, zoomSnap: 0 });
 
-  const osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-  }).addTo(map);
+  const bases = baseLayers();
+  bases['Street'].addTo(map);
 
-  const satellite = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Tiles &copy; Esri' }
-  );
-
-  const hybrid = L.layerGroup([
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { attribution: 'Tiles &copy; Esri' }
-    ),
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.7 })
-  ]);
-
-  const boundaryLayer = addBoundaryOverlay(map, { 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid });
+  const boundaryLayer = addBoundaryOverlay(map, bases);
 
   const bounds = [];
 
@@ -108,26 +97,14 @@ export function renderSingleMap(container, territory, onMapClick, onMapReady) {
   const store = getStore();
   const defaultCenter = store.getDefaultCenter();
   const defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
-  const map = L.map(container, { center: defaultCenter, zoom: defaultZoom });
+  // zoomSnap 0 permite zoom fraccionado: sin esto fitBounds baja al entero
+  // inferior y deja los territorios pequenos en medio de un mapa muy abierto.
+  const map = L.map(container, { center: defaultCenter, zoom: defaultZoom, zoomSnap: 0 });
 
-  const osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-  }).addTo(map);
+  const bases = baseLayers();
+  bases['Street'].addTo(map);
 
-  const satellite = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Tiles &copy; Esri' }
-  );
-
-  const hybrid = L.layerGroup([
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { attribution: 'Tiles &copy; Esri' }
-    ),
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.7 })
-  ]);
-
-  addBoundaryOverlay(map, { 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid });
+  addBoundaryOverlay(map, bases);
 
   if (territory.polygon && territory.polygon.length >= 3) {
     const coords = territory.polygon.map(function (c) { return [c[1], c[0]]; });

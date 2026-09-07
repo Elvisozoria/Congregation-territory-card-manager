@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import { streetLayer } from './tiles.js';
 import QRCode from 'qrcode';
 import { escapeHtml } from '../utils/helpers.js';
 
@@ -31,7 +32,7 @@ export function renderCardMap(cardElement, territory, globalLandmarks, options) 
     boxZoom: editable
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+  streetLayer().addTo(map);
 
   let defaultBounds = null;
 

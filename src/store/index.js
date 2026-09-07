@@ -4,6 +4,7 @@ let currentStore = null;
 let currentUserProfile = null;
 let storeReadyCallbacks = [];
 let storeReady = false;
+let unsubscribeAuth = null;
 
 export function getMode() {
   return localStorage.getItem('app-mode'); // 'offline' | 'online' | null
@@ -46,6 +47,34 @@ function notifyStoreReady() {
   storeReadyCallbacks = [];
 }
 
+// Observa la sesion soltando siempre el observador anterior, y devuelve una
+// promesa que se resuelve la primera vez que llega un cambio de sesion.
+//
+// El fallo que arregla: initStore registraba un observador nuevo en cada
+// llamada sin soltar el de antes. Al volver a entrar despues de cerrar sesion
+// habia dos vivos; el viejo marcaba la tienda como lista y el nuevo ya no
+// resolvia su promesa, asi que el boton de entrar se quedaba en "..." y no
+// pasaba nada mas.
+export function watchAuthOnce(subscribe, handler) {
+  if (unsubscribeAuth) {
+    unsubscribeAuth();
+    unsubscribeAuth = null;
+  }
+  return new Promise(function (resolve) {
+    let settled = false;
+    unsubscribeAuth = subscribe(async function (user) {
+      try {
+        await handler(user);
+      } finally {
+        if (!settled) {
+          settled = true;
+          resolve();
+        }
+      }
+    });
+  });
+}
+
 export async function initStore() {
   // Reset ready state for re-initialization (e.g., after login)
   storeReady = false;
@@ -56,8 +85,7 @@ export async function initStore() {
       const { onAuthChange, getCurrentUserProfile } = await import('../firebase/auth.js');
       const { createFirestoreStore } = await import('../firebase/firestore-store.js');
 
-      return new Promise(function (resolve) {
-        onAuthChange(async function (user) {
+      return watchAuthOnce(onAuthChange, async function (user) {
           if (user) {
             try {
               // Check for pending invite first
@@ -85,11 +113,7 @@ export async function initStore() {
             if (currentStore && currentStore.destroy) currentStore.destroy();
             currentStore = null;
           }
-          if (!storeReady) {
-            notifyStoreReady();
-            resolve();
-          }
-        });
+        notifyStoreReady();
       });
     } catch (err) {
       console.error('Failed to load Firebase:', err);
