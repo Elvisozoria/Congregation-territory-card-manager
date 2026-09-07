@@ -405,11 +405,14 @@ export async function createFirestoreStore(user, congregationId) {
       for (const t of imported) {
         const existing = territories.find(function (e) { return e.number === t.number; });
         if (existing) {
-          await this.updateTerritory(existing.id, {
+          const updates = {
             name: t.name,
             tags: normalizeTags(territoryTags(existing).concat(t.tags || [])),
             polygon: t.polygon
-          });
+          };
+          // Las notas escritas a mano mandan: el KML solo rellena si estan vacias.
+          if (t.notes && !existing.notes) updates.notes = t.notes;
+          await this.updateTerritory(existing.id, updates);
         } else {
           await this.createTerritory({
             number: t.number,
@@ -417,7 +420,7 @@ export async function createFirestoreStore(user, congregationId) {
             tags: t.tags,
             polygon: t.polygon,
             showQr: false,
-            notes: '',
+            notes: t.notes || '',
             landmarks: [],
             blocks: []
           });

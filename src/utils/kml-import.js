@@ -150,6 +150,12 @@ function parsePlacemark(placemark, groupName) {
   const polygon = parseCoordString(coordsEl.textContent);
   if (polygon.length < 3) return null;
 
+  // La descripcion del placemark es donde Google Earth y las herramientas de
+  // mapas guardan el texto libre de cada zona. Se descartaba, y ahi es donde
+  // viene lo que mas sirve en el campo: comunidades incluidas y como se llega.
+  const descEl = placemark.querySelector('description');
+  const notes = descEl ? descEl.textContent.trim() : '';
+
   // La carpeta del KML pasa a ser una etiqueta del territorio.
-  return { number, name: fullName, tags: groupName ? [groupName] : [], polygon };
+  return { number, name: fullName, tags: groupName ? [groupName] : [], notes, polygon };
 }
