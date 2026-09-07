@@ -155,6 +155,11 @@ export function render(container) {
     wrapper.appendChild(migrateSection);
   }
 
+  // Una persona puede llevar los territorios de más de una congregación.
+  if (mode === 'online' && profile && profile.congregationId) {
+    wrapper.appendChild(buildCongregationSection());
+  }
+
   // Límite de la congregación (offline siempre; online sólo quien puede editar
   // la congregación, porque lo ven todos).
   if (mode === 'offline' || canEditCongregation(profile)) {
@@ -164,6 +169,102 @@ export function render(container) {
   container.appendChild(wrapper);
 
   return null;
+}
+
+function buildCongregationSection() {
+  const section = document.createElement('div');
+  section.className = 'admin-section';
+  section.innerHTML = '<h3>' + escapeHtml(t('settings.congregationTitle')) + '</h3>' +
+    '<p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:0.75rem;">' +
+    escapeHtml(t('settings.congregationDesc')) + '</p>' +
+    '<div class="flash flash-alert cong-error" style="display:none"></div>' +
+    '<p class="cong-loading" style="color:var(--text-secondary);">' + escapeHtml(t('admin.loading')) + '</p>';
+
+  const list = document.createElement('div');
+  list.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;';
+  section.appendChild(list);
+
+  function fail(msg) {
+    const box = section.querySelector('.cong-error');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  (async function () {
+    const { listMemberships, switchCongregation } = await import('../firebase/auth.js');
+    let items = [];
+    try {
+      items = await listMemberships();
+    } catch (e) {
+      fail(t('settings.congregationLoadError'));
+    }
+    const loading = section.querySelector('.cong-loading');
+    if (loading) loading.remove();
+
+    items.forEach(function (m) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:0.75rem;' +
+        'padding:0.5rem 0.75rem;border:1px solid var(--border-primary);border-radius:6px;';
+
+      const label = document.createElement('div');
+      label.style.cssText = 'flex:1;min-width:0;';
+      label.innerHTML = '<strong>' + escapeHtml(m.name || m.congregationId) + '</strong>' +
+        '<span style="color:var(--text-secondary);font-size:0.8125rem;margin-left:0.5rem;">' +
+        escapeHtml(t('admin.role' + m.role.charAt(0).toUpperCase() + m.role.slice(1))) + '</span>';
+      row.appendChild(label);
+
+      if (m.active) {
+        const badge = document.createElement('span');
+        badge.className = 'status-badge status-active';
+        badge.textContent = t('settings.congregationActive');
+        row.appendChild(badge);
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary btn-sm';
+        btn.textContent = t('settings.congregationSwitch');
+        btn.addEventListener('click', async function () {
+          btn.disabled = true;
+          try {
+            await switchCongregation(m.congregationId);
+            window.location.hash = '#/';
+            window.location.reload();
+          } catch (e) {
+            btn.disabled = false;
+            fail(t('settings.congregationSwitchError'));
+          }
+        });
+        row.appendChild(btn);
+      }
+      list.appendChild(row);
+    });
+
+    // Crear otra congregación. Sólo tiene sentido para quien administra: quien
+    // es publicador en la suya no anda creando congregaciones.
+    const profile = getUserProfile();
+    if (profile && profile.role === 'admin') {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'btn btn-primary';
+      addBtn.style.marginTop = '0.75rem';
+      addBtn.textContent = t('settings.congregationCreate');
+      addBtn.addEventListener('click', async function () {
+        const name = window.prompt(t('settings.congregationPrompt'));
+        if (!name || !name.trim()) return;
+        addBtn.disabled = true;
+        try {
+          const { registerCongregation } = await import('../firebase/auth.js');
+          await registerCongregation(name.trim());
+          window.location.hash = '#/';
+          window.location.reload();
+        } catch (e) {
+          addBtn.disabled = false;
+          fail(t('settings.congregationCreateError'));
+        }
+      });
+      section.appendChild(addBtn);
+    }
+  })();
+
+  return section;
 }
 
 function buildBoundarySection() {

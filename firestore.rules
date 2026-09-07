@@ -29,15 +29,54 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
+      // Una persona puede llevar varias congregaciones. `memberships` es el mapa
+      // {congregationId: rol} de las que son suyas, y congregationId/role son
+      // simplemente la ACTIVA. Todo lo demas de estas reglas sigue mirando la
+      // activa, asi que no cambia.
+      //
+      // La parte delicada es que el propio usuario escribe su memberships. Para
+      // que no pueda colarse en una congregacion ajena, cada forma de tocar ese
+      // mapa se valida por separado y ninguna acepta una congregacion que no
+      // haya creado el.
+      function ownChanges() {
+        return request.resource.data.diff(resource.data).affectedKeys();
+      }
+      function oldMemberships() {
+        return resource.data.get('memberships', {});
+      }
+      function membershipsChanged() {
+        return request.resource.data.memberships.diff(oldMemberships()).affectedKeys();
+      }
+
       // Users can read their own profile
       allow read: if request.auth != null && request.auth.uid == userId;
 
       // Users can only create their OWN profile (registration flow)
       allow create: if request.auth != null && request.auth.uid == userId;
 
-      // Users can update their own profile BUT cannot change role or congregationId
-      allow update: if request.auth != null && request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'congregationId']);
+      allow update: if request.auth != null && request.auth.uid == userId && (
+        // (a) Cambios corrientes: no tocan rol, congregacion activa ni membresias.
+        !ownChanges().hasAny(['role', 'congregationId', 'memberships'])
+
+        // (b) Relleno inicial: un perfil viejo estrena memberships con la unica
+        //     congregacion que ya tenia, y con el rol que ya tenia.
+        || (ownChanges().hasOnly(['memberships'])
+            && membershipsChanged().hasOnly([resource.data.congregationId])
+            && request.resource.data.memberships[resource.data.congregationId] == resource.data.role)
+
+        // (c) Cambiar de congregacion activa: solo a una que ya sea suya, y con
+        //     el rol que ahi tiene. El mapa de membresias no se toca.
+        || (ownChanges().hasOnly(['role', 'congregationId'])
+            && oldMemberships()[request.resource.data.congregationId] == request.resource.data.role)
+
+        // (d) Crear una congregacion nueva: se anade UNA membresia y tiene que
+        //     ser una congregacion cuyo createdBy es este mismo usuario.
+        || (ownChanges().hasOnly(['role', 'congregationId', 'memberships'])
+            && membershipsChanged().hasOnly([request.resource.data.congregationId])
+            && request.resource.data.memberships[request.resource.data.congregationId] == 'admin'
+            && request.resource.data.role == 'admin'
+            && get(/databases/$(database)/documents/congregations/$(request.resource.data.congregationId)).data.createdBy == request.auth.uid)
+      );
 
       // Admins can read users in their congregation
       allow read: if request.auth != null
@@ -49,10 +88,23 @@ service cloud.firestore {
         && getUserData().role == 'admin'
         && request.resource.data.congregationId == getUserData().congregationId;
 
-      // Admins can update users in their congregation (e.g., change role)
+      // Admins can update users in their congregation (e.g., change role).
+      //
+      // Nunca sobre su PROPIO perfil: para uno mismo, `resource.data.congregationId
+      // == getUserData().congregationId` siempre se cumple, asi que esta regla le
+      // dejaba a cualquier admin cambiarse su congregacion y su rol a lo que
+      // quisiera, saltandose las condiciones de arriba. El perfil propio se rige
+      // solo por el bloque anterior.
+      //
+      // De las membresias ajenas solo pueden tocar la de su propia congregacion:
+      // si no, un admin podria meter a alguien en una congregacion ajena.
       allow update: if request.auth != null
+        && request.auth.uid != userId
         && resource.data.congregationId == getUserData().congregationId
-        && getUserData().role == 'admin';
+        && getUserData().role == 'admin'
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['memberships'])
+            || request.resource.data.memberships.diff(resource.data.get('memberships', {}))
+                .affectedKeys().hasOnly([getUserData().congregationId]));
 
       // Conductor / publisher pueden leer otros perfiles de su congregación
       // (necesario para mostrar nombres en historial / dropdown)
