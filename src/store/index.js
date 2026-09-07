@@ -61,8 +61,11 @@ export async function initStore() {
           if (user) {
             try {
               // Check for pending invite first
-              const { checkAndApplyInvite } = await import('../firebase/auth.js');
+              const { checkAndApplyInvite, backfillMemberships } = await import('../firebase/auth.js');
               await checkAndApplyInvite();
+              // Un perfil creado antes del soporte multi-congregación no tiene
+              // memberships, y sin eso no se puede cambiar de congregación.
+              await backfillMemberships();
 
               const profile = await getCurrentUserProfile();
               if (profile && profile.congregationId) {

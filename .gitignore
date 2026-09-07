@@ -12,3 +12,7 @@ node_modules/
 
 # Build output
 dist/
+
+# Emulador de Firestore (pruebas de reglas)
+firestore-debug.log
+firebase-debug.log
