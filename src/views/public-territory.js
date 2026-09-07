@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import { streetLayer } from '../components/tiles.js';
 import { t } from '../i18n/i18n.js';
 import { escapeHtml } from '../utils/helpers.js';
 import { normalizePublicId } from '../utils/public-id.js';
@@ -90,9 +91,7 @@ async function loadAndRender(wrapper, congPublicId, terPublicId) {
   wrapper.appendChild(mapDiv);
 
   const map = L.map(mapDiv);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap &copy; CARTO'
-  }).addTo(map);
+  streetLayer().addTo(map);
 
   let center = null;
 

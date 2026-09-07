@@ -1,6 +1,7 @@
 import L from 'leaflet';
 import 'leaflet-draw';
 import { getStore } from '../store/index.js';
+import { streetLayer } from './tiles.js';
 import { buildBoundaryLayer } from './map.js';
 import { t } from '../i18n/i18n.js';
 
@@ -10,9 +11,7 @@ export function initPolygonDraw(mapContainer, hiddenInput, existingPolygon) {
   const defaultZoom = (defaultCenter[0] === 0 && defaultCenter[1] === 0) ? 2 : 15;
   const map = L.map(mapContainer, { center: defaultCenter, zoom: defaultZoom });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-  }).addTo(map);
+  streetLayer().addTo(map);
 
   // Dibujar es donde más sirve ver el límite, sobre todo en una congregación
   // que está trazando sus territorios por primera vez. No restringe nada.
