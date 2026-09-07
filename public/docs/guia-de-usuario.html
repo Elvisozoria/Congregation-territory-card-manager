@@ -147,15 +147,20 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
     <a class="nav-link" href="#crear-territorio">Crear territorio</a>
     <a class="nav-link" href="#ver-territorio">Ver detalle</a>
     <a class="nav-link" href="#editar-territorio">Editar territorio</a>
+    <a class="nav-link" href="#etiquetas">Etiquetas</a>
+    <a class="nav-link" href="#casas">Casas aproximadas</a>
+    <a class="nav-link" href="#limite">Límite de la congregación</a>
     <a class="nav-link" href="#landmarks">Puntos de referencia</a>
     <a class="nav-link" href="#manzanas">Manzanas</a>
     <a class="nav-link" href="#eliminar-territorio">Eliminar territorio</a>
   </div>
   <div class="nav-group">
     <div class="nav-group-title">Asignaciones</div>
+    <a class="nav-link" href="#pendientes">Qué toca ahora</a>
     <a class="nav-link" href="#asignar">Asignar territorio</a>
     <a class="nav-link" href="#completar">Completar / Devolver</a>
     <a class="nav-link" href="#historial">Historial de trabajo</a>
+    <a class="nav-link" href="#s13">Registro S-13</a>
   </div>
   <div class="nav-group">
     <div class="nav-group-title">Tarjetas e impresión</div>
@@ -170,6 +175,7 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
   </div>
   <div class="nav-group">
     <div class="nav-group-title">Administración</div>
+    <a class="nav-link" href="#varias-congregaciones">Varias congregaciones</a>
     <a class="nav-link" href="#panel-admin">Panel de admin</a>
     <a class="nav-link" href="#invitar">Invitar usuarios</a>
     <a class="nav-link" href="#cambiar-rol">Cambiar roles</a>
@@ -498,6 +504,90 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
   </div>
 </section>
 
+
+<!-- ===================== ETIQUETAS ===================== -->
+<section id="etiquetas">
+  <h2>Etiquetas</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+
+  <p>Cada territorio puede llevar varias etiquetas. Sirven para encontrar rápido un grupo de territorios y para repartir el trabajo con criterio.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Al crear o editar un territorio, escribe las etiquetas separadas por coma en el campo <strong>Etiquetas</strong>. Por ejemplo: <code>Pedro García, tardes, a pie</code>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>En la lista de territorios aparecen como botones. Pulsa uno para ver sólo esos territorios; pulsa varios y se van sumando condiciones.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>La casilla <strong>"Agrupar por etiqueta"</strong> reordena la lista por grupos. Un territorio con tres etiquetas aparece bajo las tres.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Separar zona de otras cosas</div>
+    <p>Si escribes la etiqueta con un prefijo y dos puntos, como <code>zona:Norte</code> o <code>modo:a pie</code>, la lista las separa en filas distintas con su título. Así la zona no compite con la hora del día ni con el modo de recorrido.</p>
+  </div>
+
+  <div class="info-card">
+    <div class="card-label">Si vienes de la versión anterior</div>
+    <p>El campo <strong>Grupo</strong> que existía antes se convirtió en la primera etiqueta de cada territorio. No hay que hacer nada.</p>
+  </div>
+</section>
+
+<!-- ===================== CASAS ===================== -->
+<section id="casas">
+  <h2>Casas aproximadas</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+
+  <p>Un estimado de cuántas casas tiene el territorio. No hace falta que sea exacto: sirve para repartir la carga parejo y para saber si un territorio es una salida o tres.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Al crear o editar el territorio, pon el número en <strong>Casas (aprox.)</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>En la lista puedes elegir <strong>"Ordenar por casas"</strong> para ver de un vistazo cuáles son los más grandes.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Si activas <strong>"Mostrar casas en la tarjeta"</strong>, el número se imprime en la tarjeta, para que el publicador sepa a qué atenerse.</p></div>
+  </div>
+</section>
+
+<!-- ===================== LIMITE ===================== -->
+<section id="limite">
+  <h2>Límite de la congregación</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+
+  <p>Es el contorno que asigna la sucursal a la congregación. Se dibuja sobre los mapas como guía mientras trazas territorios, y es especialmente útil cuando una congregación empieza a hacerlos desde cero.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Ve a <strong>Configuración</strong> y busca <strong>"Límite de la congregación"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Pulsa <strong>"Subir límite"</strong> y elige el archivo KML o KMZ que da la sucursal.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>El contorno aparece en los mapas como una línea roja de puntos. En el control de capas, arriba a la derecha del mapa, puedes apagarlo cuando estorbe.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Es una guía, no una barrera</div>
+    <p>Se pueden crear territorios fuera de la línea. Los linderos reales no siempre coinciden con el trazo, y hay casas que quedan justo encima.</p>
+  </div>
+
+  <div class="info-card">
+    <div class="card-label">Los cuatro linderos</div>
+    <p>Si el archivo de la sucursal trae los linderos escritos (norte, sur, este y oeste), se guardan y se muestran debajo. Es lo que se consulta cuando hay duda de si una casa entra o no.</p>
+  </div>
+</section>
+
 <!-- ===================== LANDMARKS ===================== -->
 <section id="landmarks">
   <h2>Puntos de referencia</h2>
@@ -591,26 +681,57 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
 </section>
 
 <!-- ===================== ASIGNAR ===================== -->
+
+<!-- ===================== PENDIENTES ===================== -->
+<section id="pendientes">
+  <h2>Qué toca ahora</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge conductor">Conductor</span> <span class="role-badge offline">Offline</span></p>
+
+  <p>Al abrir la aplicación, encima de la lista, aparece lo que necesita atención. Sólo se muestra si hay algo que atender, así que una congregación al día no ve nada.</p>
+
+  <ul>
+    <li><strong>Llevan mucho asignados</strong> — asignaciones que llevan más de dos meses abiertas. Suele significar que se trabajó y nadie lo registró.</li>
+    <li><strong>Nunca se han trabajado</strong> — territorios que no tienen ninguna asignación. En el campo suelen ser los más lejanos.</li>
+    <li><strong>Sin trabajar hace más tiempo</strong> — los que llevan más tiempo sin salir, del más olvidado al menos.</li>
+  </ul>
+
+  <p>Cada territorio de estas listas trae su botón al lado, para asignarlo o cerrarlo sin salir de ahí.</p>
+</section>
+
 <section id="asignar">
   <h2>Asignar territorio</h2>
   <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
 
+  <p>La forma rápida, que es la que se usa a diario:</p>
+
   <div class="step">
     <div class="step-num">1</div>
-    <div class="step-body"><p>Entra al detalle del territorio que deseas asignar.</p></div>
+    <div class="step-body"><p>En la lista de territorios, pulsa <strong>"Asignar"</strong> en el territorio que quieras. No hace falta entrar a su ficha.</p></div>
   </div>
   <div class="step">
     <div class="step-num">2</div>
-    <div class="step-body"><p>Haz clic en <strong>"Asignar Territorio"</strong>.</p></div>
+    <div class="step-body"><p>Escribe el nombre de la persona y acepta. El territorio pasa a mostrar su nombre en la esquina.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">No hace falta que tenga cuenta</div>
+    <p>Puedes asignar un territorio a cualquier persona de la congregación, tenga o no cuenta en la aplicación. La mayoría de los publicadores no la va a tener.</p>
+    <p>Si la persona sí tiene cuenta, escribe su nombre tal como aparece y quedará vinculada, de modo que verá su territorio al entrar.</p>
+  </div>
+
+  <p>Desde la ficha del territorio hay algo más de control, por si quieres poner otra fecha o dejar un comentario:</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Entra al territorio y pulsa <strong>"Asignar Territorio"</strong>.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Escribe el nombre. Según escribes te sugiere a quien tiene cuenta y a quien ya trabajó territorios antes.</p></div>
   </div>
   <div class="step">
     <div class="step-num">3</div>
-    <div class="step-body"><p><strong>En modo offline:</strong> escribe el nombre de la persona manualmente.
-    <br><strong>En modo online:</strong> selecciona al miembro de la congregación de la lista desplegable.</p></div>
-  </div>
-  <div class="step">
-    <div class="step-num">4</div>
-    <div class="step-body"><p>Haz clic en <strong>"Asignar"</strong>. El territorio mostrará el nombre de la persona asignada y la fecha de inicio.</p></div>
+    <div class="step-body"><p>Ajusta la fecha si no es hoy, añade un comentario si hace falta, y pulsa <strong>"Asignar"</strong>.</p></div>
   </div>
 
   <div class="screenshot-placeholder" data-ref="asignar-territorio">
@@ -627,13 +748,14 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
 
   <div class="step">
     <div class="step-num">1</div>
-    <div class="step-body"><p>Ve al detalle del territorio.</p></div>
+    <div class="step-body"><p>En la lista, pulsa <strong>"Completado"</strong> en ese territorio. Es lo más rápido cuando te devuelven varios de una vez.</p></div>
   </div>
   <div class="step">
     <div class="step-num">2</div>
-    <div class="step-body"><p>En la sección de asignación activa, haz clic en:
-      <br>— <strong>"Completado"</strong> si el territorio fue trabajado completamente
-      <br>— <strong>"Devolver"</strong> si se devuelve sin completar
+    <div class="step-body"><p>Si prefieres elegir la fecha de cierre o devolverlo sin completar, entra a la ficha del territorio. En la franja de asignación tienes:
+      <br>— <strong>"Completado"</strong> si el territorio se trabajó entero
+      <br>— <strong>"Devolver"</strong> si se devuelve sin terminar
+      <br>Y a su lado el campo de fecha, por si se cerró antes de que lo registres.
     </p></div>
   </div>
   <div class="step">
@@ -665,6 +787,33 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
 
   <div class="screenshot-placeholder" data-ref="historial">
     <img src="screenshots/tut-notes.png" alt="Historial de trabajo y notas de un territorio">
+  </div>
+</section>
+
+
+<!-- ===================== S-13 ===================== -->
+<section id="s13">
+  <h2>Registro S-13</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge conductor">Conductor</span> <span class="role-badge offline">Offline</span></p>
+
+  <p>Es el formulario oficial de asignación de territorios, con las últimas cuatro asignaciones de cada uno. Se llena solo con lo que vas registrando.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Pulsa <strong>S-13</strong> en la barra de arriba.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Elige el <strong>año de servicio</strong> si quieres ver sólo ese periodo. El año de servicio va del 1 de septiembre al 31 de agosto. El selector aparece cuando hay asignaciones registradas.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Pulsa <strong>"Imprimir S-13"</strong> para sacarlo en papel.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Empezar hoja nueva</div>
+    <p>El botón <strong>"Empezar hoja nueva"</strong> deja la hoja en blanco a partir de hoy. No borra nada: las asignaciones anteriores siguen en el historial de cada territorio, y puedes volver a mostrarlas cuando quieras.</p>
   </div>
 </section>
 
@@ -791,6 +940,33 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
 
   <div class="screenshot-placeholder" data-ref="vista-publica">
     <img src="screenshots/tut-public-view.png" alt="Vista pública de un territorio compartido">
+  </div>
+</section>
+
+
+<!-- ===================== VARIAS CONGREGACIONES ===================== -->
+<section id="varias-congregaciones">
+  <h2>Varias congregaciones</h2>
+  <p><span class="role-badge admin">Admin</span></p>
+
+  <p>Una misma cuenta puede llevar los territorios de más de una congregación. Sólo una está activa a la vez, y todo lo que ves pertenece a la activa.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Ve a <strong>Configuración</strong>. Arriba está <strong>"Congregaciones"</strong> con la lista de las tuyas y tu rol en cada una.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Pulsa <strong>"Usar esta"</strong> en la que quieras trabajar. La aplicación se recarga con sus datos.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Con <strong>"Crear otra congregación"</strong> añades una nueva y quedas como administrador. Pasa a ser la activa.</p></div>
+  </div>
+
+  <div class="info-card">
+    <div class="card-label">Los datos no se mezclan</div>
+    <p>Cada congregación tiene sus territorios, su historial y su límite. Cambiar de una a otra no mueve nada.</p>
   </div>
 </section>
 
