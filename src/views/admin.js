@@ -31,12 +31,9 @@ export function render(container) {
     '<a href="#/" class="btn btn-secondary">' + escapeHtml(t('show.btnBack')) + '</a>';
   wrapper.appendChild(header);
 
-  // Congregation info
-  const congSection = document.createElement('div');
-  congSection.className = 'admin-section';
-  congSection.innerHTML = '<h3>' + escapeHtml(t('admin.congregationInfo')) + '</h3>' +
-    '<p class="admin-detail"><strong>' + escapeHtml(t('admin.congregationId')) + ':</strong> <code>' + escapeHtml(profile.congregationId) + '</code></p>';
-  wrapper.appendChild(congSection);
+  // El identificador interno de la congregación encabezaba esta pantalla y no
+  // le sirve a nadie: se queda accesible por si hace falta para soporte, pero
+  // ya no es lo primero que se ve.
 
   // Members list
   const membersSection = document.createElement('div');
@@ -202,9 +199,12 @@ async function loadMembers(section, currentProfile) {
         tdActions.appendChild(select);
         tdActions.appendChild(saveBtn);
       } else {
+        // Antes esta frase ocupaba una columna sin ancho y se salía de la
+        // tarjeta partida letra por letra. Ahora es una marca corta.
         const youLabel = document.createElement('span');
-        youLabel.style.cssText = 'font-size:0.75rem;color:var(--text-secondary);';
-        youLabel.textContent = '(' + t('admin.youCannotChangeOwnRole').split('.')[0] + ')';
+        youLabel.className = 'admin-you';
+        youLabel.textContent = t('admin.youBadge');
+        youLabel.title = t('admin.youCannotChangeOwnRole');
         tdActions.appendChild(youLabel);
       }
 

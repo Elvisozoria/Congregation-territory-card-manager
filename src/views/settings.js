@@ -6,6 +6,13 @@ import { canEditCongregation } from '../auth/permissions.js';
 
 export let isDirty = false;
 
+
+function roleLabel(role) {
+  const key = 'admin.role' + String(role || '').charAt(0).toUpperCase() + String(role || '').slice(1);
+  const label = t(key);
+  return label === key ? (role || '') : label;
+}
+
 export function render(container) {
   const mode = getMode();
   const profile = getUserProfile();
@@ -23,7 +30,9 @@ export function render(container) {
   // Current mode info
   const modeSection = document.createElement('div');
   modeSection.className = 'admin-section';
+  modeSection.dataset.order = '90';
   const modeLabel = mode === 'online' ? t('settings.modeOnline') : t('settings.modeOffline');
+  void modeLabel;
   modeSection.innerHTML = '<h3>' + escapeHtml(t('settings.currentMode')) + '</h3>' +
     '<p>' + escapeHtml(modeLabel) + '</p>';
 
@@ -46,16 +55,22 @@ export function render(container) {
   if (mode === 'online' && profile) {
     const profileSection = document.createElement('div');
     profileSection.className = 'admin-section';
+    profileSection.dataset.order = '50';
     profileSection.innerHTML =
       '<h3>' + escapeHtml(t('settings.profile')) + '</h3>' +
       '<p><strong>' + escapeHtml(t('auth.displayName')) + ':</strong> ' + escapeHtml(profile.displayName || '') + '</p>' +
       '<p><strong>' + escapeHtml(t('auth.email')) + ':</strong> ' + escapeHtml(profile.email || '') + '</p>' +
-      '<p><strong>' + escapeHtml(t('admin.role')) + ':</strong> ' + escapeHtml(profile.role || '') + '</p>';
+      '<p><strong>' + escapeHtml(t('admin.role')) + ':</strong> ' + escapeHtml(roleLabel(profile.role)) + '</p>';
     wrapper.appendChild(profileSection);
+
+    // Con sesión de Google no hay contraseña que cambiar: el bloque sólo
+    // aparece para cuentas de correo y contraseña.
+    const showPassword = profile.hasPassword === true;
 
     // Change password
     const passSection = document.createElement('div');
     passSection.className = 'admin-section';
+    passSection.dataset.order = '55';
     passSection.innerHTML =
       '<h3>' + escapeHtml(t('auth.changePasswordTitle')) + '</h3>' +
       '<div class="flash flash-alert pass-error" style="display:none"></div>' +
@@ -102,11 +117,12 @@ export function render(container) {
       }
     });
 
-    wrapper.appendChild(passSection);
+    if (showPassword) wrapper.appendChild(passSection);
 
     // Logout
     const logoutSection = document.createElement('div');
     logoutSection.className = 'admin-section';
+    logoutSection.dataset.order = '60';
     const logoutBtn = document.createElement('button');
     logoutBtn.className = 'btn btn-danger';
     logoutBtn.textContent = t('settings.logout');
@@ -124,6 +140,7 @@ export function render(container) {
   if (mode === 'online' && profile) {
     const switchOfflineSection = document.createElement('div');
     switchOfflineSection.className = 'admin-section';
+    switchOfflineSection.dataset.order = '95';
     const switchOfflineBtn = document.createElement('button');
     switchOfflineBtn.className = 'btn btn-secondary';
     switchOfflineBtn.textContent = t('settings.switchToOffline');
@@ -140,6 +157,7 @@ export function render(container) {
   if (mode === 'offline') {
     const migrateSection = document.createElement('div');
     migrateSection.className = 'admin-section';
+    migrateSection.dataset.order = '95';
     migrateSection.innerHTML = '<h3>' + escapeHtml(t('settings.migrateTitle')) + '</h3>' +
       '<p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:0.75rem;">' + escapeHtml(t('settings.migrateDesc')) + '</p>';
 
@@ -157,14 +175,26 @@ export function render(container) {
 
   // Una persona puede llevar los territorios de más de una congregación.
   if (mode === 'online' && profile && profile.congregationId) {
-    wrapper.appendChild(buildCongregationSection());
+    const congSection = buildCongregationSection();
+    congSection.dataset.order = '10';
+    wrapper.appendChild(congSection);
   }
 
   // Límite de la congregación (offline siempre; online sólo quien puede editar
   // la congregación, porque lo ven todos).
   if (mode === 'offline' || canEditCongregation(profile)) {
-    wrapper.appendChild(buildBoundarySection());
+    const bSection = buildBoundarySection();
+    bSection.dataset.order = '20';
+    wrapper.appendChild(bSection);
   }
+
+  // Orden por uso: primero la congregación, luego tu cuenta y al final lo
+  // técnico. Antes salía en el orden en que estaba escrito el archivo.
+  Array.from(wrapper.querySelectorAll('.admin-section'))
+    .sort(function (a, b) {
+      return Number(a.dataset.order || 70) - Number(b.dataset.order || 70);
+    })
+    .forEach(function (el) { wrapper.appendChild(el); });
 
   container.appendChild(wrapper);
 

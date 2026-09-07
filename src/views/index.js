@@ -1,10 +1,11 @@
 import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
 import { renderOverviewMap } from '../components/map.js';
-import { escapeHtml, formatDate } from '../utils/helpers.js';
-import { territoryTags, allTags, matchesTags } from '../utils/tags.js';
+import { escapeHtml, formatDate, todayISO } from '../utils/helpers.js';
+import { territoryTags, allTags, matchesTags, groupTags, splitTag } from '../utils/tags.js';
 import { refresh } from '../router.js';
 import {
+  canAssignTerritory,
   canCreateTerritory,
   canDeleteTerritory,
   canEditTerritory,
@@ -82,6 +83,147 @@ function buildHistoryStrip(store, territoryId, fullHistory, uid) {
 }
 
 export let isDirty = false;
+
+
+// Repartir y recibir territorios es casi todo el trabajo del encargado, y antes
+// obligaba a entrar a cada ficha. Este botón hace las dos cosas desde la lista.
+function buildQuickAction(store, territory, profile, onDone) {
+  if (!canAssignTerritory(profile)) return null;
+  const active = store.getActiveAssignment ? store.getActiveAssignment(territory.id) : null;
+
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary');
+  btn.textContent = active ? t('index.quickComplete') : t('index.quickAssign');
+  btn.addEventListener('click', async function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (active) {
+      if (!confirm(t('index.confirmComplete', { name: active.person }))) return;
+      btn.disabled = true;
+      await store.updateHistoryEntry(active.id, { status: 'completed', endDate: todayISO() });
+      onDone();
+      return;
+    }
+
+    const person = (window.prompt(t('index.promptAssign', { number: territory.number })) || '').trim();
+    if (!person) return;
+    btn.disabled = true;
+    await store.addHistoryEntry({
+      territoryId: territory.id,
+      person: person,
+      assignedToUid: null,
+      startDate: todayISO(),
+      endDate: null,
+      notes: '',
+      type: 'assignment',
+      status: 'active'
+    });
+    onDone();
+  });
+  return btn;
+}
+
+
+// Lo que el encargado necesita saber antes que nada: qué lleva demasiado
+// tiempo parado y qué asignación se quedó abierta. Antes eso sólo salía leyendo
+// el S-13 entero o recorriendo las fichas una por una.
+const DIAS_ABIERTA = 60;
+
+function daysSince(iso) {
+  if (!iso) return null;
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d)) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+function buildPendingPanel(store, territories, profile, onDone) {
+  const history = store.getAllHistory ? store.getAllHistory() : [];
+  const lastEnd = new Map();
+  territories.forEach(function (terr) { lastEnd.set(terr.id, null); });
+  history.forEach(function (h) {
+    if (!h.endDate) return;
+    const prev = lastEnd.get(h.territoryId);
+    if (!prev || h.endDate > prev) lastEnd.set(h.territoryId, h.endDate);
+  });
+
+  const stale = [];
+  const never = [];
+  const open = [];
+
+  territories.forEach(function (terr) {
+    const active = store.getActiveAssignment ? store.getActiveAssignment(terr.id) : null;
+    if (active) {
+      const d = daysSince(active.startDate);
+      if (d !== null && d >= DIAS_ABIERTA) open.push({ terr, days: d, person: active.person });
+      return;
+    }
+    const end = lastEnd.get(terr.id);
+    if (!end) {
+      if (!history.some(function (h) { return h.territoryId === terr.id; })) never.push({ terr });
+      return;
+    }
+    const d = daysSince(end);
+    if (d !== null) stale.push({ terr, days: d });
+  });
+
+  stale.sort(function (a, b) { return b.days - a.days; });
+  open.sort(function (a, b) { return b.days - a.days; });
+
+  const groups = [
+    { key: 'pendingOpen', items: open.slice(0, 5), tone: 'warn' },
+    { key: 'pendingNever', items: never.slice(0, 5), tone: 'warn' },
+    { key: 'pendingStale', items: stale.slice(0, 5), tone: '' }
+  ].filter(function (g) { return g.items.length > 0; });
+
+  if (groups.length === 0) return null;
+
+  const panel = document.createElement('section');
+  panel.className = 'pending-panel';
+
+  const head = document.createElement('h2');
+  head.className = 'pending-title';
+  head.textContent = t('index.pendingTitle');
+  panel.appendChild(head);
+
+  const cols = document.createElement('div');
+  cols.className = 'pending-cols';
+
+  groups.forEach(function (g) {
+    const col = document.createElement('div');
+    col.className = 'pending-col';
+    const h = document.createElement('h3');
+    h.textContent = t('index.' + g.key);
+    col.appendChild(h);
+
+    const ul = document.createElement('ul');
+    g.items.forEach(function (it) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#/territories/' + it.terr.id;
+      a.textContent = it.terr.number + ' · ' + it.terr.name;
+      li.appendChild(a);
+
+      if (it.days !== undefined) {
+        const meta = document.createElement('span');
+        meta.className = 'pending-meta' + (g.tone ? ' ' + g.tone : '');
+        meta.textContent = it.person
+          ? t('index.pendingWithPerson', { person: it.person, days: it.days })
+          : t('index.pendingDays', { days: it.days });
+        li.appendChild(meta);
+      }
+
+      const quick = buildQuickAction(store, it.terr, profile, onDone);
+      if (quick) li.appendChild(quick);
+      ul.appendChild(li);
+    });
+    col.appendChild(ul);
+    cols.appendChild(col);
+  });
+
+  panel.appendChild(cols);
+  return panel;
+}
 
 export function render(container) {
   const store = getStore();
@@ -225,6 +367,10 @@ export function render(container) {
   let groupByTag = getGroupPref();
   let sortBy = getSortPref();
 
+  // Qué toca ahora, arriba del todo y sólo si hay algo que atender.
+  const pendingHost = document.createElement('div');
+  if (!isPublisher) container.appendChild(pendingHost);
+
   const filterBar = document.createElement('div');
   filterBar.className = 'tag-filter-bar';
   container.appendChild(filterBar);
@@ -281,20 +427,35 @@ export function render(container) {
   function paintFilterBar() {
     filterBar.innerHTML = '';
 
-    availableTags.forEach(function (tag) {
-      const on = selectedTags.some(function (s) { return s.toLowerCase() === tag.toLowerCase(); });
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'tag-chip' + (on ? ' active' : '');
-      chip.textContent = tag;
-      chip.addEventListener('click', function () {
-        selectedTags = on
-          ? selectedTags.filter(function (s) { return s.toLowerCase() !== tag.toLowerCase(); })
-          : selectedTags.concat([tag]);
-        setFilterPref(selectedTags);
-        redraw();
+    // Las etiquetas se agrupan por su dimensión: zona en una fila, modo de
+    // recorrido en otra. Antes salían todas en una tira alfabética donde Norte
+    // y "a pie" competían como si fueran alternativas.
+    groupTags(availableTags).forEach(function (g) {
+      const row = document.createElement('div');
+      row.className = 'tag-row';
+      if (g.group) {
+        const label = document.createElement('span');
+        label.className = 'tag-row-label';
+        label.textContent = g.group;
+        row.appendChild(label);
+      }
+      g.tags.forEach(function (parsed) {
+        const tag = parsed.full;
+        const on = selectedTags.some(function (s) { return s.toLowerCase() === tag.toLowerCase(); });
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'tag-chip' + (on ? ' active' : '');
+        chip.textContent = parsed.label;
+        chip.addEventListener('click', function () {
+          selectedTags = on
+            ? selectedTags.filter(function (s) { return s.toLowerCase() !== tag.toLowerCase(); })
+            : selectedTags.concat([tag]);
+          setFilterPref(selectedTags);
+          redraw();
+        });
+        row.appendChild(chip);
       });
-      filterBar.appendChild(chip);
+      filterBar.appendChild(row);
     });
 
     if (selectedTags.length > 0) {
@@ -308,6 +469,16 @@ export function render(container) {
         redraw();
       });
       filterBar.appendChild(clear);
+    }
+
+    // Con un filtro puesto, imprimir sólo esos: era la forma natural de sacar
+    // las tarjetas de un sector sin imprimir el juego entero.
+    if (selectedTags.length === 1 && canCreateTerritory(profile)) {
+      const printTag = document.createElement('a');
+      printTag.className = 'tag-chip tag-chip-print';
+      printTag.href = '#/print?tag=' + encodeURIComponent(selectedTags[0]);
+      printTag.textContent = t('index.printFiltered');
+      filterBar.appendChild(printTag);
     }
 
     const sortSelect = document.createElement('select');
@@ -347,6 +518,11 @@ export function render(container) {
   // dibujado sería mentir.
   function redraw() {
     paintFilterBar();
+    if (!isPublisher) {
+      pendingHost.innerHTML = '';
+      const panel = buildPendingPanel(store, territories, profile, redraw);
+      if (panel) pendingHost.appendChild(panel);
+    }
     if (cleanup) cleanup();
     cleanup = renderOverviewMap(mapDiv, visibleTerritories());
     if (getViewPref() === 'table') renderTable(); else renderCards();
@@ -371,7 +547,7 @@ export function render(container) {
       if (cardTags.length > 0) {
         const group = document.createElement('span');
         group.className = 'territory-grid-card-group';
-        group.textContent = cardTags.join(' · ');
+        group.textContent = cardTags.map(function (x) { return splitTag(x).label; }).join(' · ');
         cardHeader.appendChild(group);
       }
       card.appendChild(cardHeader);
@@ -379,11 +555,20 @@ export function render(container) {
       const name = document.createElement('div');
       name.className = 'territory-grid-card-name';
       name.textContent = territory.name;
+      if (!territory.polygon || territory.polygon.length < 3) {
+        const undrawn = document.createElement('span');
+        undrawn.className = 'undrawn-flag';
+        undrawn.textContent = t('index.undrawn');
+        name.appendChild(undrawn);
+      }
       card.appendChild(name);
 
       const meta = document.createElement('div');
       meta.className = 'territory-grid-card-meta';
-      meta.innerHTML = '<span>' + territory.landmarks.length + ' ' + escapeHtml(t('index.colLandmarks').toLowerCase()) + '</span>';
+      const lmCount = (territory.landmarks || []).length;
+      meta.innerHTML = '<span>' + escapeHtml(lmCount === 0
+        ? t('index.noLandmarks')
+        : t(lmCount === 1 ? 'index.oneLandmark' : 'index.someLandmarks', { count: lmCount })) + '</span>';
       if (territory.houses) {
         meta.innerHTML += '<span>' + escapeHtml(t('show.housesCount', { count: territory.houses })) + '</span>';
       }
@@ -419,20 +604,10 @@ export function render(container) {
         actions.appendChild(editLink);
       }
 
-      if (canDeleteTerritory(profile)) {
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn-outline-danger btn-sm';
-        deleteBtn.textContent = t('index.btnDelete');
-        deleteBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (confirm(t('confirm.deleteTerritory', { number: territory.number, name: territory.name }))) {
-            store.deleteTerritory(territory.id);
-            refresh();
-          }
-        });
-        actions.appendChild(deleteBtn);
-      }
+      // Eliminar sale de la lista: vive en la ficha, discreto y al fondo, que es
+      // donde corresponde a una acción que no se deshace.
+      const quick = buildQuickAction(store, territory, profile, redraw);
+      if (quick) actions.appendChild(quick);
 
       card.appendChild(actions);
       return card;
@@ -466,9 +641,15 @@ export function render(container) {
       nameLink.href = '#/territories/' + territory.id;
       nameLink.textContent = territory.name;
       tdName.appendChild(nameLink);
+      if (!territory.polygon || territory.polygon.length < 3) {
+        const undrawn = document.createElement('span');
+        undrawn.className = 'undrawn-flag';
+        undrawn.textContent = t('index.undrawn');
+        tdName.appendChild(undrawn);
+      }
 
       const tdGroup = document.createElement('td');
-      tdGroup.textContent = territoryTags(territory).join(', ');
+      tdGroup.textContent = territoryTags(territory).map(function (x) { return splitTag(x).label; }).join(', ');
 
       const tdHouses = document.createElement('td');
       tdHouses.textContent = territory.houses ? String(territory.houses) : '';
@@ -497,18 +678,8 @@ export function render(container) {
         tdActions.appendChild(editLink);
       }
 
-      if (canDeleteTerritory(profile)) {
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn-outline-danger btn-sm';
-        deleteBtn.textContent = t('index.btnDelete');
-        deleteBtn.addEventListener('click', function () {
-          if (confirm(t('confirm.deleteTerritory', { number: territory.number, name: territory.name }))) {
-            store.deleteTerritory(territory.id);
-            refresh();
-          }
-        });
-        tdActions.appendChild(deleteBtn);
-      }
+      const quickRow = buildQuickAction(store, territory, profile, redraw);
+      if (quickRow) tdActions.appendChild(quickRow);
 
       tr.appendChild(tdNum);
       tr.appendChild(tdName);

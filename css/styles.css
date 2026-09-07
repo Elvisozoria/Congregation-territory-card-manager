@@ -146,7 +146,7 @@ a.navbar-brand:hover { color: white; }
 /* Ultimas asignaciones bajo cada tarjeta (resumen S-13) */
 .territory-grid-card-history { margin-top: 0.625rem; display: flex; flex-direction: column; gap: 0.125rem; font-size: 0.75rem; }
 .history-strip-row { display: flex; justify-content: space-between; gap: 0.5rem; color: var(--text-secondary); }
-.history-strip-person { font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-strip-person { font-weight: 600; color: var(--text-primary); }
 .history-strip-dates { flex-shrink: 0; font-variant-numeric: tabular-nums; }
 .history-strip-empty { color: var(--text-muted); font-style: italic; }
 
@@ -432,7 +432,9 @@ body.print-layout .container { max-width: none; padding: 0; }
 .s13-head p { font-size: 0.8125rem; color: var(--text-secondary); margin: 0; }
 .s13-scroll { overflow-x: auto; }
 .s13-table { width: 100%; min-width: 52rem; border-collapse: collapse; font-size: 0.6875rem; table-layout: fixed; }
-.s13-table th, .s13-table td { border: 1px solid var(--border-primary); padding: 0.25rem 0.3rem; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s13-table th, .s13-table td { border: 1px solid var(--border-primary); padding: 0.25rem 0.3rem; text-align: center; }
+.s13-table .s13-person { white-space: normal; word-break: break-word; min-width: 7rem; text-align: left; padding-left: 0.4rem; }
+.s13-table .s13-date { white-space: nowrap; }
 .s13-table th { background: var(--bg-secondary); font-weight: 600; line-height: 1.15; white-space: normal; }
 .s13-table td { height: 1.5rem; }
 .s13-col-num { width: 3rem; font-weight: 700; }
@@ -456,3 +458,63 @@ body.print-layout .container { max-width: none; padding: 0; }
   .s13-table th { background: #eee; }
   .s13-table tr { break-inside: avoid; }
 }
+
+/* ============ Revisión de uso: qué toca ahora ============ */
+.pending-panel { margin: 0 0 1.25rem; }
+.pending-title { font-size: 1rem; margin: 0 0 0.75rem; color: var(--text-secondary); font-weight: 600; }
+.pending-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; }
+.pending-col { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 10px; padding: 0.875rem 1rem; }
+.pending-col h3 { font-size: 0.8125rem; margin: 0 0 0.5rem; color: var(--text-secondary); font-weight: 600; }
+.pending-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.pending-col li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; flex-wrap: wrap; }
+.pending-col li > a { font-weight: 500; flex: 1 1 auto; min-width: 0; }
+.pending-col li > .btn { flex: 0 0 auto; }
+.pending-meta { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+.pending-meta.warn { color: #B45309; }
+[data-theme='dark'] .pending-meta.warn { color: #F59E0B; }
+
+/* Territorio sin contorno dibujado */
+.undrawn-flag {
+  display: inline-block; margin-left: 0.5rem; font-size: 0.6875rem; font-weight: 500;
+  color: var(--text-muted); border: 1px dashed var(--border-primary);
+  border-radius: 999px; padding: 0 0.4rem; vertical-align: middle;
+}
+
+/* Imprimir sólo lo filtrado */
+.tag-chip-print { text-decoration: none; border-style: dashed; }
+
+/* Fichas de la lista: misma altura y botones alineados abajo */
+.territory-grid-card { display: flex; flex-direction: column; }
+.territory-grid-card-actions { margin-top: auto; }
+
+/* Formulario a dos columnas: los campos a un lado, el mapa con sitio al otro */
+.form-split { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 1.5rem; align-items: start; max-width: 100%; }
+.form-map-pane { position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.form-map-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.8125rem; color: var(--text-secondary); font-weight: 600; }
+.form-map-pane .map-container { height: min(70vh, 620px); margin: 0; }
+.form-map-pane.fullscreen {
+  position: fixed; inset: 0; z-index: 2000; background: var(--bg-primary);
+  padding: 0.75rem 1rem 1rem; top: 0;
+}
+.form-map-pane.fullscreen .map-container { height: calc(100vh - 4rem); }
+body.map-fullscreen-open { overflow: hidden; }
+@media (max-width: 900px) {
+  .form-split { grid-template-columns: 1fr; }
+  .form-map-pane { position: static; }
+  .form-map-pane .map-container { height: 55vh; }
+}
+
+/* Aviso de tarjetas sin contorno antes de imprimir */
+.print-warning { margin: 0.5rem auto 0; max-width: 42rem; font-size: 0.8125rem; color: #B45309; }
+[data-theme='dark'] .print-warning { color: #F59E0B; }
+
+/* Marca de "eres tú" en la tabla de miembros */
+.admin-you { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+
+/* Etiqueta de la fecha de cierre en la franja de asignación */
+.close-date-label { font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; margin-right: 0.25rem; }
+
+/* Etiquetas agrupadas por dimensión: zona en su fila, modo en la suya */
+.tag-filter-bar { align-items: flex-start; }
+.tag-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.tag-row-label { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-right: 0.15rem; }

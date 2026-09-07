@@ -122,6 +122,7 @@ export async function createFirestoreStore(user, congregationId) {
     if (attrs.houses !== undefined) obj.houses = parseHouses(attrs.houses);
     if (attrs.polygon !== undefined) obj.polygon = polygonToFirestore(attrs.polygon);
     if (attrs.showQr !== undefined) obj.showQr = attrs.showQr;
+    if (attrs.showHouses !== undefined) obj.showHouses = !!attrs.showHouses;
     if (attrs.notes !== undefined) obj.notes = attrs.notes;
     if (attrs.landmarks !== undefined) obj.landmarks = attrs.landmarks;
     if (attrs.blocks !== undefined) obj.blocks = attrs.blocks;
@@ -159,6 +160,7 @@ export async function createFirestoreStore(user, congregationId) {
         houses: parseHouses(attrs.houses),
         polygon: polygonToFirestore(attrs.polygon || []),
         showQr: !!attrs.showQr,
+        showHouses: !!attrs.showHouses,
         notes: attrs.notes || '',
         landmarks: attrs.landmarks || [],
         blocks: attrs.blocks || [],
