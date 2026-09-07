@@ -297,7 +297,28 @@ export default {
     migrateTitle: 'Migrar datos a la nube',
     migrateDesc: 'Si te registras en modo en línea, podrás subir tus datos locales a la nube.',
     migrateButton: 'Registrarse y migrar datos',
-    switchToOffline: 'Cambiar a modo sin conexión'
+    switchToOffline: 'Cambiar a modo sin conexión',
+    boundaryTitle: 'Límite de la congregación',
+    boundaryDesc: 'Sube el archivo KML o KMZ que da la sucursal. Se dibuja sobre los mapas como guía al trazar territorios. No impide crear territorios fuera de la línea.',
+    boundaryUpload: 'Subir límite',
+    boundaryReplace: 'Reemplazar límite',
+    boundaryRemove: 'Quitar límite',
+    boundaryLoaded: 'Límite cargado',
+    boundaryUpdated: 'Actualizado por la sucursal',
+    boundaryPoints: 'puntos',
+    boundaryBorders: 'Linderos',
+    boundaryNorth: 'Norte',
+    boundaryEast: 'Este',
+    boundarySouth: 'Sur',
+    boundaryWest: 'Oeste',
+    boundaryNone: 'Todavía no has subido el límite de la congregación.',
+    boundaryError: 'No se pudo leer el límite: ',
+    boundaryEmpty: 'El archivo no contiene un polígono válido.',
+    boundaryConfirmRemove: '¿Quitar el límite de la congregación?'
+  },
+
+  map: {
+    boundaryLayer: 'Límite de la congregación'
   },
 
   // Alerts

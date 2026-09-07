@@ -297,7 +297,28 @@ export default {
     migrateTitle: 'Migrate data to cloud',
     migrateDesc: 'If you register for online mode, you can upload your local data to the cloud.',
     migrateButton: 'Register and migrate data',
-    switchToOffline: 'Switch to offline mode'
+    switchToOffline: 'Switch to offline mode',
+    boundaryTitle: 'Congregation boundary',
+    boundaryDesc: 'Upload the KML or KMZ file the branch provides. It is drawn over the maps as a guide while tracing territories. It does not prevent creating territories outside the line.',
+    boundaryUpload: 'Upload boundary',
+    boundaryReplace: 'Replace boundary',
+    boundaryRemove: 'Remove boundary',
+    boundaryLoaded: 'Boundary loaded',
+    boundaryUpdated: 'Updated by the branch',
+    boundaryPoints: 'points',
+    boundaryBorders: 'Borders',
+    boundaryNorth: 'North',
+    boundaryEast: 'East',
+    boundarySouth: 'South',
+    boundaryWest: 'West',
+    boundaryNone: 'You have not uploaded the congregation boundary yet.',
+    boundaryError: 'Could not read the boundary: ',
+    boundaryEmpty: 'The file does not contain a valid polygon.',
+    boundaryConfirmRemove: 'Remove the congregation boundary?'
+  },
+
+  map: {
+    boundaryLayer: 'Congregation boundary'
   },
 
   // Alerts

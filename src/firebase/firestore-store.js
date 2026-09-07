@@ -17,6 +17,7 @@ export async function createFirestoreStore(user, congregationId) {
   let defaultCenter = [0, 0];
   let congregationPublicId = null;
   let s13Cutoff = null;
+  let boundary = null;
 
   const terrCol = collection(db, 'congregations', congregationId, 'territories');
   const histCol = collection(db, 'congregations', congregationId, 'history');
@@ -29,6 +30,7 @@ export async function createFirestoreStore(user, congregationId) {
     if (snap.exists()) {
       const data = snap.data();
       s13Cutoff = data.s13Cutoff || null;
+      boundary = data.boundary || null;
       if (data.publicId) {
         congregationPublicId = data.publicId;
       } else {
@@ -451,6 +453,19 @@ export async function createFirestoreStore(user, congregationId) {
     async setS13Cutoff(iso) {
       s13Cutoff = iso || null;
       await updateDoc(doc(db, 'congregations', congregationId), { s13Cutoff: s13Cutoff });
+      notify();
+    },
+
+    // Límite de la congregación. Los puntos van como una sola cadena de texto,
+    // no como lista de objetos: son más de mil y nunca se editan a mano.
+    // ponytail: se lee al abrir la sesión, igual que el corte del S-13.
+    getBoundary() {
+      return boundary;
+    },
+
+    async setBoundary(value) {
+      boundary = value || null;
+      await updateDoc(doc(db, 'congregations', congregationId), { boundary: boundary });
       notify();
     },
 

@@ -1,28 +1,19 @@
 import JSZip from 'jszip';
 
-export function parse(file) {
+// Lee el texto XML de un .kml o del primer .kml dentro de un .kmz.
+function readKmlText(file) {
   if (file.name.toLowerCase().endsWith('.kmz')) {
-    return parseKMZ(file);
+    return readKmzText(file);
   }
-  return parseKMLFile(file);
-}
-
-function parseKMLFile(file) {
   return new Promise(function (resolve, reject) {
     const reader = new FileReader();
-    reader.onload = function (e) {
-      try {
-        resolve(parseKMLString(e.target.result));
-      } catch (err) {
-        reject(err);
-      }
-    };
+    reader.onload = function (e) { resolve(e.target.result); };
     reader.onerror = function () { reject(reader.error); };
     reader.readAsText(file);
   });
 }
 
-function parseKMZ(file) {
+function readKmzText(file) {
   return new Promise(function (resolve, reject) {
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -35,13 +26,46 @@ function parseKMZ(file) {
         });
         if (!kmlFile) throw new Error('No .kml file found inside KMZ archive');
         return kmlFile.async('string');
-      }).then(function (kmlString) {
-        resolve(parseKMLString(kmlString));
-      }).catch(reject);
+      }).then(resolve).catch(reject);
     };
     reader.onerror = function () { reject(reader.error); };
     reader.readAsArrayBuffer(file);
   });
+}
+
+export function parse(file) {
+  return readKmlText(file).then(parseKMLString);
+}
+
+// Límite de la congregación: un solo polígono, el que da la sucursal.
+export function parseBoundary(file) {
+  return readKmlText(file).then(parseBoundaryString);
+}
+
+// Convierte el texto de <coordinates> en pares [lng, lat].
+// Descarta altitud y basura, y quita el punto de cierre que repite el primero.
+// Exportada aparte porque es la única lógica con filo y así se puede probar
+// sin DOM (el límite de una congregación trae más de mil puntos).
+export function parseCoordString(coordsText) {
+  const coords = [];
+  if (!coordsText) return coords;
+
+  coordsText.trim().split(/\s+/).forEach(function (triplet) {
+    const parts = triplet.split(',');
+    if (parts.length < 2) return;
+    const lng = parseFloat(parts[0]);
+    const lat = parseFloat(parts[1]);
+    if (!isNaN(lng) && !isNaN(lat)) {
+      coords.push([lng, lat]);
+    }
+  });
+
+  if (coords.length > 1) {
+    const first = coords[0], last = coords[coords.length - 1];
+    if (first[0] === last[0] && first[1] === last[1]) coords.pop();
+  }
+
+  return coords;
 }
 
 function parseKMLString(kmlText) {
@@ -73,6 +97,43 @@ function parseKMLString(kmlText) {
   return territories;
 }
 
+// El KML de la sucursal trae los cuatro linderos escritos en <Data>. Eso es lo
+// que uno consulta cuando duda si una casa entra o no, así que se guarda igual
+// que la geometría.
+function parseBoundaryString(kmlText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(kmlText, 'text/xml');
+
+  const placemark = doc.querySelector('Placemark');
+  if (!placemark) throw new Error('boundary.empty');
+
+  const coordsEl = placemark.querySelector('coordinates');
+  if (!coordsEl) throw new Error('boundary.empty');
+
+  const coordsText = coordsEl.textContent.trim().replace(/\s+/g, ' ');
+  if (parseCoordString(coordsText).length < 3) throw new Error('boundary.empty');
+
+  const nameEl = placemark.querySelector('name');
+  const data = {};
+  placemark.querySelectorAll('Data').forEach(function (el) {
+    const key = el.getAttribute('name');
+    const valueEl = el.querySelector('value');
+    if (key && valueEl) data[key] = valueEl.textContent.trim();
+  });
+
+  return {
+    name: nameEl ? nameEl.textContent.trim() : '',
+    coords: coordsText,
+    updated: data.LastUpdated || '',
+    borders: {
+      north: data.BorderNorth || '',
+      east: data.BorderEast || '',
+      south: data.BorderSouth || '',
+      west: data.BorderWest || ''
+    }
+  };
+}
+
 function parsePlacemark(placemark, groupName) {
   const nameEl = placemark.querySelector('name');
   const rawName = nameEl ? nameEl.textContent.trim() : '';
@@ -86,24 +147,9 @@ function parsePlacemark(placemark, groupName) {
   const coordsEl = placemark.querySelector('coordinates');
   if (!coordsEl) return null;
 
-  const coordsText = coordsEl.textContent.trim();
-  const polygon = [];
-
-  coordsText.split(/\s+/).forEach(function (triplet) {
-    const parts = triplet.split(',');
-    if (parts.length < 2) return;
-    const lng = parseFloat(parts[0]);
-    const lat = parseFloat(parts[1]);
-    if (!isNaN(lng) && !isNaN(lat)) {
-      polygon.push([lng, lat]);
-    }
-  });
-
+  const polygon = parseCoordString(coordsEl.textContent);
   if (polygon.length < 3) return null;
 
-  // Strip closing ring point (KML repeats first coord as last)
-  const first = polygon[0], last = polygon[polygon.length - 1];
-  if (first[0] === last[0] && first[1] === last[1]) polygon.pop();
-
-  return { number, name: fullName, group_name: groupName, polygon };
+  // La carpeta del KML pasa a ser una etiqueta del territorio.
+  return { number, name: fullName, tags: groupName ? [groupName] : [], polygon };
 }

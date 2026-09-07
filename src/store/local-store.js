@@ -54,7 +54,7 @@ const SAMPLE_DATA = {
 const STORAGE_KEY = 'territory-cards-data';
 
 export function createLocalStore() {
-  let data = { territories: [], history: [], globalLandmarks: [] };
+  let data = { territories: [], history: [], globalLandmarks: [], boundary: null };
   let listeners = [];
   let defaultCenter = [0, 0];
 
@@ -374,7 +374,7 @@ export function createLocalStore() {
     },
 
     reset() {
-      data = { territories: [], history: [], globalLandmarks: [] };
+      data = { territories: [], history: [], globalLandmarks: [], boundary: null };
       try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
       notify();
     },
@@ -405,6 +405,18 @@ export function createLocalStore() {
 
     setS13Cutoff(iso) {
       data.s13Cutoff = iso || null;
+      notify();
+    },
+
+    // Límite de la congregación, el que asigna la sucursal. Es orientación
+    // visual al dibujar, nunca una restricción: se pueden hacer territorios
+    // fuera de la línea porque los linderos reales no siempre coinciden.
+    getBoundary() {
+      return data.boundary || null;
+    },
+
+    setBoundary(boundary) {
+      data.boundary = boundary || null;
       notify();
     }
   };

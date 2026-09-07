@@ -1,6 +1,8 @@
 import { t } from '../i18n/i18n.js';
 import { escapeHtml } from '../utils/helpers.js';
-import { getMode, setMode, getUserProfile, migrateLocalToCloud } from '../store/index.js';
+import { getMode, setMode, getUserProfile, getStore, migrateLocalToCloud } from '../store/index.js';
+import { parseBoundary, parseCoordString } from '../utils/kml-import.js';
+import { canEditCongregation } from '../auth/permissions.js';
 
 export let isDirty = false;
 
@@ -153,7 +155,114 @@ export function render(container) {
     wrapper.appendChild(migrateSection);
   }
 
+  // Límite de la congregación (offline siempre; online sólo quien puede editar
+  // la congregación, porque lo ven todos).
+  if (mode === 'offline' || canEditCongregation(profile)) {
+    wrapper.appendChild(buildBoundarySection());
+  }
+
   container.appendChild(wrapper);
 
   return null;
+}
+
+function buildBoundarySection() {
+  const store = getStore();
+  const section = document.createElement('div');
+  section.className = 'admin-section';
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.kml,.kmz';
+  fileInput.style.display = 'none';
+
+  function paint() {
+    const boundary = store.getBoundary ? store.getBoundary() : null;
+    section.innerHTML = '<h3>' + escapeHtml(t('settings.boundaryTitle')) + '</h3>' +
+      '<p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:0.75rem;">' +
+      escapeHtml(t('settings.boundaryDesc')) + '</p>' +
+      '<div class="flash flash-alert boundary-error" style="display:none"></div>';
+
+    if (boundary) {
+      const points = parseCoordString(boundary.coords).length;
+      let html = '<p><strong>' + escapeHtml(t('settings.boundaryLoaded')) + ':</strong> ' +
+        escapeHtml(boundary.name || '') + ' (' + points + ' ' + escapeHtml(t('settings.boundaryPoints')) + ')</p>';
+
+      if (boundary.updated) {
+        html += '<p style="font-size:0.875rem;color:var(--text-secondary);">' +
+          escapeHtml(t('settings.boundaryUpdated')) + ': ' + escapeHtml(boundary.updated) + '</p>';
+      }
+
+      const b = boundary.borders || {};
+      const rows = [
+        ['boundaryNorth', b.north], ['boundaryEast', b.east],
+        ['boundarySouth', b.south], ['boundaryWest', b.west]
+      ].filter(function (r) { return r[1]; });
+
+      if (rows.length > 0) {
+        html += '<h4 style="margin:0.75rem 0 0.25rem;">' + escapeHtml(t('settings.boundaryBorders')) + '</h4>' +
+          '<dl style="margin:0;font-size:0.875rem;">' +
+          rows.map(function (r) {
+            return '<dt style="font-weight:600;margin-top:0.35rem;">' + escapeHtml(t('settings.' + r[0])) + '</dt>' +
+              '<dd style="margin:0 0 0 0.75rem;white-space:pre-line;color:var(--text-secondary);">' +
+              escapeHtml(r[1]) + '</dd>';
+          }).join('') + '</dl>';
+      }
+      section.insertAdjacentHTML('beforeend', html);
+    } else {
+      section.insertAdjacentHTML('beforeend',
+        '<p style="color:var(--text-secondary);">' + escapeHtml(t('settings.boundaryNone')) + '</p>');
+    }
+
+    const actions = document.createElement('div');
+    actions.style.marginTop = '0.75rem';
+    actions.style.display = 'flex';
+    actions.style.gap = '0.5rem';
+    actions.style.flexWrap = 'wrap';
+
+    const uploadBtn = document.createElement('button');
+    uploadBtn.className = 'btn btn-primary';
+    uploadBtn.textContent = boundary ? t('settings.boundaryReplace') : t('settings.boundaryUpload');
+    uploadBtn.addEventListener('click', function () { fileInput.click(); });
+    actions.appendChild(uploadBtn);
+
+    if (boundary) {
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'btn btn-danger';
+      removeBtn.textContent = t('settings.boundaryRemove');
+      removeBtn.addEventListener('click', async function () {
+        if (!window.confirm(t('settings.boundaryConfirmRemove'))) return;
+        await store.setBoundary(null);
+        paint();
+      });
+      actions.appendChild(removeBtn);
+    }
+
+    section.appendChild(actions);
+    section.appendChild(fileInput);
+  }
+
+  fileInput.addEventListener('change', async function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const boundary = await parseBoundary(file);
+      await store.setBoundary(boundary);
+      paint();
+    } catch (err) {
+      const msg = err && err.message === 'boundary.empty'
+        ? t('settings.boundaryEmpty')
+        : (err && err.message) || '';
+      const box = section.querySelector('.boundary-error');
+      if (box) {
+        box.textContent = t('settings.boundaryError') + msg;
+        box.style.display = 'block';
+      }
+    } finally {
+      fileInput.value = '';
+    }
+  });
+
+  paint();
+  return section;
 }

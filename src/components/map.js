@@ -1,8 +1,41 @@
 import L from 'leaflet';
 import { getStore } from '../store/index.js';
 import { escapeHtml } from '../utils/helpers.js';
+import { parseCoordString } from '../utils/kml-import.js';
+import { t } from '../i18n/i18n.js';
 
 const TERRITORY_COLORS = ['#1E40AF', '#B91C1C', '#047857', '#7C3AED', '#B45309', '#BE185D'];
+
+// Contorno de la congregación, sin relleno para no tapar los territorios.
+// Devuelve null si no hay límite cargado.
+export function buildBoundaryLayer() {
+  const store = getStore();
+  const boundary = store.getBoundary ? store.getBoundary() : null;
+  if (!boundary || !boundary.coords) return null;
+
+  const coords = parseCoordString(boundary.coords).map(function (c) { return [c[1], c[0]]; });
+  if (coords.length < 3) return null;
+
+  return L.polygon(coords, {
+    color: '#DC2626',
+    weight: 2,
+    dashArray: '6 4',
+    fill: false,
+    interactive: false
+  });
+}
+
+// El control de capas de Leaflet ya da la casilla de encender y apagar, así que
+// el interruptor de "ver límite" no se construye a mano.
+function addBoundaryOverlay(map, baseLayers) {
+  const boundaryLayer = buildBoundaryLayer();
+  const overlays = {};
+  if (boundaryLayer) {
+    overlays[t('map.boundaryLayer')] = boundaryLayer;
+    boundaryLayer.addTo(map);
+  }
+  L.control.layers(baseLayers, overlays).addTo(map);
+}
 
 export function renderOverviewMap(container, territories) {
   const store = getStore();
@@ -27,7 +60,7 @@ export function renderOverviewMap(container, territories) {
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.7 })
   ]);
 
-  L.control.layers({ 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid }).addTo(map);
+  addBoundaryOverlay(map, { 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid });
 
   const bounds = [];
 
@@ -90,7 +123,7 @@ export function renderSingleMap(container, territory, onMapClick, onMapReady) {
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.7 })
   ]);
 
-  L.control.layers({ 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid }).addTo(map);
+  addBoundaryOverlay(map, { 'Street': osm, 'Satellite': satellite, 'Hybrid': hybrid });
 
   if (territory.polygon && territory.polygon.length >= 3) {
     const coords = territory.polygon.map(function (c) { return [c[1], c[0]]; });
