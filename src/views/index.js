@@ -2,6 +2,7 @@ import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
 import { renderOverviewMap } from '../components/map.js';
 import { escapeHtml, formatDate } from '../utils/helpers.js';
+import { territoryTags, allTags, matchesTags } from '../utils/tags.js';
 import { refresh } from '../router.js';
 import {
   canCreateTerritory,
@@ -15,6 +16,25 @@ const VIEW_KEY = 'territory-cards-view';
 
 function getViewPref() {
   try { return localStorage.getItem(VIEW_KEY) || 'cards'; } catch (e) { return 'cards'; }
+}
+
+const FILTER_KEY = 'territory-tag-filter';
+const GROUP_KEY = 'territory-group-by-tag';
+
+function getFilterPref() {
+  try { return JSON.parse(localStorage.getItem(FILTER_KEY)) || []; } catch (e) { return []; }
+}
+
+function setFilterPref(tags) {
+  try { localStorage.setItem(FILTER_KEY, JSON.stringify(tags)); } catch (e) { /* ignore */ }
+}
+
+function getGroupPref() {
+  try { return localStorage.getItem(GROUP_KEY) === '1'; } catch (e) { return false; }
+}
+
+function setGroupPref(on) {
+  try { localStorage.setItem(GROUP_KEY, on ? '1' : '0'); } catch (e) { /* ignore */ }
 }
 
 function setViewPref(view) {
@@ -186,22 +206,121 @@ export function render(container) {
   }
   container.appendChild(header);
 
+  // Filtro por etiquetas y agrupación. Sólo aparece si hay etiquetas puestas:
+  // una congregación que no las usa no ve controles de más.
+  const availableTags = allTags(territories);
+  let selectedTags = getFilterPref().filter(function (tag) {
+    return availableTags.some(function (a) { return a.toLowerCase() === String(tag).toLowerCase(); });
+  });
+  let groupByTag = getGroupPref();
+
+  const filterBar = document.createElement('div');
+  filterBar.className = 'tag-filter-bar';
+  if (availableTags.length > 0) container.appendChild(filterBar);
+
   // Map
   const mapDiv = document.createElement('div');
   mapDiv.className = 'map-container';
   container.appendChild(mapDiv);
-  cleanup = renderOverviewMap(mapDiv, territories);
+
+  // Un territorio con varias etiquetas sale bajo cada una: es justo lo que se
+  // busca al pedir "muéstrame los de Pedro García" y "los de a pie".
+  function groupsOf(list) {
+    if (!groupByTag) return [{ label: null, items: list }];
+
+    const byTag = new Map();
+    const untagged = [];
+
+    list.forEach(function (territory) {
+      const tags = territoryTags(territory);
+      if (tags.length === 0) { untagged.push(territory); return; }
+      tags.forEach(function (tag) {
+        const key = tag.toLowerCase();
+        if (!byTag.has(key)) byTag.set(key, { label: tag, items: [] });
+        byTag.get(key).items.push(territory);
+      });
+    });
+
+    const groups = Array.from(byTag.values()).sort(function (a, b) {
+      return a.label.localeCompare(b.label);
+    });
+    if (untagged.length > 0) groups.push({ label: t('index.untagged'), items: untagged });
+    return groups;
+  }
+
+  function visibleTerritories() {
+    return territories.filter(function (territory) { return matchesTags(territory, selectedTags); });
+  }
+
+  function buildGroupHeading(label, count) {
+    const heading = document.createElement('h2');
+    heading.className = 'tag-group-heading';
+    heading.textContent = label + ' (' + count + ')';
+    return heading;
+  }
+
+  function paintFilterBar() {
+    if (availableTags.length === 0) return;
+    filterBar.innerHTML = '';
+
+    availableTags.forEach(function (tag) {
+      const on = selectedTags.some(function (s) { return s.toLowerCase() === tag.toLowerCase(); });
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'tag-chip' + (on ? ' active' : '');
+      chip.textContent = tag;
+      chip.addEventListener('click', function () {
+        selectedTags = on
+          ? selectedTags.filter(function (s) { return s.toLowerCase() !== tag.toLowerCase(); })
+          : selectedTags.concat([tag]);
+        setFilterPref(selectedTags);
+        redraw();
+      });
+      filterBar.appendChild(chip);
+    });
+
+    if (selectedTags.length > 0) {
+      const clear = document.createElement('button');
+      clear.type = 'button';
+      clear.className = 'tag-chip tag-chip-clear';
+      clear.textContent = t('index.clearFilter');
+      clear.addEventListener('click', function () {
+        selectedTags = [];
+        setFilterPref(selectedTags);
+        redraw();
+      });
+      filterBar.appendChild(clear);
+    }
+
+    const groupLabel = document.createElement('label');
+    groupLabel.className = 'tag-group-toggle';
+    const groupCheck = document.createElement('input');
+    groupCheck.type = 'checkbox';
+    groupCheck.checked = groupByTag;
+    groupCheck.addEventListener('change', function () {
+      groupByTag = groupCheck.checked;
+      setGroupPref(groupByTag);
+      redraw();
+    });
+    groupLabel.appendChild(groupCheck);
+    groupLabel.appendChild(document.createTextNode(' ' + t('index.groupByTag')));
+    filterBar.appendChild(groupLabel);
+  }
+
+  // El mapa también obedece el filtro: filtrar "a pie" y seguir viendo todo
+  // dibujado sería mentir.
+  function redraw() {
+    paintFilterBar();
+    if (cleanup) cleanup();
+    cleanup = renderOverviewMap(mapDiv, visibleTerritories());
+    if (getViewPref() === 'table') renderTable(); else renderCards();
+  }
 
   // Content area (cards or table)
   const contentArea = document.createElement('div');
   container.appendChild(contentArea);
 
-  function renderCards() {
-    contentArea.innerHTML = '';
-    const grid = document.createElement('div');
-    grid.className = 'territory-grid';
-
-    territories.forEach(function (territory) {
+  function buildCard(territory) {
       const card = document.createElement('a');
       card.href = '#/territories/' + territory.id;
       card.className = 'territory-grid-card';
@@ -212,10 +331,11 @@ export function render(container) {
       num.className = 'territory-grid-card-number';
       num.textContent = territory.number;
       cardHeader.appendChild(num);
-      if (territory.group_name) {
+      const cardTags = territoryTags(territory);
+      if (cardTags.length > 0) {
         const group = document.createElement('span');
         group.className = 'territory-grid-card-group';
-        group.textContent = territory.group_name;
+        group.textContent = cardTags.join(' · ');
         cardHeader.appendChild(group);
       }
       card.appendChild(cardHeader);
@@ -276,22 +396,21 @@ export function render(container) {
       }
 
       card.appendChild(actions);
-      grid.appendChild(card);
-    });
-
-    contentArea.appendChild(grid);
+      return card;
   }
 
-  function renderTable() {
+  function renderCards() {
     contentArea.innerHTML = '';
-    const table = document.createElement('table');
-    table.className = 'territory-table';
+    groupsOf(visibleTerritories()).forEach(function (group) {
+      if (group.label !== null) contentArea.appendChild(buildGroupHeading(group.label, group.items.length));
+      const grid = document.createElement('div');
+      grid.className = 'territory-grid';
+      group.items.forEach(function (territory) { grid.appendChild(buildCard(territory)); });
+      contentArea.appendChild(grid);
+    });
+  }
 
-    const thead = '<thead><tr><th>' + escapeHtml(t('index.colNumber')) + '</th><th>' + escapeHtml(t('index.colName')) + '</th><th>' + escapeHtml(t('index.colGroup')) + '</th><th>' + escapeHtml(t('index.colLandmarks')) + '</th><th>' + escapeHtml(t('index.colHistory')) + '</th><th></th></tr></thead>';
-    table.innerHTML = thead + '<tbody></tbody>';
-
-    const tbodyEl = table.querySelector('tbody');
-    territories.forEach(function (territory) {
+  function buildRow(territory) {
       const tr = document.createElement('tr');
       tr.style.cursor = 'pointer';
       tr.addEventListener('click', function (e) {
@@ -310,7 +429,7 @@ export function render(container) {
       tdName.appendChild(nameLink);
 
       const tdGroup = document.createElement('td');
-      tdGroup.textContent = territory.group_name || '';
+      tdGroup.textContent = territoryTags(territory).join(', ');
 
       const tdLandmarks = document.createElement('td');
       tdLandmarks.textContent = territory.landmarks.length;
@@ -355,10 +474,22 @@ export function render(container) {
       tr.appendChild(tdLandmarks);
       tr.appendChild(tdHistory);
       tr.appendChild(tdActions);
-      tbodyEl.appendChild(tr);
-    });
+      return tr;
+  }
 
-    contentArea.appendChild(table);
+  function renderTable() {
+    contentArea.innerHTML = '';
+    const thead = '<thead><tr><th>' + escapeHtml(t('index.colNumber')) + '</th><th>' + escapeHtml(t('index.colName')) + '</th><th>' + escapeHtml(t('index.colTags')) + '</th><th>' + escapeHtml(t('index.colLandmarks')) + '</th><th>' + escapeHtml(t('index.colHistory')) + '</th><th></th></tr></thead>';
+
+    groupsOf(visibleTerritories()).forEach(function (group) {
+      if (group.label !== null) contentArea.appendChild(buildGroupHeading(group.label, group.items.length));
+      const table = document.createElement('table');
+      table.className = 'territory-table';
+      table.innerHTML = thead + '<tbody></tbody>';
+      const tbodyEl = table.querySelector('tbody');
+      group.items.forEach(function (territory) { tbodyEl.appendChild(buildRow(territory)); });
+      contentArea.appendChild(table);
+    });
   }
 
   function switchView(view) {
@@ -371,7 +502,7 @@ export function render(container) {
   btnCards.addEventListener('click', function () { switchView('cards'); });
   btnTable.addEventListener('click', function () { switchView('table'); });
 
-  if (getViewPref() === 'table') renderTable(); else renderCards();
+  redraw();
 
   return function () {
     if (cleanup) cleanup();

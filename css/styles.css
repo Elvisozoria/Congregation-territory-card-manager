@@ -262,6 +262,16 @@ a.navbar-brand:hover { color: white; }
 .view-toggle-btn.active { background: var(--bg-tertiary); color: var(--text-primary); }
 .view-toggle-btn:hover:not(.active) { color: var(--text-primary); }
 
+/* Filtro por etiquetas y agrupación */
+.tag-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 1rem; }
+.tag-chip { font-size: 0.8125rem; color: var(--text-secondary); background: var(--bg-tertiary); border: 1px solid var(--border-primary); padding: 0.25rem 0.625rem; border-radius: 999px; cursor: pointer; transition: all 0.15s; }
+.tag-chip:hover { color: var(--text-primary); }
+.tag-chip.active { background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary); }
+.tag-chip-clear { background: none; border-style: dashed; }
+.tag-group-toggle { display: flex; align-items: center; gap: 0.25rem; font-size: 0.8125rem; color: var(--text-secondary); cursor: pointer; margin-left: auto; }
+.tag-group-heading { font-size: 0.9375rem; font-weight: 600; color: var(--text-secondary); margin: 1.5rem 0 0.625rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border-secondary); }
+.tag-group-heading:first-child { margin-top: 0; }
+
 /* History section */
 .history-section { margin-top: 2rem; }
 .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }

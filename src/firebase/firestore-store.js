@@ -4,6 +4,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './config.js';
 import { parse as parseKml } from '../utils/kml-import.js';
+import { normalizeTags, territoryTags } from '../utils/tags.js';
 import { generatePublicId } from '../utils/public-id.js';
 
 export async function createFirestoreStore(user, congregationId) {
@@ -116,7 +117,7 @@ export async function createFirestoreStore(user, congregationId) {
     const obj = {};
     if (attrs.number !== undefined) obj.number = attrs.number;
     if (attrs.name !== undefined) obj.name = attrs.name;
-    if (attrs.group_name !== undefined) obj.group_name = attrs.group_name;
+    if (attrs.tags !== undefined) obj.tags = normalizeTags(attrs.tags);
     if (attrs.polygon !== undefined) obj.polygon = polygonToFirestore(attrs.polygon);
     if (attrs.showQr !== undefined) obj.showQr = attrs.showQr;
     if (attrs.notes !== undefined) obj.notes = attrs.notes;
@@ -152,7 +153,7 @@ export async function createFirestoreStore(user, congregationId) {
       const data = {
         number: attrs.number || '',
         name: attrs.name || '',
-        group_name: attrs.group_name || '',
+        tags: normalizeTags(attrs.tags),
         polygon: polygonToFirestore(attrs.polygon || []),
         showQr: !!attrs.showQr,
         notes: attrs.notes || '',
@@ -403,14 +404,14 @@ export async function createFirestoreStore(user, congregationId) {
         if (existing) {
           await this.updateTerritory(existing.id, {
             name: t.name,
-            group_name: t.group_name,
+            tags: normalizeTags(territoryTags(existing).concat(t.tags || [])),
             polygon: t.polygon
           });
         } else {
           await this.createTerritory({
             number: t.number,
             name: t.name,
-            group_name: t.group_name,
+            tags: t.tags,
             polygon: t.polygon,
             showQr: false,
             notes: '',

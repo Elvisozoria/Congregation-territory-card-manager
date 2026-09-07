@@ -2,6 +2,7 @@ import L from 'leaflet';
 import { t } from '../i18n/i18n.js';
 import { escapeHtml } from '../utils/helpers.js';
 import { normalizePublicId } from '../utils/public-id.js';
+import { territoryTags } from '../utils/tags.js';
 
 const WORLD_BOUNDS = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
 
@@ -77,8 +78,9 @@ async function loadAndRender(wrapper, congPublicId, terPublicId) {
   header.style.cssText = 'margin-bottom:1rem;';
   header.innerHTML =
     '<h1 style="margin:0;font-size:1.5rem;">' + escapeHtml(territory.number || '') + ' - ' + escapeHtml(territory.name || '') + '</h1>';
-  if (territory.group_name) {
-    header.innerHTML += '<p style="margin:0.25rem 0 0;color:var(--text-secondary);font-size:0.875rem;">' + escapeHtml(territory.group_name) + '</p>';
+  const tags = territoryTags(territory);
+  if (tags.length > 0) {
+    header.innerHTML += '<p style="margin:0.25rem 0 0;color:var(--text-secondary);font-size:0.875rem;">' + escapeHtml(tags.join(' · ')) + '</p>';
   }
   wrapper.appendChild(header);
 
