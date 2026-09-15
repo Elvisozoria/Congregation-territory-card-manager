@@ -33,15 +33,16 @@ La [Guía de Usuario](https://elvisozoria.github.io/Congregation-territory-card-
 - **Gestión de territorios** — Crea, edita y elimina territorios con polígonos sobre un mapa interactivo (Leaflet)
 - **Etiquetas** — Varias por territorio para filtrar y agrupar: zona, hora del día, modo de recorrido, tipo
 - **Límite de la congregación** — Sube el KML de la sucursal y se dibuja sobre los mapas como guía al trazar
-- **Puntos de referencia** — Marcadores de colores en el mapa para ubicar lugares clave
+- **Puntos de referencia** — Marcadores de colores en el mapa para ubicar lugares clave, cada uno con su «Cómo llegar»; uno puede ser la entrada del territorio
 - **Manzanas** — Etiquetas numeradas para bloques de calles dentro del territorio
 
 **Tarjetas**
 
 - **Tarjetas imprimibles** — Mapa, polígono, referencias, y de forma opcional el código QR y el número de casas
 - **Imprimir por sector** — Ordenadas por número, y con un filtro puesto sólo las de ese grupo
-- **Descarga PNG** — Descarga tarjetas como imágenes de alta resolución (2x)
-- **Compartir** — Links públicos para compartir territorios sin necesidad de cuenta
+- **Descarga PNG** — Una tarjeta suelta, o todas en un ZIP desde Imprimir, a doble resolución
+- **Apariencia por congregación** — Mapa base (limpio, carreteras, relieve, satélite, híbrido), velo, contorno, relleno y tamaño de etiquetas, con muestra en vivo; un territorio puede fijar su propio mapa
+- **Compartir** — Links públicos sin cuenta, con ruta en Google Maps o Waze hasta la entrada del territorio
 
 **Cuenta y congregación**
 

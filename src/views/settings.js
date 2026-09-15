@@ -3,6 +3,9 @@ import { escapeHtml } from '../utils/helpers.js';
 import { getMode, setMode, getUserProfile, getStore, migrateLocalToCloud } from '../store/index.js';
 import { parseBoundary, parseCoordString } from '../utils/kml-import.js';
 import { canEditCongregation } from '../auth/permissions.js';
+import { renderCardMap } from '../components/card-map.js';
+import { baseName } from '../components/tiles.js';
+import { BASES, OUTLINE_COLORS, OUTLINE_WEIGHTS, LABEL_SIZES, DEFAULT_STYLE, normalizeStyle } from '../utils/map-style.js';
 
 export let isDirty = false;
 
@@ -187,6 +190,10 @@ export function render(container) {
     const bSection = buildBoundarySection();
     bSection.dataset.order = '20';
     wrapper.appendChild(bSection);
+
+    const sSection = buildStyleSection();
+    sSection.dataset.order = '25';
+    wrapper.appendChild(sSection);
   }
 
   // Orden por uso: primero la congregación, luego tu cuenta y al final lo
@@ -397,5 +404,148 @@ function buildBoundarySection() {
   });
 
   paint();
+  return section;
+}
+
+// Apariencia de las tarjetas, con una tarjeta de muestra que se redibuja al
+// tocar cualquier ajuste. Sin la muestra se ajusta a ciegas y hay que ir a un
+// territorio a mirar; con ella se ve al momento qué le pasa al campo con cada
+// mapa base.
+const COLOR_NAMES = ['Blue', 'Red', 'Yellow', 'White', 'Black'];
+const WEIGHT_NAMES = ['Thin', 'Normal', 'Thick'];
+
+function buildStyleSection() {
+  const store = getStore();
+  const section = document.createElement('div');
+  section.className = 'admin-section';
+  let style = normalizeStyle(store.getMapStyle ? store.getMapStyle() : null);
+
+  section.innerHTML = '<h3>' + escapeHtml(t('settings.styleTitle')) + '</h3>' +
+    '<p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:0.75rem;">' +
+    escapeHtml(t('settings.styleDesc')) + '</p>' +
+    '<div class="flash flash-notice style-saved" style="display:none"></div>';
+
+  function options(values, labelFor, current) {
+    return values.map(function (v) {
+      return '<option value="' + v + '"' + (String(v) === String(current) ? ' selected' : '') + '>' + escapeHtml(labelFor(v)) + '</option>';
+    }).join('');
+  }
+
+  const form = document.createElement('div');
+  form.className = 'admin-form';
+  form.innerHTML =
+    '<div class="form-group">' +
+      '<label for="style-base">' + escapeHtml(t('settings.styleBase')) + '</label>' +
+      '<select id="style-base">' + options(BASES, baseName, style.base) + '</select>' +
+    '</div>' +
+    '<div class="form-group">' +
+      '<label for="style-veil">' + escapeHtml(t('settings.styleVeil')) + ' <span class="style-veil-val"></span></label>' +
+      '<input type="range" id="style-veil" min="0" max="100" step="5" value="' + style.veil + '" />' +
+    '</div>' +
+    '<div class="form-group">' +
+      '<label for="style-color">' + escapeHtml(t('settings.styleOutline')) + '</label>' +
+      '<div style="display:flex;gap:0.5rem;">' +
+        '<select id="style-color">' + options(OUTLINE_COLORS, function (c) {
+          return t('settings.styleColor' + COLOR_NAMES[OUTLINE_COLORS.indexOf(c)]);
+        }, style.outlineColor) + '</select>' +
+        '<select id="style-weight">' + options(OUTLINE_WEIGHTS, function (w) {
+          return t('settings.styleWeight' + WEIGHT_NAMES[OUTLINE_WEIGHTS.indexOf(w)]);
+        }, style.outlineWeight) + '</select>' +
+      '</div>' +
+    '</div>' +
+    '<div class="form-group">' +
+      '<label for="style-fill">' + escapeHtml(t('settings.styleFill')) + ' <span class="style-fill-val"></span></label>' +
+      '<input type="range" id="style-fill" min="0" max="30" step="5" value="' + style.fill + '" />' +
+    '</div>' +
+    '<div class="form-group">' +
+      '<label for="style-label">' + escapeHtml(t('settings.styleLabelSize')) + '</label>' +
+      '<select id="style-label">' + options(LABEL_SIZES, function (px) { return px + ' px'; }, style.labelSize) + '</select>' +
+      '<small style="color:var(--text-secondary);">' + escapeHtml(t('settings.styleLabelHint')) + '</small>' +
+    '</div>';
+  // Muestra: el primer territorio dibujado, con un punto de referencia si tiene.
+  const sample = (store.getAll ? store.getAll() : []).find(function (te) {
+    return te.polygon && te.polygon.length >= 3;
+  });
+  const previewWrap = document.createElement('div');
+  previewWrap.style.cssText = 'margin:0.75rem 0;';
+  previewWrap.innerHTML = '<label style="display:block;margin-bottom:0.35rem;">' + escapeHtml(t('settings.stylePreview')) + '</label>';
+  let card = null;
+  let controller = null;
+  if (sample) {
+    card = document.createElement('div');
+    card.className = 'territory-card';
+    card.style.cssText = 'width:100%;max-width:480px;height:auto;aspect-ratio:5/3;';
+    card.innerHTML = '<div class="card-map"></div>';
+    previewWrap.appendChild(card);
+  } else {
+    previewWrap.insertAdjacentHTML('beforeend',
+      '<p style="color:var(--text-secondary);">' + escapeHtml(t('settings.styleNoTerritory')) + '</p>');
+  }
+  // La muestra va antes que los controles para que quede a la vista al ajustar.
+  section.appendChild(previewWrap);
+  section.appendChild(form);
+
+  function read() {
+    return normalizeStyle({
+      base: form.querySelector('#style-base').value,
+      veil: form.querySelector('#style-veil').value,
+      outlineColor: form.querySelector('#style-color').value,
+      outlineWeight: form.querySelector('#style-weight').value,
+      fill: form.querySelector('#style-fill').value,
+      labelSize: form.querySelector('#style-label').value
+    });
+  }
+
+  function paint() {
+    style = read();
+    form.querySelector('.style-veil-val').textContent = style.veil > 0 ? style.veil + ' %' : t('settings.styleVeilOff');
+    form.querySelector('.style-fill-val').textContent = style.fill + ' %';
+    if (!card) return;
+    if (controller) controller.cleanup();
+    card.querySelectorAll('.card-houses').forEach(function (el) { el.remove(); });
+    // La muestra ignora la capa propia del territorio: aquí se ajusta la de todos.
+    const forPreview = Object.assign({}, sample, { cardLayer: null, showHouses: false });
+    controller = renderCardMap(card, forPreview, store.getGlobalLandmarks ? store.getGlobalLandmarks() : [], {
+      editable: false, style: style
+    });
+  }
+
+  form.addEventListener('input', paint);
+  form.addEventListener('change', paint);
+
+  const actions = document.createElement('div');
+  actions.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;';
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-primary';
+  saveBtn.textContent = t('settings.styleSave');
+  saveBtn.addEventListener('click', async function () {
+    saveBtn.disabled = true;
+    try {
+      await store.setMapStyle(read());
+      const box = section.querySelector('.style-saved');
+      box.textContent = t('settings.styleSaved');
+      box.style.display = 'block';
+    } finally {
+      saveBtn.disabled = false;
+    }
+  });
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'btn btn-secondary';
+  resetBtn.textContent = t('settings.styleReset');
+  resetBtn.addEventListener('click', function () {
+    form.querySelector('#style-base').value = DEFAULT_STYLE.base;
+    form.querySelector('#style-veil').value = DEFAULT_STYLE.veil;
+    form.querySelector('#style-color').value = DEFAULT_STYLE.outlineColor;
+    form.querySelector('#style-weight').value = DEFAULT_STYLE.outlineWeight;
+    form.querySelector('#style-fill').value = DEFAULT_STYLE.fill;
+    form.querySelector('#style-label').value = DEFAULT_STYLE.labelSize;
+    paint();
+  });
+  actions.appendChild(saveBtn);
+  actions.appendChild(resetBtn);
+  section.appendChild(actions);
+
+  // Leaflet necesita el nodo en el documento para medirse.
+  setTimeout(paint, 0);
   return section;
 }

@@ -5,6 +5,46 @@ versionado semántico. Cada PR contra `main` añade su entrada bajo un nuevo
 encabezado de versión. Se despliega a GitHub Pages y Firebase Hosting en cada
 merge.
 
+## [2.6.0] - 2026-09-15
+
+### Added
+
+- Apariencia de las tarjetas por congregación, en Configuración: mapa base,
+  velo fuera del territorio (de 0 a 100), color y grosor del contorno, relleno
+  dentro y tamaño de las etiquetas, con una tarjeta de muestra que se redibuja
+  al tocar cualquier ajuste. Aplica a la tarjeta, la hoja de impresión y la
+  página del QR. Los valores por defecto son el aspecto que ya tenía la app,
+  así que quien no toque nada no nota el cambio. (#35)
+- Mapa base «Relieve» (Esri Topo), sin llave. En el campo el mapa limpio pinta
+  los caminos en amarillo pálido y deja la tarjeta vacía; Relieve los dibuja
+  en blanco sobre las lomas y se lee de golpe. (#35)
+- Un territorio puede fijar su propio mapa base desde «Editar zoom y centro»;
+  se guarda con la vista. Para congregaciones con pueblo y campo. (#35)
+- El mapa general recuerda en el navegador la última capa elegida. (#35)
+- Un punto de referencia puede marcarse como la entrada del territorio. Cada
+  punto tiene «Cómo llegar», que abre la ruta en Google Maps hasta ese sitio
+  exacto, en la ficha y en la página del QR. (#35)
+- La página del QR abre la ruta en Google Maps o en Waze hasta la entrada, o
+  hasta el centro si nadie la marcó. Antes el botón sólo centraba el mapa,
+  sin pin ni ruta: a quien nunca había ido lo dejaba mirando un mapa en medio
+  del campo. (#35)
+- Descargar las tarjetas desde Imprimir da un solo ZIP en vez de un aviso del
+  navegador por tarjeta. (#35)
+
+### Fixed
+
+- El velo fuera del territorio era blanco al 20 % y sobre el mapa claro no se
+  distinguía de lo de dentro. Ahora es gris claro y su intensidad se ajusta en
+  Configuración. (#35)
+
+## [2.5.1] - 2026-09-07
+
+### Fixed
+
+- La llave de CARTO viaja en el parámetro `key`, no `api_key`. Con el nombre
+  equivocado el servidor responde el mapa con la marca de agua encima, así que
+  desde fuera parecía que la llave no servía. (#34)
+
 ## [2.5.0] - 2026-09-07
 
 ### Added

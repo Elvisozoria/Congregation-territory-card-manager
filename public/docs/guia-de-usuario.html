@@ -150,6 +150,7 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
     <a class="nav-link" href="#etiquetas">Etiquetas</a>
     <a class="nav-link" href="#casas">Casas aproximadas</a>
     <a class="nav-link" href="#limite">Límite de la congregación</a>
+    <a class="nav-link" href="#apariencia">Apariencia de las tarjetas</a>
     <a class="nav-link" href="#landmarks">Puntos de referencia</a>
     <a class="nav-link" href="#manzanas">Manzanas</a>
     <a class="nav-link" href="#eliminar-territorio">Eliminar territorio</a>
@@ -588,6 +589,46 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
   </div>
 </section>
 
+<!-- ===================== APARIENCIA ===================== -->
+<section id="apariencia">
+  <h2>Apariencia de las tarjetas</h2>
+  <p><span class="role-badge admin">Admin</span> <span class="role-badge offline">Offline</span></p>
+
+  <p>Lo que se ve bien en la ciudad no siempre se ve bien en el campo. El mapa limpio pinta los caminos rurales en amarillo pálido, y en un paraje de tres caminos la tarjeta queda casi vacía. Por eso cada congregación elige cómo se ven sus tarjetas, la hoja de impresión y la página del QR.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p>Ve a <strong>Configuración</strong> y busca <strong>"Apariencia de las tarjetas"</strong>. Arriba hay una <strong>muestra</strong> con uno de tus territorios que se redibuja al tocar cualquier ajuste.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p>Elige el <strong>mapa base</strong>:
+      <br>— <strong>Limpio:</strong> calles y nombres, casi sin color. El de siempre; en ciudad es el que menos distrae.
+      <br>— <strong>Carreteras:</strong> lo mismo con las vías más marcadas.
+      <br>— <strong>Relieve:</strong> caminos en blanco sobre el relieve de las lomas. En el campo es el que mejor se lee.
+      <br>— <strong>Satélite</strong> e <strong>Híbrido:</strong> la foto aérea, sola o con nombres encima. El único modo de ver dónde están las casas en un territorio rural.
+    </p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p>Ajusta el <strong>velo fuera del territorio</strong> (a 0 se quita), el <strong>contorno</strong> (color y grosor: sobre satélite el amarillo o el blanco se ven mejor que el azul), el <strong>relleno</strong> dentro del territorio y el <strong>tamaño de las etiquetas</strong> de puntos de referencia y manzanas, que impresas quedan pequeñas.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p>Pulsa <strong>"Guardar apariencia"</strong>. <strong>"Volver a la de siempre"</strong> deja los valores originales.</p></div>
+  </div>
+
+  <div class="info-card tip">
+    <div class="card-label">Un territorio distinto al resto</div>
+    <p>Si la congregación tiene pueblo y campo, no hace falta elegir para todos. Desde la tarjeta de un territorio, en <strong>"Editar zoom y centro"</strong>, puedes fijarle su propio mapa base. Se guarda con la vista.</p>
+  </div>
+
+  <div class="info-card">
+    <div class="card-label">El mapa general recuerda</div>
+    <p>En el mapa de la lista de territorios, la capa que elijas en el control de arriba a la derecha se recuerda en ese navegador. Si en la calle cambias a Híbrido, el siguiente mapa se abre igual.</p>
+  </div>
+</section>
+
 <!-- ===================== LANDMARKS ===================== -->
 <section id="landmarks">
   <h2>Puntos de referencia</h2>
@@ -616,8 +657,14 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
   </div>
   <div class="step">
     <div class="step-num">5</div>
+    <div class="step-body"><p>Si es el sitio por donde se entra al territorio, marca <strong>"Es la entrada"</strong>. A ese punto llega quien abre el territorio desde el QR. Sólo hace falta uno por territorio.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">6</div>
     <div class="step-body"><p>Haz clic en <strong>"Guardar"</strong>.</p></div>
   </div>
+
+  <p>Cada punto de la lista tiene un botón <strong>"Cómo llegar"</strong> que abre la ruta en Google Maps hasta ese sitio exacto.</p>
 
   <p>Para <strong>editar</strong> o <strong>eliminar</strong> un punto existente, usa los botones que aparecen en la lista de puntos debajo del mapa.</p>
 
@@ -877,7 +924,7 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
     <div class="step-num">2</div>
     <div class="step-body"><p>Verás todas las tarjetas generadas. Puedes:
       <br>— <strong>"Imprimir Todo":</strong> abre el diálogo de impresión del navegador con todas las tarjetas
-      <br>— <strong>"Descargar PNGs":</strong> descarga cada tarjeta como imagen individual
+      <br>— <strong>"Descargar PNGs":</strong> descarga todas las tarjetas en un solo archivo ZIP, una imagen por territorio
     </p></div>
   </div>
 
@@ -903,11 +950,15 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
   </div>
   <div class="step">
     <div class="step-num">3</div>
-    <div class="step-body"><p>Haz clic en <strong>"Guardar vista"</strong> para que ese zoom y centro se usen siempre para este territorio.</p></div>
+    <div class="step-body"><p>Si este territorio necesita otro mapa que el resto (un paraje en una congregación de ciudad, por ejemplo), elígelo en el desplegable <strong>"Mapa de esta tarjeta"</strong>. "El de la congregación" vuelve al general.</p></div>
   </div>
   <div class="step">
     <div class="step-num">4</div>
-    <div class="step-body"><p>Para volver al zoom automático, haz clic en <strong>"Restablecer vista"</strong>.</p></div>
+    <div class="step-body"><p>Haz clic en <strong>"Guardar vista"</strong> para que ese zoom, centro y mapa se usen siempre para este territorio.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body"><p>Para volver al zoom automático y al mapa de la congregación, haz clic en <strong>"Restablecer vista"</strong>.</p></div>
   </div>
 </section>
 
@@ -926,12 +977,12 @@ kbd{display:inline-block;padding:.125rem .375rem;font-size:.75rem;font-family:mo
   </div>
   <div class="step">
     <div class="step-num">3</div>
-    <div class="step-body"><p>Cualquier persona con ese link puede ver el territorio (mapa, referencias, link a Google Maps) <strong>sin necesidad de cuenta</strong>.</p></div>
+    <div class="step-body"><p>Cualquier persona con ese link puede ver el territorio (mapa, puntos de referencia y cómo llegar) <strong>sin necesidad de cuenta</strong>.</p></div>
   </div>
 
   <div class="info-card tip">
     <div class="card-label">Vista pública</div>
-    <p>La vista pública es de solo lectura y muestra el mapa con un botón para "Abrir en Google Maps". Ideal para enviar por WhatsApp o mensajería a publicadores que no usen la app.</p>
+    <p>La vista pública es de solo lectura. Los botones <strong>"Abrir en Google Maps"</strong> y <strong>"Abrir en Waze"</strong> trazan la ruta hasta la <strong>entrada</strong> del territorio si alguien la marcó como punto de referencia, y si no hasta el centro. Cada punto de referencia tiene además su propio <strong>"Cómo llegar"</strong>, y tocar su marcador en el mapa hace lo mismo. Ideal para enviar por WhatsApp a quien nunca ha ido.</p>
   </div>
 
   <div class="screenshot-placeholder" data-ref="compartir-link">

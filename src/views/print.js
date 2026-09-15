@@ -141,7 +141,9 @@ export function render(container) {
 
     grid.appendChild(card);
     const globalLandmarks = store.getGlobalLandmarks ? store.getGlobalLandmarks() : [];
-    const controller = renderCardMap(card, territory, globalLandmarks, { editable: false, qrUrl: qrUrl });
+    const controller = renderCardMap(card, territory, globalLandmarks, {
+      editable: false, qrUrl: qrUrl, style: store.getMapStyle ? store.getMapStyle() : null
+    });
     controllers.push(controller);
   });
 

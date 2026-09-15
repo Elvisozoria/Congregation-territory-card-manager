@@ -145,6 +145,7 @@ export function createLocalStore() {
       if (attrs.notes !== undefined) territory.notes = attrs.notes;
       if (attrs.cardZoom !== undefined) territory.cardZoom = attrs.cardZoom;
       if (attrs.cardCenter !== undefined) territory.cardCenter = attrs.cardCenter;
+      if (attrs.cardLayer !== undefined) territory.cardLayer = attrs.cardLayer;
       notify();
       return territory;
     },
@@ -164,7 +165,8 @@ export function createLocalStore() {
         description: attrs.description || '',
         lat: attrs.lat,
         lng: attrs.lng,
-        color: attrs.color || '#3B82F6'
+        color: attrs.color || '#3B82F6',
+        isStart: !!attrs.isStart
       };
       territory.landmarks.push(landmark);
       notify();
@@ -180,6 +182,7 @@ export function createLocalStore() {
       if (attrs.description !== undefined) lm.description = attrs.description;
       if (attrs.lat !== undefined) lm.lat = attrs.lat;
       if (attrs.lng !== undefined) lm.lng = attrs.lng;
+      if (attrs.isStart !== undefined) lm.isStart = !!attrs.isStart;
       notify();
     },
 
@@ -431,6 +434,17 @@ export function createLocalStore() {
 
     setBoundary(boundary) {
       data.boundary = boundary || null;
+      notify();
+    },
+
+    // Apariencia de las tarjetas (mapa base, velo, contorno). Se guarda tal
+    // cual; quien lo lee lo pasa por normalizeStyle.
+    getMapStyle() {
+      return data.mapStyle || null;
+    },
+
+    setMapStyle(style) {
+      data.mapStyle = style || null;
       notify();
     }
   };
