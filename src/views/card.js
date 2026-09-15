@@ -3,6 +3,8 @@ import QRCode from 'qrcode';
 import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
 import { renderCardMap } from '../components/card-map.js';
+import { BASES } from '../utils/map-style.js';
+import { baseName } from '../components/tiles.js';
 import { escapeHtml } from '../utils/helpers.js';
 import { buildPublicTerritoryUrl } from '../utils/public-id.js';
 import { canViewTerritory, canEditCardZoom } from '../auth/permissions.js';
@@ -74,6 +76,7 @@ export function render(container, params) {
   let editToggleBtn = null;
   let saveViewBtn = null;
   let resetViewBtn = null;
+  let layerSelect = null;
   if (allowEditView) {
     editToggleBtn = document.createElement('button');
     editToggleBtn.className = 'btn btn-secondary btn-sm';
@@ -91,6 +94,24 @@ export function render(container, params) {
     resetViewBtn.textContent = t('card.resetView');
     resetViewBtn.style.display = 'none';
     resetViewBtn.addEventListener('click', resetView);
+
+    // Capa propia de esta tarjeta. En una congregación mixta el pueblo va en
+    // Limpio y los parajes en Híbrido, sin tocar el ajuste general. Se guarda
+    // con la vista, como el zoom y el centro.
+    layerSelect = document.createElement('select');
+    layerSelect.className = 'btn btn-secondary btn-sm';
+    layerSelect.style.display = 'none';
+    layerSelect.setAttribute('aria-label', t('card.layerLabel'));
+    layerSelect.innerHTML = '<option value="">' + escapeHtml(t('card.layerDefault')) + '</option>' +
+      BASES.map(function (id) {
+        return '<option value="' + id + '"' + (territory.cardLayer === id ? ' selected' : '') + '>' + escapeHtml(baseName(id)) + '</option>';
+      }).join('');
+    layerSelect.addEventListener('change', function () {
+      territory.cardLayer = layerSelect.value || null;
+      const view = pendingView || (cardController && cardController.getView());
+      rebuildMap(true);
+      if (view && cardController) cardController.setView(view.zoom, view.center);
+    });
   }
 
   const backBtn = document.createElement('a');
@@ -104,6 +125,7 @@ export function render(container, params) {
   if (editToggleBtn) controls.appendChild(editToggleBtn);
   if (saveViewBtn) controls.appendChild(saveViewBtn);
   if (resetViewBtn) controls.appendChild(resetViewBtn);
+  if (layerSelect) controls.appendChild(layerSelect);
   controls.appendChild(backBtn);
   wrapper.appendChild(controls);
 
@@ -148,11 +170,17 @@ export function render(container, params) {
   container.appendChild(wrapper);
 
   const globalLandmarks = store.getGlobalLandmarks ? store.getGlobalLandmarks() : [];
-  cardController = renderCardMap(card, territory, globalLandmarks, {
-    editable: false,
-    qrUrl: qrUrlForRender,
-    onViewChange: function (v) { pendingView = v; }
-  });
+  const mapStyle = store.getMapStyle ? store.getMapStyle() : null;
+  function rebuildMap(editable) {
+    if (cardController) cardController.cleanup();
+    cardController = renderCardMap(card, territory, globalLandmarks, {
+      editable: editable,
+      qrUrl: qrUrlForRender,
+      style: mapStyle,
+      onViewChange: function (v) { pendingView = v; }
+    });
+  }
+  rebuildMap(false);
 
   if (needsQrHeal) {
     store.ensureTerritoryPublicId(territory.id).then(function (pubId) {
@@ -184,20 +212,17 @@ export function render(container, params) {
   function toggleEditMode() {
     editMode = !editMode;
     // Re-render del mapa con editable opcional. La forma simple: destruir y volver a crear.
-    if (cardController) cardController.cleanup();
-    cardController = renderCardMap(card, territory, globalLandmarks, {
-      editable: editMode,
-      qrUrl: qrUrlForRender,
-      onViewChange: function (v) { pendingView = v; }
-    });
+    rebuildMap(editMode);
     if (editMode) {
       editToggleBtn.textContent = t('card.back');
       saveViewBtn.style.display = '';
       resetViewBtn.style.display = '';
+      layerSelect.style.display = '';
     } else {
       editToggleBtn.textContent = t('card.enableEditView');
       saveViewBtn.style.display = 'none';
       resetViewBtn.style.display = 'none';
+      layerSelect.style.display = 'none';
     }
   }
 
@@ -208,7 +233,8 @@ export function render(container, params) {
     try {
       await store.updateTerritory(territory.id, {
         cardZoom: view.zoom,
-        cardCenter: view.center
+        cardCenter: view.center,
+        cardLayer: territory.cardLayer || null
       });
       // Actualizar territory local
       territory.cardZoom = view.zoom;
@@ -224,11 +250,14 @@ export function render(container, params) {
     try {
       await store.updateTerritory(territory.id, {
         cardZoom: null,
-        cardCenter: null
+        cardCenter: null,
+        cardLayer: null
       });
       territory.cardZoom = null;
       territory.cardCenter = null;
-      if (cardController) cardController.resetView();
+      territory.cardLayer = null;
+      if (layerSelect) layerSelect.value = '';
+      rebuildMap(editMode);
     } catch (e) {
       console.error('Reset view failed', e);
     }

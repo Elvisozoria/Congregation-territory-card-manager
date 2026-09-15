@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import { t } from '../i18n/i18n.js';
 
 // Capas base de los mapas, en un solo sitio.
 //
@@ -38,6 +39,7 @@ function carto(style) {
 const ESRI_CANVAS = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
 const ESRI_CANVAS_REF = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
 const ESRI_STREET = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+const ESRI_TOPO = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
 const ESRI_IMAGERY = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const ESRI_LABELS = 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
 
@@ -66,6 +68,13 @@ export function roadsLayer() {
   return L.tileLayer(ESRI_STREET, { attribution: ESRI_ATTR, maxZoom: 19 });
 }
 
+// Relieve sombreado con los caminos en blanco. En el campo es el mapa de
+// calles que mejor se lee: Voyager pinta los caminos rurales en amarillo
+// pálido y en un paraje de tres caminos deja la tarjeta vacía.
+export function terrainLayer() {
+  return L.tileLayer(ESRI_TOPO, { attribution: ESRI_ATTR, maxZoom: 19 });
+}
+
 export function satelliteLayer() {
   return L.tileLayer(ESRI_IMAGERY, { attribution: ESRI_ATTR, maxZoom: 19 });
 }
@@ -81,12 +90,30 @@ export function hybridLayer() {
   ]);
 }
 
-// El orden importa: la primera es la que se enciende al abrir el mapa.
+const FACTORIES = {
+  clean: streetLayer,
+  roads: roadsLayer,
+  terrain: terrainLayer,
+  satellite: satelliteLayer,
+  hybrid: hybridLayer
+};
+
+// Una capa por su id guardado. Cualquier id desconocido cae en la limpia.
+export function baseLayer(id) {
+  return (FACTORIES[id] || streetLayer)();
+}
+
+export function baseName(id) {
+  return t('map.base' + id.charAt(0).toUpperCase() + id.slice(1));
+}
+
+// Para el control de capas: nombre visible → capa. El orden es el del menú.
 export function baseLayers() {
-  return {
-    'Clean': streetLayer(),
-    'Roads': roadsLayer(),
-    'Satellite': satelliteLayer(),
-    'Hybrid': hybridLayer()
-  };
+  const out = {};
+  Object.keys(FACTORIES).forEach(function (id) { out[baseName(id)] = FACTORIES[id](); });
+  return out;
+}
+
+export function baseIdByName(name) {
+  return Object.keys(FACTORIES).find(function (id) { return baseName(id) === name; }) || 'clean';
 }

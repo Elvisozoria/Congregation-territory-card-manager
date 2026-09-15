@@ -137,6 +137,9 @@ export default {
     addLandmarkCancel: 'Cancel',
     scopeLocal: 'This territory only',
     scopeGlobal: 'All territories',
+    landmarkStart: 'This is the entrance: where the QR sends people',
+    startBadge: 'Entrance',
+    directions: 'Directions',
     globalBadge: 'Global',
     // Blocks
     blocks: 'Blocks',
@@ -219,12 +222,19 @@ export default {
     saveView: 'Save view',
     resetView: 'Reset view',
     enableEditView: 'Edit zoom and center',
-    viewSaved: 'View saved.'
+    viewSaved: 'View saved.',
+    layerLabel: 'Map for this card',
+    layerDefault: 'Congregation default'
   },
 
   // Public view
   public: {
     openInMaps: 'Open in Google Maps',
+    openInWaze: 'Open in Waze',
+    directions: 'Directions',
+    goesToStart: 'Takes you to the territory entrance.',
+    goesToCentre: 'Takes you to the centre of the territory. Each landmark below has its own directions.',
+    landmarks: 'Landmarks',
     poweredBy: 'Territory Cards'
   },
 
@@ -242,6 +252,10 @@ export default {
     printAll: 'Print All',
     undrawnWarning: 'Heads up: {count} without an outline ({numbers}). Their cards will print empty.',
     downloadAll: 'Download All PNGs',
+    downloadProgress: 'Preparing {done} of {total}...',
+    downloadZipping: 'Zipping...',
+    downloadFailed: '{count} cards could not be rendered. The rest are in the ZIP.',
+    zipName: 'territory-cards',
     back: 'Back'
   },
 
@@ -360,11 +374,38 @@ export default {
     boundaryNone: 'You have not uploaded the congregation boundary yet.',
     boundaryError: 'Could not read the boundary: ',
     boundaryEmpty: 'The file does not contain a valid polygon.',
-    boundaryConfirmRemove: 'Remove the congregation boundary?'
+    boundaryConfirmRemove: 'Remove the congregation boundary?',
+    styleTitle: 'Card appearance',
+    styleDesc: 'How the map looks on cards, when printing and on the QR page. Rural areas usually read better on Terrain or Hybrid; cities on Clean. The preview updates as you change anything.',
+    styleBase: 'Base map',
+    styleVeil: 'Veil outside the territory',
+    styleVeilOff: 'no veil',
+    styleOutline: 'Outline',
+    styleWeightThin: 'Thin',
+    styleWeightNormal: 'Normal',
+    styleWeightThick: 'Thick',
+    styleColorBlue: 'Blue',
+    styleColorRed: 'Red',
+    styleColorYellow: 'Yellow',
+    styleColorWhite: 'White',
+    styleColorBlack: 'Black',
+    styleFill: 'Fill inside the territory',
+    styleLabelSize: 'Label size',
+    styleLabelHint: 'Landmarks and blocks on the card',
+    stylePreview: 'Preview',
+    styleNoTerritory: 'Draw a territory to see the preview.',
+    styleSave: 'Save appearance',
+    styleSaved: 'Appearance saved.',
+    styleReset: 'Back to the default look'
   },
 
   map: {
-    boundaryLayer: 'Congregation boundary'
+    boundaryLayer: 'Congregation boundary',
+    baseClean: 'Clean',
+    baseRoads: 'Roads',
+    baseTerrain: 'Terrain',
+    baseSatellite: 'Satellite',
+    baseHybrid: 'Hybrid'
   },
 
   // Alerts

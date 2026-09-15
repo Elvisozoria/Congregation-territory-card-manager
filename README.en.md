@@ -26,15 +26,16 @@ The [User Guide](https://elvisozoria.github.io/Congregation-territory-card-manag
 - **Territory management** — Create, edit, and delete territories with polygon boundaries drawn on a Leaflet map.
 - **Tags** — Several per territory, to filter and group by area, time of day, how you cover it, or type.
 - **Congregation boundary** — Upload the branch's KML and it is drawn over the maps as a guide while tracing.
-- **Landmark management** — Click the map to add colored landmark markers to each territory.
+- **Landmark management** — Click the map to add colored landmark markers, each with its own directions link; one can be the territory entrance.
 - **Blocks** — Numbered labels for street blocks inside a territory.
 
 **Cards**
 
 - **Territory cards** — Printable card view with non-interactive map, polygon mask, landmark labels, and optionally a QR code and the house count.
 - **Print by area** — Ordered by territory number, and only the filtered group when a tag is selected.
-- **PNG download** — Download any card as a 2x resolution PNG.
-- **Public links** — Share a territory with someone who has no account.
+- **PNG download** — One card, or all of them as a ZIP from Print, at 2x resolution.
+- **Per-congregation appearance** — Base map (clean, roads, terrain, satellite, hybrid), veil, outline, fill and label size, with a live preview; a territory can pin its own base map.
+- **Public links** — Share a territory with someone who has no account, with Google Maps or Waze directions to its entrance.
 
 **Account and congregation**
 

@@ -3,6 +3,7 @@ import { t } from '../i18n/i18n.js';
 import { getStore, getUserProfile } from '../store/index.js';
 import { renderSingleMap } from '../components/map.js';
 import { escapeHtml, escapeAttr, todayISO, formatDate } from '../utils/helpers.js';
+import { googleMapsDirections } from '../utils/map-style.js';
 import { territoryTags } from '../utils/tags.js';
 import { buildPublicTerritoryUrl } from '../utils/public-id.js';
 import {
@@ -286,6 +287,12 @@ export function render(container, params) {
           '<button class="scope-btn' + (initialScope === 'local' ? ' active' : '') + '" data-scope="local">' + escapeHtml(t('show.scopeLocal')) + '</button>' +
           '<button class="scope-btn' + (initialScope === 'global' ? ' active' : '') + '" data-scope="global">' + escapeHtml(t('show.scopeGlobal')) + '</button>' +
         '</div>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label style="display:flex;align-items:center;gap:0.5rem;font-weight:normal;">' +
+          '<input type="checkbox" data-field="lm-start"' + (isEdit && existingLm.isStart ? ' checked' : '') + ' />' +
+          escapeHtml(t('show.landmarkStart')) +
+        '</label>' +
       '</div>';
 
     let selectedScope = initialScope;
@@ -308,6 +315,7 @@ export function render(container, params) {
       const name = form.querySelector('[data-field="lm-name"]').value.trim();
       const description = form.querySelector('[data-field="lm-desc"]').value.trim();
       if (!name) return;
+      const isStart = form.querySelector('[data-field="lm-start"]').checked;
 
       if (isEdit) {
         const scopeChanged = (existingIsGlobal && selectedScope === 'local') || (!existingIsGlobal && selectedScope === 'global');
@@ -318,7 +326,7 @@ export function render(container, params) {
           if (existingIsGlobal) {
             store.deleteGlobalLandmark(existingLm.id);
             const color = LANDMARK_COLORS[(territory.landmarks || []).length % LANDMARK_COLORS.length];
-            store.addLandmark(territory.id, { name, description, lat: latlng.lat, lng: latlng.lng, color: color });
+            store.addLandmark(territory.id, { name, description, lat: latlng.lat, lng: latlng.lng, color: color, isStart: isStart });
           } else {
             store.deleteLandmark(territory.id, existingLm.id);
             store.addGlobalLandmark({ name, description, lat: latlng.lat, lng: latlng.lng, color: '#9CA3AF' });
@@ -328,7 +336,7 @@ export function render(container, params) {
           if (existingIsGlobal) {
             store.updateGlobalLandmark(existingLm.id, { name, description });
           } else {
-            store.updateLandmark(territory.id, existingLm.id, { name, description });
+            store.updateLandmark(territory.id, existingLm.id, { name, description, isStart: isStart });
           }
         }
       } else {
@@ -339,7 +347,7 @@ export function render(container, params) {
         if (selectedScope === 'global') {
           store.addGlobalLandmark({ name, description, lat: pendingLatlng.lat, lng: pendingLatlng.lng, color: '#9CA3AF' });
         } else {
-          store.addLandmark(territory.id, { name, description, lat: pendingLatlng.lat, lng: pendingLatlng.lng, color: color });
+          store.addLandmark(territory.id, { name, description, lat: pendingLatlng.lat, lng: pendingLatlng.lng, color: color, isStart: isStart });
         }
         pendingLatlng = null;
       }
@@ -481,6 +489,13 @@ export function render(container, params) {
       nameRow.appendChild(document.createTextNode(' '));
       nameRow.appendChild(badge);
     }
+    if (lm.isStart && !isGlobal) {
+      const badge = document.createElement('span');
+      badge.className = 'global-badge';
+      badge.textContent = t('show.startBadge');
+      nameRow.appendChild(document.createTextNode(' '));
+      nameRow.appendChild(badge);
+    }
     infoDiv.appendChild(nameRow);
 
     if (lm.description) {
@@ -492,6 +507,16 @@ export function render(container, params) {
 
     li.appendChild(dot);
     li.appendChild(infoDiv);
+
+    // Ruta hasta el punto exacto. Lo ve todo el que ve el territorio: es para
+    // quien va a salir, no sólo para quien lo edita.
+    const goLink = document.createElement('a');
+    goLink.className = 'btn btn-secondary btn-sm';
+    goLink.href = googleMapsDirections(lm.lat, lm.lng);
+    goLink.target = '_blank';
+    goLink.rel = 'noopener';
+    goLink.textContent = t('show.directions');
+    li.appendChild(goLink);
 
     if (allowEditLm) {
       const actionsSpan = document.createElement('span');

@@ -137,6 +137,9 @@ export default {
     addLandmarkCancel: 'Cancelar',
     scopeLocal: 'Solo este territorio',
     scopeGlobal: 'Todos los territorios',
+    landmarkStart: 'Es la entrada: aquí llega quien abre el territorio desde el QR',
+    startBadge: 'Entrada',
+    directions: 'Cómo llegar',
     globalBadge: 'Global',
     // Blocks (manzanas)
     blocks: 'Manzanas',
@@ -219,12 +222,19 @@ export default {
     saveView: 'Guardar vista',
     resetView: 'Restablecer vista',
     enableEditView: 'Editar zoom y centro',
-    viewSaved: 'Vista guardada.'
+    viewSaved: 'Vista guardada.',
+    layerLabel: 'Mapa de esta tarjeta',
+    layerDefault: 'El de la congregación'
   },
 
   // Public view
   public: {
     openInMaps: 'Abrir en Google Maps',
+    openInWaze: 'Abrir en Waze',
+    directions: 'Cómo llegar',
+    goesToStart: 'Te lleva a la entrada del territorio.',
+    goesToCentre: 'Te lleva al centro del territorio. Cada punto de referencia de abajo tiene su propio «Cómo llegar».',
+    landmarks: 'Puntos de referencia',
     poweredBy: 'Tarjetas de Territorio'
   },
 
@@ -242,6 +252,10 @@ export default {
     titleTag: 'Tarjetas de {tag} ({count})',
     undrawnWarning: 'Ojo: {count} sin contorno dibujado ({numbers}). Sus tarjetas saldrán vacías.',
     downloadAll: 'Descargar PNGs',
+    downloadProgress: 'Preparando {done} de {total}...',
+    downloadZipping: 'Comprimiendo...',
+    downloadFailed: 'No se pudieron generar {count} tarjetas. El resto sí está en el ZIP.',
+    zipName: 'tarjetas-de-territorio',
     back: 'Volver'
   },
 
@@ -360,11 +374,38 @@ export default {
     boundaryNone: 'Todavía no has subido el límite de la congregación.',
     boundaryError: 'No se pudo leer el límite: ',
     boundaryEmpty: 'El archivo no contiene un polígono válido.',
-    boundaryConfirmRemove: '¿Quitar el límite de la congregación?'
+    boundaryConfirmRemove: '¿Quitar el límite de la congregación?',
+    styleTitle: 'Apariencia de las tarjetas',
+    styleDesc: 'Cómo se ve el mapa en las tarjetas, al imprimir y en la hoja del QR. En el campo suele leerse mejor Relieve o Híbrido; en ciudad, Limpio. La muestra se actualiza al tocar cualquier ajuste.',
+    styleBase: 'Mapa base',
+    styleVeil: 'Velo fuera del territorio',
+    styleVeilOff: 'sin velo',
+    styleOutline: 'Contorno',
+    styleWeightThin: 'Fino',
+    styleWeightNormal: 'Normal',
+    styleWeightThick: 'Grueso',
+    styleColorBlue: 'Azul',
+    styleColorRed: 'Rojo',
+    styleColorYellow: 'Amarillo',
+    styleColorWhite: 'Blanco',
+    styleColorBlack: 'Negro',
+    styleFill: 'Relleno dentro del territorio',
+    styleLabelSize: 'Tamaño de etiquetas',
+    styleLabelHint: 'Puntos de referencia y manzanas en la tarjeta',
+    stylePreview: 'Muestra',
+    styleNoTerritory: 'Dibuja un territorio para ver la muestra.',
+    styleSave: 'Guardar apariencia',
+    styleSaved: 'Apariencia guardada.',
+    styleReset: 'Volver a la de siempre'
   },
 
   map: {
-    boundaryLayer: 'Límite de la congregación'
+    boundaryLayer: 'Límite de la congregación',
+    baseClean: 'Limpio',
+    baseRoads: 'Carreteras',
+    baseTerrain: 'Relieve',
+    baseSatellite: 'Satélite',
+    baseHybrid: 'Híbrido'
   },
 
   // Alerts

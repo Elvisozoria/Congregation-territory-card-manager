@@ -20,6 +20,7 @@ export async function createFirestoreStore(user, congregationId) {
   let congregationPublicId = null;
   let s13Cutoff = null;
   let boundary = null;
+  let mapStyle = null;
 
   const terrCol = collection(db, 'congregations', congregationId, 'territories');
   const histCol = collection(db, 'congregations', congregationId, 'history');
@@ -33,6 +34,7 @@ export async function createFirestoreStore(user, congregationId) {
       const data = snap.data();
       s13Cutoff = data.s13Cutoff || null;
       boundary = data.boundary || null;
+      mapStyle = data.mapStyle || null;
       if (data.publicId) {
         congregationPublicId = data.publicId;
       } else {
@@ -128,6 +130,7 @@ export async function createFirestoreStore(user, congregationId) {
     if (attrs.blocks !== undefined) obj.blocks = attrs.blocks;
     if (attrs.cardZoom !== undefined) obj.cardZoom = attrs.cardZoom;
     if (attrs.cardCenter !== undefined) obj.cardCenter = attrs.cardCenter;
+    if (attrs.cardLayer !== undefined) obj.cardLayer = attrs.cardLayer;
     return obj;
   }
 
@@ -220,7 +223,8 @@ export async function createFirestoreStore(user, congregationId) {
         description: attrs.description || '',
         lat: attrs.lat,
         lng: attrs.lng,
-        color: attrs.color || '#3B82F6'
+        color: attrs.color || '#3B82F6',
+        isStart: !!attrs.isStart
       };
       const updatedLandmarks = [...(territory.landmarks || []), landmark];
       const ref = doc(db, 'congregations', congregationId, 'territories', String(territoryId));
@@ -475,6 +479,18 @@ export async function createFirestoreStore(user, congregationId) {
     async setBoundary(value) {
       boundary = value || null;
       await updateDoc(doc(db, 'congregations', congregationId), { boundary: boundary });
+      notify();
+    },
+
+    // Apariencia de las tarjetas. Va en el documento de la congregación, como
+    // el límite: lo ven todos y lo cambia quien la administra.
+    getMapStyle() {
+      return mapStyle;
+    },
+
+    async setMapStyle(value) {
+      mapStyle = value || null;
+      await updateDoc(doc(db, 'congregations', congregationId), { mapStyle: mapStyle });
       notify();
     },
 

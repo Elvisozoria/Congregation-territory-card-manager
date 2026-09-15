@@ -3,7 +3,8 @@ import { getStore } from '../store/index.js';
 import { escapeHtml } from '../utils/helpers.js';
 import { parseCoordString } from '../utils/kml-import.js';
 import { t } from '../i18n/i18n.js';
-import { baseLayers } from './tiles.js';
+import { baseLayers, baseName, baseIdByName } from './tiles.js';
+import { normalizeStyle } from '../utils/map-style.js';
 
 const TERRITORY_COLORS = ['#1E40AF', '#B91C1C', '#047857', '#7C3AED', '#B45309', '#BE185D'];
 
@@ -24,6 +25,24 @@ export function buildBoundaryLayer() {
     fill: false,
     interactive: false
   });
+}
+
+// Capa con la que se abre el mapa: la última que eligió esta persona en este
+// navegador, y si nunca eligió, la de la congregación. Quien anda en el campo
+// con el móvil cambia a Híbrido una vez y no tiene que volver a hacerlo.
+const BASE_KEY = 'territory-map-base';
+
+function addBases(map) {
+  const store = getStore();
+  const bases = baseLayers();
+  let id = null;
+  try { id = localStorage.getItem(BASE_KEY); } catch (e) { /* ignore */ }
+  if (!id) id = normalizeStyle(store.getMapStyle ? store.getMapStyle() : null).base;
+  (bases[baseName(id)] || bases[baseName('clean')]).addTo(map);
+  map.on('baselayerchange', function (e) {
+    try { localStorage.setItem(BASE_KEY, baseIdByName(e.name)); } catch (err) { /* ignore */ }
+  });
+  return bases;
 }
 
 // El control de capas de Leaflet ya da la casilla de encender y apagar, así que
@@ -47,8 +66,7 @@ export function renderOverviewMap(container, territories) {
   // inferior y deja los territorios pequenos en medio de un mapa muy abierto.
   const map = L.map(container, { center: defaultCenter, zoom: defaultZoom, zoomSnap: 0 });
 
-  const bases = baseLayers();
-  bases['Clean'].addTo(map);
+  const bases = addBases(map);
 
   const boundaryLayer = addBoundaryOverlay(map, bases);
 
@@ -101,8 +119,7 @@ export function renderSingleMap(container, territory, onMapClick, onMapReady) {
   // inferior y deja los territorios pequenos en medio de un mapa muy abierto.
   const map = L.map(container, { center: defaultCenter, zoom: defaultZoom, zoomSnap: 0 });
 
-  const bases = baseLayers();
-  bases['Clean'].addTo(map);
+  const bases = addBases(map);
 
   addBoundaryOverlay(map, bases);
 

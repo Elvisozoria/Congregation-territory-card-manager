@@ -90,7 +90,7 @@ export function render(container) {
   downloadBtn.addEventListener('click', function (e) {
     e.preventDefault();
     downloadBtn.textContent = t('print.downloadAll') + '...';
-    setTimeout(function () { downloadAllCards(); }, 500);
+    setTimeout(function () { downloadAllCards(); }, 300);
   });
 
   const backBtn = document.createElement('a');
@@ -141,34 +141,54 @@ export function render(container) {
 
     grid.appendChild(card);
     const globalLandmarks = store.getGlobalLandmarks ? store.getGlobalLandmarks() : [];
-    const controller = renderCardMap(card, territory, globalLandmarks, { editable: false, qrUrl: qrUrl });
+    const controller = renderCardMap(card, territory, globalLandmarks, {
+      editable: false, qrUrl: qrUrl, style: store.getMapStyle ? store.getMapStyle() : null
+    });
     controllers.push(controller);
   });
 
   container.appendChild(grid);
 
-  function downloadAllCards() {
-    const cards = document.querySelectorAll('.territory-card');
-    let i = 0;
+  // Un solo archivo ZIP en vez de una descarga por tarjeta: con 23 territorios
+  // eran 23 avisos del navegador que había que aceptar uno a uno. JSZip ya
+  // estaba aquí para leer los KMZ.
+  async function downloadAllCards() {
+    const cards = Array.from(document.querySelectorAll('.territory-card'));
+    if (cards.length === 0) return;
 
-    function downloadNext() {
-      if (i >= cards.length) return;
+    const { default: JSZip } = await import('jszip');
+    const zip = new JSZip();
+    let failed = 0;
+
+    for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
-      toPng(card, { cacheBust: true, pixelRatio: 2, quality: 1 }).then(function (dataUrl) {
-        const link = document.createElement('a');
-        const label = card.querySelector('.card-label').textContent.trim().toLowerCase().replace(/\s+/g, '-');
-        link.download = label + '.png';
-        link.href = dataUrl;
-        link.click();
-      }).catch(function (err) {
+      downloadBtn.textContent = t('print.downloadProgress', { done: i + 1, total: cards.length });
+      try {
+        const dataUrl = await toPng(card, { cacheBust: true, pixelRatio: 2, quality: 1 });
+        // "1 - La Joya" -> "1-la-joya": sin acentos ni guiones repetidos.
+        const label = card.querySelector('.card-label').textContent.trim()
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        zip.file((label || 'territorio-' + (i + 1)) + '.png', dataUrl.split(',')[1], { base64: true });
+      } catch (err) {
+        failed += 1;
         console.error('Failed to render card ' + i + ':', err);
-      }).then(function () {
-        i++;
-        setTimeout(downloadNext, 500);
-      });
+      }
     }
 
-    downloadNext();
+    downloadBtn.textContent = t('print.downloadZipping');
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = t('print.zipName') + '.zip';
+    link.href = url;
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+
+    downloadBtn.textContent = t('print.downloadAll');
+    if (failed > 0) window.alert(t('print.downloadFailed', { count: failed }));
   }
 
   return function () {
