@@ -242,6 +242,10 @@ export default {
     printAll: 'Print All',
     undrawnWarning: 'Heads up: {count} without an outline ({numbers}). Their cards will print empty.',
     downloadAll: 'Download All PNGs',
+    downloadProgress: 'Preparing {done} of {total}...',
+    downloadZipping: 'Zipping...',
+    downloadFailed: '{count} cards could not be rendered. The rest are in the ZIP.',
+    zipName: 'territory-cards',
     back: 'Back'
   },
 

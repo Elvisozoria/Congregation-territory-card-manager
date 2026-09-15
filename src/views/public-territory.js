@@ -99,8 +99,9 @@ async function loadAndRender(wrapper, congPublicId, terPublicId) {
     const coords = territory.polygon.map(function (c) { return [c[1], c[0]]; });
 
     L.polygon(coords, { color: '#1E40AF', weight: 3, fillOpacity: 0 }).addTo(map);
+    // Mismo velo que en la tarjeta: lo de fuera se apaga, el territorio no.
     L.polygon([WORLD_BOUNDS, coords], {
-      color: 'none', fillColor: 'white', fillOpacity: 0.20, stroke: false
+      color: 'none', fillColor: '#F3F4F6', fillOpacity: 0.62, stroke: false
     }).addTo(map);
 
     const bounds = L.latLngBounds(coords);

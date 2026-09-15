@@ -62,10 +62,14 @@ export function renderCardMap(cardElement, territory, globalLandmarks, options) 
       fillOpacity: 0
     }).addTo(map);
 
+    // Vela lo de fuera del territorio para que la vista no distraiga. Era un
+    // velo blanco al 20%, que sobre el mapa claro de ahora no se distinguía de
+    // lo de dentro: blanco sobre blanco. Con un gris claro a la mitad, lo de
+    // fuera se apaga y el territorio queda a plena vista.
     L.polygon([WORLD_BOUNDS, coords], {
       color: 'none',
-      fillColor: 'white',
-      fillOpacity: 0.20,
+      fillColor: '#F3F4F6',
+      fillOpacity: 0.62,
       stroke: false
     }).addTo(map);
 

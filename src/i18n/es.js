@@ -242,6 +242,10 @@ export default {
     titleTag: 'Tarjetas de {tag} ({count})',
     undrawnWarning: 'Ojo: {count} sin contorno dibujado ({numbers}). Sus tarjetas saldrán vacías.',
     downloadAll: 'Descargar PNGs',
+    downloadProgress: 'Preparando {done} de {total}...',
+    downloadZipping: 'Comprimiendo...',
+    downloadFailed: 'No se pudieron generar {count} tarjetas. El resto sí está en el ZIP.',
+    zipName: 'tarjetas-de-territorio',
     back: 'Volver'
   },
 
